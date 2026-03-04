@@ -1,6 +1,7 @@
 import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from "typeorm"
 import { ChildrenEntity } from "./children.entity"
 import { UserRoleEntity } from "./user-role.entity"
+import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {
@@ -18,6 +19,9 @@ export class UserEntity extends BaseEntity {
 
     @UpdateDateColumn()
     updatedAt: Date
+
+    @OneToMany(() => AuthIdentityEntity, (authIdentity) => authIdentity.user)
+    authIdentities: AuthIdentityEntity[]
 
     @OneToMany(() => ChildrenEntity, (children) => children.user)
     childrens: ChildrenEntity[]
