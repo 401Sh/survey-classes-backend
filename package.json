@@ -1,0 +1,29 @@
+{
+  "name": "survey-courses-backend",
+  "version": "0.0.1",
+  "description": "A Node.js backend setup, built with NestJS, designed to sidplay course data and course surveys. https://github.com/401Sh",
+  "author": "401Sh",
+  "private": true,
+  "license": "ISC",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.14",
+    "@nestjs/core": "^11.1.14",
+    "@nestjs/platform-express": "^11.1.14",
+    "dotenv": "^17.3.1"
+  },
+  "overrides": {
+    "multer": "1.4.5-lts.1"
+  }
+}
