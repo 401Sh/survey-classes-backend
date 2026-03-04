@@ -6,8 +6,8 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
-} from "typeorm";
-import { QuestionEntity } from "./question.entity";
+} from "typeorm"
+import { QuestionEntity } from "./question.entity"
 
 @Entity("question-options")
 export class QuestionOptionEntity extends BaseEntity {

@@ -1,4 +1,4 @@
-import { UserEntity } from "src/users/entities/user.entity";
+import { UserEntity } from "src/users/entities/user.entity"
 import {
     BaseEntity,
     Column,
@@ -7,7 +7,7 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
-} from "typeorm";
+} from "typeorm"
 
 @Entity('auth-user-identities')
 export class AuthIdentityEntity extends BaseEntity {

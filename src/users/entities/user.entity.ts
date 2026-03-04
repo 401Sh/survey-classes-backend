@@ -12,6 +12,7 @@ import { ChildrenEntity } from "./children.entity"
 import { UserRoleEntity } from "./user-role.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
+import { LessonEntity } from "src/lessons/entities/lesson.entity"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {
@@ -35,6 +36,9 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => ChildrenEntity, (children) => children.user)
     childrens: ChildrenEntity[]
+
+    @OneToMany(() => LessonEntity, (lesson) => lesson.createdBy)
+    lessons: LessonEntity[]
 
     @OneToMany(() => SurveyEntity, (survey) => survey.createdBy)
     surveys: SurveyEntity[]

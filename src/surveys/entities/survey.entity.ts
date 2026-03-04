@@ -7,9 +7,10 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
-} from "typeorm";
-import { QuestionEntity } from "./question.entity";
-import { UserEntity } from "src/users/entities/user.entity";
+} from "typeorm"
+import { QuestionEntity } from "./question.entity"
+import { UserEntity } from "src/users/entities/user.entity"
+import { LessonEntity } from "src/lessons/entities/lesson.entity"
 
 @Entity("surveys")
 export class SurveyEntity extends BaseEntity {
@@ -33,6 +34,9 @@ export class SurveyEntity extends BaseEntity {
 
     @ManyToOne(() => UserEntity, (user) => user.surveys)
     createdBy: UserEntity
+
+    @ManyToOne(() => LessonEntity, (lesson) => lesson.surveys)
+    lesson: LessonEntity
 
     @OneToMany(() => QuestionEntity, (question) => question.survey)
     questions: QuestionEntity[]

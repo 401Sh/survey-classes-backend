@@ -7,10 +7,10 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
-} from "typeorm";
-import { QuestionType } from "../enums/question-type.enum";
-import { SurveyEntity } from "./survey.entity";
-import { QuestionOptionEntity } from "./question-option.entity";
+} from "typeorm"
+import { QuestionType } from "../enums/question-type.enum"
+import { SurveyEntity } from "./survey.entity"
+import { QuestionOptionEntity } from "./question-option.entity"
 
 @Entity("questions")
 export class QuestionEntity extends BaseEntity {

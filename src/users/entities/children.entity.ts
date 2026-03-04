@@ -6,8 +6,8 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
-} from "typeorm";
-import { UserEntity } from "./user.entity";
+} from "typeorm"
+import { UserEntity } from "./user.entity"
 
 @Entity("childrens")
 export class ChildrenEntity extends BaseEntity {
