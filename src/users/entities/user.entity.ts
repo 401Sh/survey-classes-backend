@@ -1,7 +1,17 @@
-import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from "typeorm"
+import {
+    Entity,
+    BaseEntity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+    OneToMany,
+    OneToOne
+} from "typeorm"
 import { ChildrenEntity } from "./children.entity"
 import { UserRoleEntity } from "./user-role.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
+import { SurveyEntity } from "src/surveys/entities/survey.entity"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {
@@ -25,6 +35,9 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => ChildrenEntity, (children) => children.user)
     childrens: ChildrenEntity[]
+
+    @OneToMany(() => SurveyEntity, (survey) => survey.createdBy)
+    surveys: SurveyEntity[]
 
     @OneToOne(() => UserRoleEntity, (role) => role.user)
     role: UserRoleEntity

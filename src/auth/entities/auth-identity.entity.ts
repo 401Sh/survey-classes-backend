@@ -1,5 +1,13 @@
 import { UserEntity } from "src/users/entities/user.entity";
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+    BaseEntity,
+    Column,
+    CreateDateColumn,
+    Entity,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
+} from "typeorm";
 
 @Entity('auth-user-identities')
 export class AuthIdentityEntity extends BaseEntity {
