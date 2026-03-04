@@ -4,13 +4,15 @@ import {
     CreateDateColumn,
     Entity,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
 import { UserEntity } from "./user.entity"
+import { ResponseEntity } from "src/responses/entities/response.entity"
 
-@Entity("childrens")
-export class ChildrenEntity extends BaseEntity {
+@Entity("children")
+export class ChildEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
@@ -29,6 +31,9 @@ export class ChildrenEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => UserEntity, (user) => user.childrens)
+    @ManyToOne(() => UserEntity, (user) => user.children)
     user: UserEntity
+
+    @OneToMany(() => ResponseEntity, (response) => response.createdFor)
+    responses: ResponseEntity[]
 }

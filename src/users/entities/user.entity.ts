@@ -6,13 +6,15 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToMany,
-    OneToOne
+    OneToOne,
+    JoinColumn
 } from "typeorm"
-import { ChildrenEntity } from "./children.entity"
+import { ChildEntity } from "./children.entity"
 import { UserRoleEntity } from "./user-role.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
+import { ResponseEntity } from "src/responses/entities/response.entity"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {
@@ -31,11 +33,15 @@ export class UserEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
+    @OneToOne(() => UserRoleEntity, (role) => role.user)
+    @JoinColumn()
+    role: UserRoleEntity
+
     @OneToMany(() => AuthIdentityEntity, (authIdentity) => authIdentity.user)
     authIdentities: AuthIdentityEntity[]
 
-    @OneToMany(() => ChildrenEntity, (children) => children.user)
-    childrens: ChildrenEntity[]
+    @OneToMany(() => ChildEntity, (child) => child.user)
+    children: ChildEntity[]
 
     @OneToMany(() => LessonEntity, (lesson) => lesson.createdBy)
     lessons: LessonEntity[]
@@ -43,6 +49,6 @@ export class UserEntity extends BaseEntity {
     @OneToMany(() => SurveyEntity, (survey) => survey.createdBy)
     surveys: SurveyEntity[]
 
-    @OneToOne(() => UserRoleEntity, (role) => role.user)
-    role: UserRoleEntity
+    @OneToMany(() => ResponseEntity, (response) => response.createdBy)
+    responses: ResponseEntity[]
 }

@@ -11,6 +11,7 @@ import {
 import { QuestionEntity } from "./question.entity"
 import { UserEntity } from "src/users/entities/user.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
+import { ResponseEntity } from "src/responses/entities/response.entity"
 
 @Entity("surveys")
 export class SurveyEntity extends BaseEntity {
@@ -40,4 +41,7 @@ export class SurveyEntity extends BaseEntity {
 
     @OneToMany(() => QuestionEntity, (question) => question.survey)
     questions: QuestionEntity[]
+
+    @OneToMany(() => ResponseEntity, (response) => response.survey)
+    responses: ResponseEntity[]
 }
