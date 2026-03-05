@@ -9,7 +9,7 @@ import {
     OneToOne,
     JoinColumn
 } from "typeorm"
-import { ChildEntity } from "./children.entity"
+import { ChildEntity } from "./child.entity"
 import { UserRoleEntity } from "./user-role.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"

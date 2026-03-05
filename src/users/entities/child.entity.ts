@@ -22,7 +22,7 @@ export class ChildEntity extends BaseEntity {
     @Column({ type: "varchar", length: 255 })
     secondName: string
 
-    @Column({ type: "timestamptz" })
+    @Column({ type: "datetime" })
     birthDate: Date
 
     @CreateDateColumn()

@@ -9,7 +9,7 @@ import {
 } from "typeorm"
 import { ResponseStatus } from "../enums/response-status.enum"
 import { UserEntity } from "src/users/entities/user.entity"
-import { ChildEntity } from "src/users/entities/children.entity"
+import { ChildEntity } from "src/users/entities/child.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 
 @Entity("responses")
@@ -17,7 +17,7 @@ export class ResponseEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ type: "timestamptz" })
+    @Column({ type: "datetime" })
     consentedAt: Date
 
     @Column({ type: "enum", enum: ResponseStatus, default: ResponseStatus.PENDING })
