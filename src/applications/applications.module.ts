@@ -4,12 +4,14 @@ import { ApplicationsService } from "./applications.service"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { ApplicationEntity } from "./entities/application.entity"
 import { AnswerEntity } from "./entities/answer.entity"
+import { EnrollmentEntity } from "./entities/enrollment.entity"
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             ApplicationEntity,
             AnswerEntity,
+            EnrollmentEntity,
         ]),
     ],
     controllers: [ApplicationsController],

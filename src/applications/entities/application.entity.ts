@@ -5,14 +5,16 @@ import {
     Entity,
     ManyToOne,
     OneToMany,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { UserEntity } from "src/users/entities/user.entity"
-import { ChildEntity } from "src/users/entities/child.entity"
+import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { AnswerEntity } from "./answer.entity"
+import { EnrollmentEntity } from "./enrollment.entity"
 
 @Entity("applications")
 export class ApplicationEntity extends BaseEntity {
@@ -31,11 +33,14 @@ export class ApplicationEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
+    @OneToOne(() => EnrollmentEntity, (enrollment) => enrollment.application)
+    enrollment: EnrollmentEntity
+
     @ManyToOne(() => UserEntity, (user) => user.applications)
     createdBy: UserEntity
 
-    @ManyToOne(() => ChildEntity, (child) => child.applications)
-    createdFor: ChildEntity
+    @ManyToOne(() => UserChildEntity, (child) => child.applications)
+    createdFor: UserChildEntity
 
     @ManyToOne(() => SurveyEntity, (survey) => survey.applications)
     survey: SurveyEntity

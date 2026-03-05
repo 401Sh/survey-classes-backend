@@ -10,9 +10,10 @@ import {
 } from "typeorm"
 import { UserEntity } from "./user.entity"
 import { ApplicationEntity } from "src/applications/entities/application.entity"
+import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 
 @Entity("children")
-export class ChildEntity extends BaseEntity {
+export class UserChildEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
@@ -36,4 +37,7 @@ export class ChildEntity extends BaseEntity {
 
     @OneToMany(() => ApplicationEntity, (application) => application.createdFor)
     applications: ApplicationEntity[]
+
+    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.lesson)
+    enrollments: EnrollmentEntity[]
 }

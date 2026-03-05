@@ -1,3 +1,4 @@
+import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { UserEntity } from "src/users/entities/user.entity"
 import {
@@ -39,4 +40,7 @@ export class LessonEntity extends BaseEntity {
 
     @OneToMany(() => SurveyEntity, (survey) => survey.lesson)
     surveys: SurveyEntity[]
+
+    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.lesson)
+    enrollments: EnrollmentEntity[]
 }

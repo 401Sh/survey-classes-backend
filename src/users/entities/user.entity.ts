@@ -7,7 +7,7 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from "typeorm"
-import { ChildEntity } from "./child.entity"
+import { UserChildEntity } from "./user-child.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
@@ -37,8 +37,8 @@ export class UserEntity extends BaseEntity {
     @OneToMany(() => AuthIdentityEntity, (authIdentity) => authIdentity.user)
     authIdentities: AuthIdentityEntity[]
 
-    @OneToMany(() => ChildEntity, (child) => child.user)
-    children: ChildEntity[]
+    @OneToMany(() => UserChildEntity, (child) => child.user)
+    children: UserChildEntity[]
 
     @OneToMany(() => LessonEntity, (lesson) => lesson.createdBy)
     lessons: LessonEntity[]

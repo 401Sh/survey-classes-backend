@@ -3,13 +3,13 @@ import { UsersController } from "./users.controller"
 import { UsersService } from "./users.service"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { UserEntity } from "./entities/user.entity"
-import { ChildEntity } from "./entities/child.entity"
+import { UserChildEntity } from "./entities/user-child.entity"
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             UserEntity,
-            ChildEntity,
+            UserChildEntity,
         ]),
     ],
     controllers: [UsersController],
