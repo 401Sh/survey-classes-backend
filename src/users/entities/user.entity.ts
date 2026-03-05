@@ -10,11 +10,11 @@ import {
     JoinColumn
 } from "typeorm"
 import { ChildEntity } from "./child.entity"
-import { UserRoleEntity } from "./user-role.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { ResponseEntity } from "src/responses/entities/response.entity"
+import { UserRole } from "../enums/user-role.enum"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {
@@ -27,15 +27,14 @@ export class UserEntity extends BaseEntity {
     @Column({ type: "varchar", length: 255 })
     secondName: string
 
+    @Column({ type: "enum", enum: UserRole, default: UserRole.USER })
+    role: UserRole
+
     @CreateDateColumn()
     createdAt: Date
 
     @UpdateDateColumn()
     updatedAt: Date
-
-    @OneToOne(() => UserRoleEntity, (role) => role.user)
-    @JoinColumn()
-    role: UserRoleEntity
 
     @OneToMany(() => AuthIdentityEntity, (authIdentity) => authIdentity.user)
     authIdentities: AuthIdentityEntity[]

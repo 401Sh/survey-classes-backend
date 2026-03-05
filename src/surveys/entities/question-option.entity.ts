@@ -3,11 +3,13 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
 import { QuestionEntity } from "./question.entity"
+import { AnswerEntity } from "src/responses/entities/answer.entity"
 
 @Entity("question-options")
 export class QuestionOptionEntity extends BaseEntity {
@@ -26,6 +28,9 @@ export class QuestionOptionEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @OneToMany(() => QuestionEntity, (question) => question.options)
+    @ManyToOne(() => QuestionEntity, (question) => question.options)
     question: QuestionEntity
+
+    @OneToMany(() => AnswerEntity, (answer) => answer.selectedOption)
+    answers: AnswerEntity[]
 }

@@ -11,6 +11,7 @@ import {
 import { QuestionType } from "../enums/question-type.enum"
 import { SurveyEntity } from "./survey.entity"
 import { QuestionOptionEntity } from "./question-option.entity"
+import { AnswerEntity } from "src/responses/entities/answer.entity"
 
 @Entity("questions")
 export class QuestionEntity extends BaseEntity {
@@ -40,4 +41,7 @@ export class QuestionEntity extends BaseEntity {
 
     @OneToMany(() => QuestionOptionEntity, (option) => option.question)
     options: QuestionOptionEntity[]
+
+    @OneToMany(() => AnswerEntity, (answer) => answer.question)
+    answers: AnswerEntity[]
 }
