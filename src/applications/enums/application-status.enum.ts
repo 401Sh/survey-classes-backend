@@ -1,4 +1,4 @@
-export enum ResponseStatus {
+export enum ApplicationStatus {
     APPROVED = "approved",
     REJECTED = "rejected",
     PENDING = "pending",

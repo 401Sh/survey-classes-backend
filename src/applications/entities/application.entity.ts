@@ -8,22 +8,22 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
-import { ResponseStatus } from "../enums/response-status.enum"
+import { ApplicationStatus } from "../enums/application-status.enum"
 import { UserEntity } from "src/users/entities/user.entity"
 import { ChildEntity } from "src/users/entities/child.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { AnswerEntity } from "./answer.entity"
 
-@Entity("responses")
-export class ResponseEntity extends BaseEntity {
+@Entity("applications")
+export class ApplicationEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
     @Column({ type: "datetime" })
     consentedAt: Date
 
-    @Column({ type: "enum", enum: ResponseStatus, default: ResponseStatus.PENDING })
-    status: ResponseStatus
+    @Column({ type: "enum", enum: ApplicationStatus, default: ApplicationStatus.PENDING })
+    status: ApplicationStatus
 
     @CreateDateColumn()
     createdAt: Date
@@ -31,13 +31,13 @@ export class ResponseEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => UserEntity, (user) => user.responses)
+    @ManyToOne(() => UserEntity, (user) => user.applications)
     createdBy: UserEntity
 
-    @ManyToOne(() => ChildEntity, (child) => child.responses)
+    @ManyToOne(() => ChildEntity, (child) => child.applications)
     createdFor: ChildEntity
 
-    @ManyToOne(() => SurveyEntity, (survey) => survey.responses)
+    @ManyToOne(() => SurveyEntity, (survey) => survey.applications)
     survey: SurveyEntity
 
     @OneToMany(() => AnswerEntity, (answer) => answer.response)

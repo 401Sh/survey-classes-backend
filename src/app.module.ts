@@ -5,7 +5,7 @@ import { AuthModule } from "./auth/auth.module"
 import { UsersModule } from "./users/users.module"
 import { LessonsModule } from "./lessons/lessons.module"
 import { SurveysModule } from "./surveys/surveys.module"
-import { ResponsesModule } from "./responses/responses.module"
+import { ApplicationsModule } from "./applications/applications.module"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { dataSourceOptions } from "./common/configs/typeorm.config"
 
@@ -15,7 +15,7 @@ import { dataSourceOptions } from "./common/configs/typeorm.config"
         UsersModule,
         LessonsModule,
         SurveysModule,
-        ResponsesModule,
+        ApplicationsModule,
         TypeOrmModule.forRoot(dataSourceOptions)
     ],
     controllers: [AppController],

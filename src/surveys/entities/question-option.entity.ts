@@ -9,7 +9,7 @@ import {
     UpdateDateColumn
 } from "typeorm"
 import { QuestionEntity } from "./question.entity"
-import { AnswerEntity } from "src/responses/entities/answer.entity"
+import { AnswerEntity } from "src/applications/entities/answer.entity"
 
 @Entity("question-options")
 export class QuestionOptionEntity extends BaseEntity {

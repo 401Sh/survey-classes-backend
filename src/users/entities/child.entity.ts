@@ -9,7 +9,7 @@ import {
     UpdateDateColumn
 } from "typeorm"
 import { UserEntity } from "./user.entity"
-import { ResponseEntity } from "src/responses/entities/response.entity"
+import { ApplicationEntity } from "src/applications/entities/application.entity"
 
 @Entity("children")
 export class ChildEntity extends BaseEntity {
@@ -34,6 +34,6 @@ export class ChildEntity extends BaseEntity {
     @ManyToOne(() => UserEntity, (user) => user.children)
     user: UserEntity
 
-    @OneToMany(() => ResponseEntity, (response) => response.createdFor)
-    responses: ResponseEntity[]
+    @OneToMany(() => ApplicationEntity, (application) => application.createdFor)
+    applications: ApplicationEntity[]
 }

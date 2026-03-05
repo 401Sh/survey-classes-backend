@@ -6,14 +6,12 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToMany,
-    OneToOne,
-    JoinColumn
 } from "typeorm"
 import { ChildEntity } from "./child.entity"
 import { AuthIdentityEntity } from "src/auth/entities/auth-identity.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
-import { ResponseEntity } from "src/responses/entities/response.entity"
+import { ApplicationEntity } from "src/applications/entities/application.entity"
 import { UserRole } from "../enums/user-role.enum"
 
 @Entity("users")
@@ -48,6 +46,6 @@ export class UserEntity extends BaseEntity {
     @OneToMany(() => SurveyEntity, (survey) => survey.createdBy)
     surveys: SurveyEntity[]
 
-    @OneToMany(() => ResponseEntity, (response) => response.createdBy)
-    responses: ResponseEntity[]
+    @OneToMany(() => ApplicationEntity, (application) => application.createdBy)
+    applications: ApplicationEntity[]
 }

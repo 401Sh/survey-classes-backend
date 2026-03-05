@@ -11,7 +11,7 @@ import {
 import { QuestionType } from "../enums/question-type.enum"
 import { SurveyEntity } from "./survey.entity"
 import { QuestionOptionEntity } from "./question-option.entity"
-import { AnswerEntity } from "src/responses/entities/answer.entity"
+import { AnswerEntity } from "src/applications/entities/answer.entity"
 
 @Entity("questions")
 export class QuestionEntity extends BaseEntity {

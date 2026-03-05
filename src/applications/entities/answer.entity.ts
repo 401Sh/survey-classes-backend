@@ -7,7 +7,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
-import { ResponseEntity } from "./response.entity"
+import { ApplicationEntity } from "./application.entity"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { QuestionOptionEntity } from "src/surveys/entities/question-option.entity"
 
@@ -26,8 +26,8 @@ export class AnswerEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => ResponseEntity, (response) => response.answers)
-    response: ResponseEntity
+    @ManyToOne(() => ApplicationEntity, (response) => response.answers)
+    response: ApplicationEntity
 
     @ManyToOne(() => QuestionEntity, (question) => question.answers)
     question: QuestionEntity
