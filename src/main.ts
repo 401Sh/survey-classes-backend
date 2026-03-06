@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core"
 import { AppModule } from "./app.module"
 import * as dotenv from "dotenv"
-import { Logger, LogLevel } from "@nestjs/common"
+import { Logger, LogLevel, ValidationPipe } from "@nestjs/common"
 
 dotenv.config()
 
@@ -12,6 +12,14 @@ const logLevels = process.env.LOG_LEVEL?.split(",") as LogLevel[] || ["log", "er
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule)
+
+    app.useGlobalPipes(
+        new ValidationPipe({
+            transform: true,
+            whitelist: true,
+            forbidNonWhitelisted: true,
+        }),
+    )
 
     app.setGlobalPrefix("api/v1")
     app.useLogger(logLevels)
