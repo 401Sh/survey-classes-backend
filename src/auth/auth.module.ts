@@ -1,12 +1,13 @@
 import { Module } from "@nestjs/common"
 import { AuthController } from "./auth.controller"
 import { AuthService } from "./auth.service"
-import { UsersService } from "src/users/users.service"
-import { MailService } from "src/mail/mail.service"
 import { TokensService } from "./services/tokens.service"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { EmailVerificationEntity } from "./entities/email-verification.entity"
 import { RefreshSessionEntity } from "./entities/refresh-session.entity"
+import { UsersModule } from "src/users/users.module"
+import { MailModule } from "src/mail/mail.module"
+import { JwtModule } from "@nestjs/jwt"
 
 @Module({
     imports: [
@@ -14,8 +15,9 @@ import { RefreshSessionEntity } from "./entities/refresh-session.entity"
             RefreshSessionEntity,
             EmailVerificationEntity,
         ]),
-        UsersService,
-        MailService,
+        JwtModule.register({}),
+        UsersModule,
+        MailModule,
     ],
     controllers: [AuthController],
     providers: [

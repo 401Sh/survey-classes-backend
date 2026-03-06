@@ -13,6 +13,7 @@
     "start:prod": "node dist/main"
   },
   "devDependencies": {
+    "@nestjs/schematics": "^11.0.9",
     "@types/express": "^5.0.6",
     "@types/nodemailer": "^7.0.11",
     "ts-node": "^10.9.2",
@@ -23,6 +24,7 @@
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.14",
     "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.14",
     "@nestjs/typeorm": "^11.0.0",
     "argon2": "^0.44.0",
@@ -32,6 +34,7 @@
     "handlebars": "^4.7.8",
     "mysql2": "^3.18.2",
     "nodemailer": "^8.0.1",
+    "passport-jwt": "^4.0.1",
     "typeorm": "^0.3.28"
   },
   "overrides": {

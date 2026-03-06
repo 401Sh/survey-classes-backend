@@ -1,9 +1,11 @@
-import { Body, Controller, Ip, Post, Headers, Res, Request, HttpStatus } from "@nestjs/common"
+import { Body, Controller, Ip, Post, Headers, Res, Request, HttpStatus, UseGuards } from "@nestjs/common"
 import { AuthService } from "./auth.service"
 import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { Response } from "express"
 import { SignInDto } from "./dto/signin.dto"
+import { AccessTokenGuard } from "./guards/access-token.guard"
+import { RefreshTokenGuard } from "./guards/refresh-token.guard"
 
 @Controller("auth")
 export class AuthController {
