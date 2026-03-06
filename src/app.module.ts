@@ -8,15 +8,19 @@ import { SurveysModule } from "./surveys/surveys.module"
 import { ApplicationsModule } from "./applications/applications.module"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { dataSourceOptions } from "./common/configs/typeorm.config"
+import { MailModule } from "./mail/mail.module"
+import { ConfigModule } from "@nestjs/config"
 
 @Module({
     imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        TypeOrmModule.forRoot(dataSourceOptions),
         AuthModule,
         UsersModule,
         LessonsModule,
         SurveysModule,
         ApplicationsModule,
-        TypeOrmModule.forRoot(dataSourceOptions)
+        MailModule,
     ],
     controllers: [AppController],
     providers: [AppService],
