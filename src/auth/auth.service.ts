@@ -1,28 +1,226 @@
-import { Injectable } from "@nestjs/common"
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { SignInDto } from "./dto/signin.dto"
-import { JwtService } from "@nestjs/jwt"
+import * as argon2 from "argon2"
+import { UsersService } from "src/users/users.service"
+import { MAIL_CONFIRMATION_CODE_LENGTH, MAIL_CONFIRMATION_CODE_TTL } from "src/common/constants/mail.constant"
+import { type UserEntity } from "src/users/entities/user.entity"
+import { InjectRepository } from "@nestjs/typeorm"
+import { EmailVerificationEntity } from "./entities/email-verification.entity"
+import { Repository } from "typeorm"
+import { MailService } from "src/mail/mail.service"
+import { TokensService } from "./services/tokens.service"
+import { randomInt } from "crypto"
 
 @Injectable()
 export class AuthService {
-    constructor(private jwtService: JwtService) {}
+    private readonly logger = new Logger(AuthService.name)
 
-    refreshTokens(userId: any, refreshToken: any, userAgent: string, ip: string, fingerprint: string) {
-        throw new Error("Method not implemented.")
+    constructor(
+        @InjectRepository(EmailVerificationEntity)
+        private emailVerificationRepository: Repository<EmailVerificationEntity>,
+
+        private usersService: UsersService,
+        private mailService: MailService,
+        private tokensService: TokensService,
+    ) { }
+
+    async signUp(signUpDto: SignUpDto) {
+        const user = await this.usersService.findByEmail(signUpDto.email)
+
+        if (!user) return await this.signUpNewUser(signUpDto)
+
+        if (user && user.isEmailVerified) {
+            throw new BadRequestException("A user with this email address is already registered")
+        }
+        
+        return await this.resendSignUpCode(user)
     }
 
 
-    deleteRefreshSession(userId: any, fingerprint: string) {
-        throw new Error("Method not implemented.")
+    private async signUpNewUser(signUpDto: SignUpDto) {
+        const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
+        const hashedCode = await this.tokensService.hashData(code)
+        const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
+    
+        const newUser = await this.usersService.create(
+            signUpDto.email,
+            signUpDto.password,
+        )
+
+        await this.emailVerificationRepository.save({
+            user: newUser,
+            code: hashedCode,
+            expiresAt,
+        })
+    
+        await this.mailService.sendUserConfirmation(newUser, code)
+    
+        return newUser
     }
 
 
-    signIn(signInDto: SignInDto, userAgent: string, ip: string, fingerprint: string) {
-        throw new Error("Method not implemented.")
+    private async resendSignUpCode(user: UserEntity) {
+        const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
+        const hashedCode = await this.tokensService.hashData(code)
+        const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
+    
+        await this.emailVerificationRepository.update({
+            user: { id: user.id },
+        }, {
+            code: hashedCode,
+            expiresAt: expiresAt,
+        })
+    
+        await this.mailService.sendUserConfirmation(user, code)
+    
+        return user
+    }
+    
+    
+    async confirmEmail(signUpConfirmDto: SignUpConfirmDto, userAgent: string, ip: string, fingerprint: string) {
+        const user = await this.usersService.findByEmailWithVerification(signUpConfirmDto.email)
+
+        if (!user) throw new NotFoundException("User does not exist")
+
+        if (user.isEmailVerified) {
+        throw new BadRequestException("Mail is already confirmed")
+        }
+
+        if (
+            !user.emailVerification.expiresAt ||
+            user.emailVerification.expiresAt < new Date()
+        ) {
+            throw new BadRequestException("Confirmation code has expired")
+        }
+
+        if (!user.emailVerification.code) {
+            throw new BadRequestException("No confirmation code, sing up your account")
+        }
+
+        const isCodeValid = await this.tokensService.verifyData(
+            signUpConfirmDto.code,
+            user.emailVerification.code,
+        )
+        if (!isCodeValid) {
+            this.logger.log(`Access denied for user: ${user.id}. Incorrect confirmation code`)
+            throw new ForbiddenException("Confirmation Denied")
+        }
+
+        user.isEmailVerified = true
+
+        await this.emailVerificationRepository.delete({ user: user })
+
+        await this.usersService.update(user.id, user)
+
+        if (!fingerprint) {
+            throw new BadRequestException("Fingerprint header is required")
+        }
+
+        const tokens = await this.tokensService.createRefreshSession(
+            user,
+            userAgent,
+            ip,
+            fingerprint,
+        )
+        return tokens
+    }
+    
+    
+    async signIn(signInDto: SignInDto, userAgent: string, ip: string, fingerprint: string) {
+        const user = await this.usersService.findByEmail(signInDto.email)
+
+        if (!user) throw new BadRequestException("User does not exist")
+
+        if (!user.isEmailVerified) {
+            throw new BadRequestException("Mail does not verified")
+        }
+
+        if (!fingerprint) {
+            throw new BadRequestException("Fingerprint header is required")
+        }
+
+        const isPasswordValid = await this.tokensService.verifyData(
+            signInDto.password,
+            user.password,
+        )
+        if (!isPasswordValid) {
+            throw new BadRequestException("Password is incorrect")
+        }
+
+        const existiingSession = await this.tokensService.findRefreshSession(
+            user.id,
+            fingerprint,
+        )
+
+        if (existiingSession) {
+            await this.tokensService.deleteRefreshSession(user.id, fingerprint)
+        }
+
+        const tokens = await this.tokensService.createRefreshSession(
+            user,
+            userAgent,
+            ip,
+            fingerprint,
+        )
+        return tokens
+    }
+    
+    
+    async deleteSession(userId: number, fingerprint: string) {
+        await this.tokensService.deleteRefreshSession(userId, fingerprint)
     }
 
 
-    confirmEmail(signUpConfirmDto: SignUpConfirmDto, userAgent: string, ip: string, fingerprint: string) {
-        throw new Error("Method not implemented.")
+    async refreshTokens(userId: number, refreshToken: string, userAgent: string, ip: string, fingerprint: string) {
+        const user = await this.usersService.findById(userId)
+
+        if (!fingerprint) {
+            throw new BadRequestException("Fingerprint header is required")
+        }
+
+        // Verifing refresh token
+        const session = await this.tokensService.findRefreshSession(user.id, fingerprint)
+
+        if (!session) {
+            this.logger.log(`Access denied for user: ${user.id}. No existing session`)
+            throw new ForbiddenException("Access Denied")
+        }
+
+        // Check if token has expired
+        const currentTime = new Date()
+        if (session.expiresAt < currentTime) {
+            this.logger.log(
+                `Access denied for user: ${user.id}. Refresh token expired`,
+            )
+            throw new ForbiddenException("Refresh token expired")
+        }
+
+        const isTokenValid = await this.tokensService.verifyData(
+            refreshToken,
+            session.refreshToken,
+        )
+
+        if (!isTokenValid) {
+            this.logger.log(`Access denied for user: ${user.id}. Incorrect refresh token`)
+            throw new ForbiddenException("Access Denied")
+        }
+
+        await this.tokensService.deleteRefreshSession(user.id, fingerprint)
+
+        // Create new refreshToken session
+        const tokens = await this.tokensService.createRefreshSession(
+            user,
+            userAgent,
+            ip,
+            fingerprint,
+        )
+        return tokens
+    }
+
+
+    private generateOtp(length: number): string {
+        return Array.from({ length }, () => randomInt(0, 10)).join("")
     }
 }

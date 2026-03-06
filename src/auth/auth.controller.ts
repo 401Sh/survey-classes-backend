@@ -36,7 +36,7 @@ export class AuthController {
     
         return res.json({
             accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshTokens,
+            refreshToken: tokens.refreshToken,
         })
     }
 
@@ -58,7 +58,7 @@ export class AuthController {
 
         return res.json({
             accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshTokens,
+            refreshToken: tokens.refreshToken,
         })
     }
 
@@ -72,12 +72,10 @@ export class AuthController {
     ) {
         const userId = req.user.userId
 
-        await this.authService.deleteRefreshSession(userId, fingerprint)
+        await this.authService.deleteSession(userId, fingerprint)
 
         return res.status(HttpStatus.OK).send({
             message: "Succesfully logout",
-            accessToken: "",
-            refreshToken: "",
         })
     }
 
@@ -88,11 +86,11 @@ export class AuthController {
         @Request() req,
         @Headers("user-agent") userAgent: string,
         @Headers("x-fingerprint") fingerprint: string,
+        @Headers('x-refresh-token') refreshToken: string,
         @Ip() ip: string,
         @Res() res: Response,
     ) {
         const userId = req.user.userId
-        const refreshToken = req.cookies["refreshToken"]
 
         const tokens = await this.authService.refreshTokens(
             userId,
@@ -104,7 +102,7 @@ export class AuthController {
 
         return res.json({
             accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshTokens,
+            refreshToken: tokens.refreshToken,
         })
     }
 }

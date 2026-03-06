@@ -14,5 +14,6 @@ import { UserChildEntity } from "./entities/user-child.entity"
     ],
     controllers: [UsersController],
     providers: [UsersService],
+    exports: [UsersService],
 })
 export class UsersModule {}
