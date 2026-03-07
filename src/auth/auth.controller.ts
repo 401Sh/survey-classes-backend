@@ -8,6 +8,7 @@ import { AccessTokenGuard } from "../common/guards/access-token.guard"
 import { RefreshTokenGuard } from "../common/guards/refresh-token.guard"
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiResponse } from "@nestjs/swagger"
 import { JWTTokensReturnDto } from "./dto/jwt-tokens-return.dto"
+import { Public } from "src/common/decorators/public.decorator"
 
 @Controller("auth")
 export class AuthController {
@@ -25,6 +26,7 @@ export class AuthController {
         status: HttpStatus.OK,
         description: "Код подтверждения отправлен на почту",
     })
+    @Public()
     @Post("signup")
     async signup(@Body() signUpDto: SignUpDto) {
         await this.authService.signUp(signUpDto)
@@ -60,6 +62,7 @@ export class AuthController {
         description: "Пользователь успешно зарегистрирован",
         type: JWTTokensReturnDto,
     })
+    @Public()
     @Post("signup/confirm")
     async confirmEmail(
         @Headers("user-agent") userAgent: string,
@@ -107,6 +110,7 @@ export class AuthController {
         description: "Успешный вход",
         type: JWTTokensReturnDto,
     })
+    @Public()
     @Post("signin")
     async signin(
         @Headers("user-agent") userAgent: string,
@@ -144,7 +148,6 @@ export class AuthController {
         description: "Успешный выход",
     })
     @Post("logout")
-    @UseGuards(AccessTokenGuard)
     async logout(
         @Headers("x-fingerprint") fingerprint: string,
         @Request() req,
@@ -181,6 +184,7 @@ export class AuthController {
         description: "Токены обновлены",
         type: JWTTokensReturnDto,
     })
+    @Public()
     @Post("refresh")
     @UseGuards(RefreshTokenGuard)
     async refreshTokens(
