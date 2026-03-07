@@ -163,7 +163,6 @@ export class AuthController {
     }
 
 
-    @ApiBearerAuth()
     @ApiOperation({
         summary: "Обновление токенов",
     })
@@ -178,6 +177,11 @@ export class AuthController {
         description: "Уникальный отпечаток устройства",
         required: true,
         example: "123456789abcdef",
+    })
+    @ApiHeader({
+        name: "x-refresh-token",
+        description: "Refresh токен",
+        required: true,
     })
     @ApiResponse({
         status: HttpStatus.OK,
