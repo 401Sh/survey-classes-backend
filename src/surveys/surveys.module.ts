@@ -5,6 +5,7 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 import { SurveyEntity } from "./entities/survey.entity"
 import { QuestionEntity } from "./entities/question.entity"
 import { QuestionOptionEntity } from "./entities/question-option.entity"
+import { LessonsModule } from "src/lessons/lessons.module"
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { QuestionOptionEntity } from "./entities/question-option.entity"
             QuestionEntity,
             QuestionOptionEntity,
         ]),
+        LessonsModule,
     ],
     controllers: [SurveysController],
     providers: [SurveysService],

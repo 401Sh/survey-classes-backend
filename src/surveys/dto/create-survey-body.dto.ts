@@ -2,7 +2,6 @@ import { Type } from "class-transformer"
 import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
-// TODO: add string limits
 export class CreateSurveyBodyDto {
     @Type(() => Number)
     @IsInt()

@@ -1,6 +1,7 @@
 import { Type } from "class-transformer"
-import { IsInt, IsOptional, IsString, Matches, Min } from "class-validator"
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from "class-validator"
 import { PAGE_MIN_VALUE, SURVEY_AMOUNT_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 export class GetSurveyListQueryDto {
     @Type(() => Number)
@@ -32,4 +33,13 @@ export class GetSurveyListQueryDto {
         message: "Date must be in the format YYYY-MM-DD",
     })
     dateTo?: string
+
+    @Type(() => Boolean)
+    @IsBoolean()
+    @IsOptional()
+    isActive?: boolean
+
+    @IsEnum(SortDirection)
+    @IsOptional()
+    sortDirection: SortDirection = SortDirection.ASC
 }

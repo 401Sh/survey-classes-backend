@@ -12,5 +12,6 @@ import { LessonEntity } from "./entities/lesson.entity"
     ],
     controllers: [LessonsController],
     providers: [LessonsService],
+    exports: [LessonsService],
 })
 export class LessonsModule {}

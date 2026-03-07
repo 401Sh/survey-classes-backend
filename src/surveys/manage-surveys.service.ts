@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common"
+import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { UpdateSurveyBodyDto } from "./dto/update-survey-body.dto"
 import { GetSurveyListQueryDto } from "./dto/get-survey-list-query.dto"
 import { CopySurveyBodyDto } from "./dto/copy-survey-body.dto"
@@ -6,6 +6,7 @@ import { CreateSurveyBodyDto } from "./dto/create-survey-body.dto"
 import { InjectRepository } from "@nestjs/typeorm"
 import { SurveyEntity } from "./entities/survey.entity"
 import { Repository } from "typeorm"
+import { LessonsService } from "src/lessons/lessons.service"
 
 @Injectable()
 export class ManageSurveysService {
@@ -13,35 +14,152 @@ export class ManageSurveysService {
 
     constructor(
         @InjectRepository(SurveyEntity)
-        private surveyRepository: Repository<SurveyEntity>
+        private surveyRepository: Repository<SurveyEntity>,
+        private lessonsService: LessonsService,
     ) {}
 
-    create(userId: any, data: CreateSurveyBodyDto) {
-        throw new Error("Method not implemented.")
+    async create(userId: number, data: CreateSurveyBodyDto) {
+        const { lessonId, ...otherData } = data
+
+        const isLessonExists = await this.lessonsService.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const survey = await this.surveyRepository.save({
+            ...otherData,
+            createdBy: { id: userId },
+            lesson: { id: lessonId },
+        })
+
+        this.logger.log(`Created new survey for user: ${userId}`)
+        this.logger.debug("Created new survey: ", survey)
+        return survey
     }
 
 
-    copy(surveyId: number, data: CopySurveyBodyDto) {
-        throw new Error("Method not implemented.")
+    async copy(surveyId: number, data: CopySurveyBodyDto) {
+        const survey = await this.surveyRepository.findOne({
+            where: { id: surveyId },
+            relations: {
+                questions: {
+                    options: true
+                }
+            }
+        })
+    
+        if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+    
+        const lessonExists = await this.lessonsService.existsById(data.lessonId)
+        if (!lessonExists) throw new NotFoundException(`Lesson with id ${data.lessonId} not found`)
+    
+        const newSurvey = await this.surveyRepository.save({
+            title: survey.title,
+            description: survey.description,
+            isActive: false,
+            lesson: { id: data.lessonId },
+            createdBy: survey.createdBy,
+            questions: survey.questions.map(question => ({
+                label: question.label,
+                description: question.description,
+                type: question.type,
+                position: question.position,
+                options: question.options.map(option => ({
+                    label: option.label,
+                    position: option.position,
+                }))
+            }))
+        })
+    
+        this.logger.log(`Copied survey ${surveyId} to lesson ${data.lessonId}`)
+        return newSurvey
     }
 
 
-    findAll(query: GetSurveyListQueryDto) {
-        throw new Error("Method not implemented.")
+    async findAll(query: GetSurveyListQueryDto) {
+        const { limit, page, dateFrom, dateTo, isActive, sortDirection } = query
+
+        const queryBuilder = this.surveyRepository.createQueryBuilder("surveys")
+
+        queryBuilder.leftJoinAndSelect("surveys.questions", "questions")
+        queryBuilder.leftJoinAndSelect("questions", "options")
+
+        if (isActive) {
+            queryBuilder.where("surveys.isActive >= :isActive", { isActive })
+        }
+
+        if (dateFrom) {
+            queryBuilder.andWhere("surveys.createdAt >= :dateFrom", { dateFrom })
+        }
+
+        if (dateTo) {
+            queryBuilder.andWhere("surveys.createdAt >= :dateTo", { dateTo })
+        }
+
+        queryBuilder.orderBy("surveys.startsAt", sortDirection)
+        queryBuilder.skip((page - 1) * limit).take(limit)
+
+        const [surveys, totalCount] = await queryBuilder.getManyAndCount()
+        const totalPagesAmount = Math.ceil(totalCount / limit)
+
+        this.logger.debug('Get survey list: ', surveys)
+        return {
+            data: surveys,
+            meta: {
+                totalCount: totalCount,
+                totalPagesAmount: totalPagesAmount,
+                currentPage: page,
+            },
+        }
     }
 
 
-    findById(surveyId: number) {
-        throw new Error("Method not implemented.")
+    async existsById(id: number): Promise<boolean> {
+        return this.surveyRepository.existsBy({ id })
     }
 
 
-    update(surveyId: number, data: UpdateSurveyBodyDto) {
-        throw new Error("Method not implemented.")
+    async findById(id: number): Promise<SurveyEntity> {
+        const survey = await this.surveyRepository.findOne({
+            where: { id },
+            relations: {
+                questions: {
+                    options: true,
+                },
+            },
+        })
+        
+        if (!survey) {
+            this.logger.log(`No survey with id: ${id}`)
+            throw new NotFoundException(`Survey with id ${id} not found`)
+        }
+    
+        this.logger.log(`Finded survey with id: ${id}`)
+        return survey
     }
 
 
-    delete(surveyId: number) {
-        throw new Error("Method not implemented.")
+    async update(surveyId: number, data: UpdateSurveyBodyDto) {
+        const isSurveyExists = await this.lessonsService.existsById(surveyId)
+        if (!isSurveyExists) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+        
+        const updatedSurvey = await this.surveyRepository.update(
+            { id: surveyId },
+            data,
+        )
+
+        this.logger.log(`Survey with id ${surveyId} updated successfully`)
+        return updatedSurvey
+    }
+
+
+    async delete(surveyId: number) {
+        this.logger.log(`Deleting event with id: ${surveyId}`);
+        const deleteResult = await this.surveyRepository.delete({ id: surveyId });
+
+        if (deleteResult.affected === 0) {
+            this.logger.log(`Cannot delete event. No event with id: ${surveyId}`);
+            throw new NotFoundException(`Event with id ${surveyId} not found`);
+        }
+
+        return deleteResult
     }
 }
