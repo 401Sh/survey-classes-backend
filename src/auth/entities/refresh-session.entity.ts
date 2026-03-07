@@ -1,5 +1,5 @@
-import { UserEntity } from "src/users/entities/user.entity";
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { UserEntity } from "src/users/entities/user.entity"
+import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity("refresh-sessions")
 export class RefreshSessionEntity extends BaseEntity {
