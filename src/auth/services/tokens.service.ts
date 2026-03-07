@@ -8,6 +8,7 @@ import { RefreshSessionEntity } from "../entities/refresh-session.entity"
 import { Repository } from "typeorm"
 import { UserEntity } from "src/users/entities/user.entity"
 import * as argon2 from "argon2"
+import { UserRole } from "src/users/enums/user-role.enum"
 
 @Injectable()
 export class TokensService {
@@ -34,7 +35,7 @@ export class TokensService {
         ip: string,
         fingerprint: string,
       ) {
-        const tokens = await this.getTokens(user.id, user.email)
+        const tokens = await this.getTokens(user.id, user.role)
         const hashedRefreshToken = await this.hashData(tokens.refreshToken)
     
         await this.refreshSessionRepository.save({
@@ -98,12 +99,12 @@ export class TokensService {
     }
 
 
-    private async getTokens(userId: number, email: string): Promise<JWTTokensReturnDto> {
+    private async getTokens(userId: number, role: UserRole): Promise<JWTTokensReturnDto> {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
                     sub: userId,
-                    email,
+                    role,
                 },
                 {
                     secret: this.accessSecret,
@@ -114,7 +115,6 @@ export class TokensService {
             this.jwtService.signAsync(
                 {
                     sub: userId,
-                    email,
                 },
                 {
                     secret: this.refreshSecret,
