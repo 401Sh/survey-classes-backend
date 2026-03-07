@@ -3,8 +3,10 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinColumn,
     ManyToOne,
     OneToMany,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
@@ -32,12 +34,13 @@ export class SurveyEntity extends BaseEntity {
 
     @UpdateDateColumn()
     updatedAt: Date
+    
+    @OneToOne(() => LessonEntity, (lesson) => lesson.survey)
+    @JoinColumn()
+    lesson: LessonEntity
 
     @ManyToOne(() => UserEntity, (user) => user.surveys)
     createdBy: UserEntity
-
-    @ManyToOne(() => LessonEntity, (lesson) => lesson.surveys)
-    lesson: LessonEntity
 
     @OneToMany(() => QuestionEntity, (question) => question.survey)
     questions: QuestionEntity[]
