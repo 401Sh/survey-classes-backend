@@ -1,11 +1,11 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request } from "@nestjs/common"
-import { ManageSurveysService } from "./manage-surveys.service"
+import { ManageSurveysService } from "../services/manage-surveys.service"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
-import { CopySurveyBodyDto } from "./dto/copy-survey-body.dto"
-import { CreateSurveyBodyDto } from "./dto/create-survey-body.dto"
-import { GetSurveyListQueryDto } from "./dto/get-survey-list-query.dto"
-import { UpdateSurveyBodyDto } from "./dto/update-survey-body.dto"
+import { CopySurveyBodyDto } from "../dto/copy-survey-body.dto"
+import { CreateSurveyBodyDto } from "../dto/create-survey-body.dto"
+import { GetSurveyListQueryDto } from "../dto/get-survey-list-query.dto"
+import { UpdateSurveyBodyDto } from "../dto/update-survey-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/surveys")

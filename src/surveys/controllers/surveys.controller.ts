@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from "@nestjs/common"
-import { SurveysService } from "./surveys.service"
-import { GetSurveyByLessonQueryDto } from "./dto/get-survey-by-lesson-query.dto"
+import { SurveysService } from "../services/surveys.service"
+import { GetSurveyByLessonQueryDto } from "../dto/get-survey-by-lesson-query.dto"
 
 @Controller("surveys")
 export class SurveysController {
