@@ -42,7 +42,10 @@ export class ApplicationEntity extends BaseEntity {
     @ManyToOne(() => UserChildEntity, (child) => child.applications)
     createdFor: UserChildEntity
 
-    @ManyToOne(() => SurveyEntity, (survey) => survey.applications)
+    @ManyToOne(() => SurveyEntity, (survey) => survey.applications, {
+        onDelete: "SET NULL",
+        nullable: true,
+    })
     survey: SurveyEntity
 
     @OneToMany(() => AnswerEntity, (answer) => answer.response)

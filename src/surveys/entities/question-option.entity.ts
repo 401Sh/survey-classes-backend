@@ -28,7 +28,7 @@ export class QuestionOptionEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => QuestionEntity, (question) => question.options)
+    @ManyToOne(() => QuestionEntity, (question) => question.options, { onDelete: "CASCADE" })
     question: QuestionEntity
 
     @OneToMany(() => AnswerEntity, (answer) => answer.selectedOption)
