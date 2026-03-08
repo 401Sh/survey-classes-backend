@@ -1,10 +1,11 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { QuestionEntity } from "../entities/question.entity"
 import { Repository } from "typeorm"
 import { UpdateQuestionBodyDto } from "../dto/update-question-body.dto"
 import { CreateQuestionOptionBodyDto } from "../dto/create-question-option-body.dto"
 import { QuestionOptionEntity } from "../entities/question-option.entity"
+import { QuestionType } from "../enums/question-type.enum"
 
 @Injectable()
 export class ManageQuestionsService {
@@ -18,8 +19,15 @@ export class ManageQuestionsService {
     ) {}
 
     async createQuestionOption(questionId: number, data: CreateQuestionOptionBodyDto) {
-        const isQuestionExists = await this.existsById(questionId)
-        if (!isQuestionExists) throw new NotFoundException(`Question with id ${questionId} not found`)
+        const question = await this.questionRepository.findOne({
+            where: { id: questionId }
+        })
+    
+        if (!question) throw new NotFoundException(`Question with id ${questionId} not found`)
+    
+        if (question.type === QuestionType.TEXT) {
+            throw new BadRequestException("Text questions cannot have options")
+        }
 
         const lastOption = await this.questionOptionRepository.findOne({
             where: {
@@ -102,6 +110,19 @@ export class ManageQuestionsService {
                         .execute()
                 }
             }
+
+            // deleting question options if type changed to TEXT
+            if (data.type && data.type === QuestionType.TEXT && question.type !== QuestionType.TEXT) {
+                await manager.delete(
+                    QuestionOptionEntity,
+                    {
+                        question: {
+                            id: questionId,
+                        },
+                    },
+                )
+                this.logger.debug(`Deleted all options for question ${questionId} due to type change to TEXT`)
+            }            
     
             // updating question
             const updatedQuestion = await manager.update(
