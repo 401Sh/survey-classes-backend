@@ -8,7 +8,7 @@ export class UpdateSurveyBodyDto {
     @MaxLength(TITLE_MAX_LENGTH, {
         message: `Description must be at most ${TITLE_MAX_LENGTH} characters`
     })
-    title: string
+    title?: string
 
     @IsString()
     @IsOptional()
@@ -20,5 +20,5 @@ export class UpdateSurveyBodyDto {
     @Type(() => Boolean)
     @IsBoolean()
     @IsOptional()
-    isActive: boolean = false
+    isActive?: boolean
 }

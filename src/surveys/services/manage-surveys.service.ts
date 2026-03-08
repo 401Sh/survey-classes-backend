@@ -7,6 +7,8 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { SurveyEntity } from "../entities/survey.entity"
 import { Repository } from "typeorm"
 import { LessonsService } from "src/lessons/lessons.service"
+import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
+import { QuestionEntity } from "../entities/question.entity"
 
 @Injectable()
 export class ManageSurveysService {
@@ -15,6 +17,9 @@ export class ManageSurveysService {
     constructor(
         @InjectRepository(SurveyEntity)
         private surveyRepository: Repository<SurveyEntity>,
+        @InjectRepository(QuestionEntity)
+        private questionRepository: Repository<QuestionEntity>,
+
         private lessonsService: LessonsService,
     ) {}
 
@@ -33,6 +38,35 @@ export class ManageSurveysService {
         this.logger.log(`Created new survey for user: ${userId}`)
         this.logger.debug("Created new survey: ", survey)
         return survey
+    }
+
+
+    async createQuestion(surveyId: number, data: CreateQuestionBodyDto) {
+        const isSurveyExists = await this.lessonsService.existsById(surveyId)
+        if (!isSurveyExists) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+
+        const lastQuestion = await this.questionRepository.findOne({
+            where: {
+                survey: {
+                    id: surveyId,
+                },
+            },
+            order: {
+                position: "DESC",
+            },
+        })
+
+        const position = lastQuestion ? lastQuestion.position + 1 : 1
+
+        const question = await this.questionRepository.save({
+            data,
+            position,
+            survey: { id: surveyId },
+        })
+
+        this.logger.log(`Created new question for survey: ${surveyId}`)
+        this.logger.debug("Created new question: ", question)
+        return question
     }
 
 
@@ -152,12 +186,12 @@ export class ManageSurveysService {
 
 
     async delete(surveyId: number) {
-        this.logger.log(`Deleting event with id: ${surveyId}`);
-        const deleteResult = await this.surveyRepository.delete({ id: surveyId });
+        this.logger.log(`Deleting survey with id: ${surveyId}`)
+        const deleteResult = await this.surveyRepository.delete({ id: surveyId })
 
         if (deleteResult.affected === 0) {
-            this.logger.log(`Cannot delete event. No event with id: ${surveyId}`);
-            throw new NotFoundException(`Event with id ${surveyId} not found`);
+            this.logger.log(`Cannot delete survey. No survey with id: ${surveyId}`)
+            throw new NotFoundException(`Survey with id ${surveyId} not found`)
         }
 
         return deleteResult

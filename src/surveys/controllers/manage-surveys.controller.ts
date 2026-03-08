@@ -6,6 +6,7 @@ import { CopySurveyBodyDto } from "../dto/copy-survey-body.dto"
 import { CreateSurveyBodyDto } from "../dto/create-survey-body.dto"
 import { GetSurveyListQueryDto } from "../dto/get-survey-list-query.dto"
 import { UpdateSurveyBodyDto } from "../dto/update-survey-body.dto"
+import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/surveys")
@@ -30,6 +31,17 @@ export class ManageSurveysController {
         @Body() data: CopySurveyBodyDto,
     ) {
         const result = await this.manageSurveysService.copy(surveyId, data)
+
+        return result
+    }
+
+
+    @Post(":surveyId/questions")
+    async createQuestion(
+        @Param("surveyId", ParseIntPipe) surveyId: number,
+        @Body() data: CreateQuestionBodyDto,
+    ) {
+        const result = await this.manageSurveysService.createQuestion(surveyId, data)
 
         return result
     }

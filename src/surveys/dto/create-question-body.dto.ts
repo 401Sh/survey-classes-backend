@@ -1,17 +1,13 @@
-import { Type } from "class-transformer"
-import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { QuestionType } from "../enums/question-type.enum"
+import { IsEnum, IsOptional, IsString, MaxLength } from "class-validator"
 
-export class CreateSurveyBodyDto {
-    @Type(() => Number)
-    @IsInt()
-    lessonId: number
-
+export class CreateQuestionBodyDto {
     @IsString()
     @MaxLength(TITLE_MAX_LENGTH, {
         message: `Title must be at most ${TITLE_MAX_LENGTH} characters`
     })
-    title: string
+    label: string
 
     @IsString()
     @IsOptional()
@@ -20,8 +16,7 @@ export class CreateSurveyBodyDto {
     })
     description?: string
 
-    @Type(() => Boolean)
-    @IsBoolean()
+    @IsEnum(QuestionType)
     @IsOptional()
-    isActive: boolean = false
+    type: QuestionType = QuestionType.TEXT
 }
