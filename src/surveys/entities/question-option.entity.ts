@@ -6,7 +6,7 @@ import {
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { QuestionEntity } from "./question.entity"
 import { AnswerEntity } from "src/applications/entities/answer.entity"

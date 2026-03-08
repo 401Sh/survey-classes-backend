@@ -6,7 +6,7 @@ import {
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { UserEntity } from "./user.entity"
 import { ApplicationEntity } from "src/applications/entities/application.entity"

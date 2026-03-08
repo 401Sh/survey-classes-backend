@@ -1,5 +1,5 @@
-import { IsString, MaxLength } from "class-validator";
-import { TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant";
+import { IsString, MaxLength } from "class-validator"
+import { TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class CreateQuestionOptionBodyDto {
     @IsString()

@@ -7,7 +7,7 @@ import {
     ManyToOne,
     OneToOne,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { ApplicationEntity } from "./application.entity"

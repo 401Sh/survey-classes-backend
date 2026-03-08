@@ -2,7 +2,6 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { SignInDto } from "./dto/signin.dto"
-import * as argon2 from "argon2"
 import { UsersService } from "src/users/users.service"
 import { MAIL_CONFIRMATION_CODE_LENGTH, MAIL_CONFIRMATION_CODE_TTL } from "src/common/constants/mail.constant"
 import { type UserEntity } from "src/users/entities/user.entity"

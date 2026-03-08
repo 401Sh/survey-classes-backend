@@ -5,7 +5,7 @@ import {
     Entity,
     ManyToOne,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { ApplicationEntity } from "./application.entity"
 import { QuestionEntity } from "src/surveys/entities/question.entity"

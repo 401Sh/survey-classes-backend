@@ -6,7 +6,7 @@ import {
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { QuestionType } from "../enums/question-type.enum"
 import { SurveyEntity } from "./survey.entity"

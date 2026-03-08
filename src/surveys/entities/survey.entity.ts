@@ -8,7 +8,7 @@ import {
     OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { QuestionEntity } from "./question.entity"
 import { UserEntity } from "src/users/entities/user.entity"
