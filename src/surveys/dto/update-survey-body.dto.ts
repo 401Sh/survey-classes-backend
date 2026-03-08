@@ -1,8 +1,13 @@
 import { Type } from "class-transformer"
-import { IsBoolean, IsOptional, IsString, MaxLength } from "class-validator"
+import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class UpdateSurveyBodyDto {
+    @Type(() => Number)
+    @IsInt()
+    @IsOptional()
+    lessonId?: number
+    
     @IsString()
     @IsOptional()
     @MaxLength(TITLE_MAX_LENGTH, {

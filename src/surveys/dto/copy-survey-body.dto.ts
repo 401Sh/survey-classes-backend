@@ -1,8 +1,9 @@
 import { Type } from "class-transformer"
-import { IsInt } from "class-validator"
+import { IsInt, IsOptional } from "class-validator"
 
 export class CopySurveyBodyDto {
     @Type(() => Number)
     @IsInt()
-    lessonId: number
+    @IsOptional()
+    lessonId?: number
 }

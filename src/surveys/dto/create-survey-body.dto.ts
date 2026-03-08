@@ -5,7 +5,8 @@ import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from "src/common/constants/d
 export class CreateSurveyBodyDto {
     @Type(() => Number)
     @IsInt()
-    lessonId: number
+    @IsOptional()
+    lessonId?: number
 
     @IsString()
     @MaxLength(TITLE_MAX_LENGTH, {

@@ -23,6 +23,7 @@ export class SurveysService {
         
         const survey = await this.surveyRepository.findOne({
             where: {
+                isActive: true,
                 lesson: {
                     id: query.lessonId,
                 },

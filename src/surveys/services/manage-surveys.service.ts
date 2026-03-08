@@ -26,13 +26,15 @@ export class ManageSurveysService {
     async create(userId: number, data: CreateSurveyBodyDto) {
         const { lessonId, ...otherData } = data
 
-        const isLessonExists = await this.lessonsService.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        if (lessonId) {
+            const isLessonExists = await this.lessonsService.existsById(lessonId)
+            if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        }
 
         const survey = await this.surveyRepository.save({
             ...otherData,
             createdBy: { id: userId },
-            lesson: { id: lessonId },
+            lesson: lessonId ? { id: lessonId } : undefined,
         })
 
         this.logger.log(`Created new survey for user: ${userId}`)
@@ -82,14 +84,16 @@ export class ManageSurveysService {
     
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
     
-        const lessonExists = await this.lessonsService.existsById(data.lessonId)
-        if (!lessonExists) throw new NotFoundException(`Lesson with id ${data.lessonId} not found`)
+        if (data.lessonId) {
+            const lessonExists = await this.lessonsService.existsById(data.lessonId)
+            if (!lessonExists) throw new NotFoundException(`Lesson with id ${data.lessonId} not found`)
+        }
     
         const newSurvey = await this.surveyRepository.save({
             title: survey.title,
             description: survey.description,
             isActive: false,
-            lesson: { id: data.lessonId },
+            lesson: data.lessonId ? { id: data.lessonId } : undefined,
             createdBy: survey.createdBy,
             questions: survey.questions.map(question => ({
                 label: question.label,
@@ -172,12 +176,38 @@ export class ManageSurveysService {
 
 
     async update(surveyId: number, data: UpdateSurveyBodyDto) {
-        const isSurveyExists = await this.lessonsService.existsById(surveyId)
-        if (!isSurveyExists) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+        const survey = await this.surveyRepository.findOne({
+            where: { id: surveyId }
+        })
+        if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+    
+        const { lessonId, ...otherData } = data
+
+        if (lessonId) {
+            const isSurveyExists = await this.lessonsService.existsById(surveyId)
+            if (!isSurveyExists) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+
+            // untying current survey from lesson
+            await this.surveyRepository.update(
+                {
+                    lesson: {
+                        id: lessonId,
+                    },
+                },
+                {
+                    lesson: undefined,
+                },
+            )
+        }
         
         const updatedSurvey = await this.surveyRepository.update(
-            { id: surveyId },
-            data,
+            {
+                id: surveyId,
+            },
+            {
+                ...otherData,
+                lesson: lessonId ? { id: lessonId } : undefined,
+            },
         )
 
         this.logger.log(`Survey with id ${surveyId} updated successfully`)
