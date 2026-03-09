@@ -30,7 +30,7 @@ export class CreateQuestionBodyDto {
     @ApiPropertyOptional({
         description: "Тип вопроса - text, radio, checkbox",
         example: QuestionType.RADIO,
-        type: Enumerator<QuestionType>,
+        enum: QuestionType,
         default: QuestionType.TEXT,
     })
     @IsEnum(QuestionType)
