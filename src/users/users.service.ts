@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { UserEntity } from "./entities/user.entity"
 import { Repository } from "typeorm"
 import * as argon2 from "argon2"
+import { SignUpDto } from "src/auth/dto/signup.dto"
 
 @Injectable()
 export class UsersService {
@@ -13,28 +14,30 @@ export class UsersService {
         private userRepository: Repository<UserEntity>,
     ) {}
 
-    async create(email: string, password: string): Promise<UserEntity> {
-        const isAvailable = await this.isEmailAvailable(email)
+    async create(data: SignUpDto): Promise<UserEntity> {
+        const isAvailable = await this.isEmailAvailable(data.email)
         if (!isAvailable) {
-            this.logger.log(`Cannot create user. Email ${email} is already used`)
-            throw new ConflictException(`Email ${email} is already used`)
+            this.logger.log(`Cannot create user. Email ${data.email} is already used`)
+            throw new ConflictException(`Email ${data.email} is already used`)
         }
+
+        const { password, ...otherData } = data
     
-        const hashedPassword = await this.hashData(password)
+        const hashedPassword = await this.hashData(data.password)
     
         const user = await this.userRepository.save({
-            email,
+            ...otherData,
             password: hashedPassword,
         })
     
-        this.logger.log(`Created user with email: ${email}`)
+        this.logger.log(`Created user with email: ${data.email}`)
         this.logger.debug("Created user", user)
         return user
     }
 
 
-    async update(userId: number, user: UserEntity) {
-        const updateResult = await this.userRepository.update({ id: userId }, user)
+    async update(userId: number, data: Partial<UserEntity>) {
+        const updateResult = await this.userRepository.update({ id: userId }, data)
     
         if (updateResult.affected === 0) {
             this.logger.debug(`Cannot update user with id: ${userId}`)
@@ -49,7 +52,7 @@ export class UsersService {
         const user = await this.userRepository
             .createQueryBuilder("users")
             .where("users.id = :id", { id })
-            .select(["users.firstName", "users.id", "users.email"])
+            .select(["users.firstName", "users.id", "users.email", "users.role"])
             .getOne()
         
         if (!user) {

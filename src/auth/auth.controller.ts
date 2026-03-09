@@ -153,7 +153,7 @@ export class AuthController {
         @Request() req,
         @Res() res: Response,
     ) {
-        const userId = req.user.userId
+        const userId = req.user.sub
 
         await this.authService.deleteSession(userId, fingerprint)
 
@@ -199,7 +199,7 @@ export class AuthController {
         @Ip() ip: string,
         @Res() res: Response,
     ) {
-        const userId = req.user.userId
+        const userId = req.user.sub
 
         const tokens = await this.authService.refreshTokens(
             userId,

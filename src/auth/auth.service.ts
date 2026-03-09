@@ -25,10 +25,10 @@ export class AuthService {
         private tokensService: TokensService,
     ) { }
 
-    async signUp(signUpDto: SignUpDto) {
-        const user = await this.usersService.findByEmail(signUpDto.email)
+    async signUp(data: SignUpDto) {
+        const user = await this.usersService.findByEmail(data.email)
 
-        if (!user) return await this.signUpNewUser(signUpDto)
+        if (!user) return await this.signUpNewUser(data)
 
         if (user && user.isEmailVerified) {
             throw new BadRequestException("A user with this email address is already registered")
@@ -38,15 +38,12 @@ export class AuthService {
     }
 
 
-    private async signUpNewUser(signUpDto: SignUpDto) {
+    private async signUpNewUser(data: SignUpDto) {
         const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
         const hashedCode = await this.tokensService.hashData(code)
         const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
     
-        const newUser = await this.usersService.create(
-            signUpDto.email,
-            signUpDto.password,
-        )
+        const newUser = await this.usersService.create(data)
 
         await this.emailVerificationRepository.save({
             user: newUser,
@@ -65,12 +62,20 @@ export class AuthService {
         const hashedCode = await this.tokensService.hashData(code)
         const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
     
-        await this.emailVerificationRepository.update({
+        const updateResult = await this.emailVerificationRepository.update({
             user: { id: user.id },
         }, {
             code: hashedCode,
             expiresAt: expiresAt,
         })
+
+        if (updateResult.affected === 0) {
+            await this.emailVerificationRepository.save({
+                user,
+                code: hashedCode,
+                expiresAt,
+            })
+        }
     
         await this.mailService.sendUserConfirmation(user, code)
     
@@ -109,9 +114,16 @@ export class AuthService {
 
         user.isEmailVerified = true
 
-        await this.emailVerificationRepository.delete({ user: user })
+        await this.emailVerificationRepository.delete({
+            user: { id: user.id },
+        })
 
-        await this.usersService.update(user.id, user)
+        await this.usersService.update(
+            user.id,
+            {
+                isEmailVerified: true,
+            },
+        )
 
         if (!fingerprint) {
             throw new BadRequestException("Fingerprint header is required")

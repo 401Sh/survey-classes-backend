@@ -8,6 +8,8 @@ import { RefreshSessionEntity } from "./entities/refresh-session.entity"
 import { UsersModule } from "src/users/users.module"
 import { MailModule } from "src/mail/mail.module"
 import { JwtModule } from "@nestjs/jwt"
+import { AccessTokenStrategy } from "./strategies/access-token.strategy"
+import { RefreshTokenStrategy } from "./strategies/refresh-token.strategy"
 
 @Module({
     imports: [
@@ -23,6 +25,8 @@ import { JwtModule } from "@nestjs/jwt"
     providers: [
         TokensService,
         AuthService,
+        AccessTokenStrategy,
+        RefreshTokenStrategy,
     ],
 })
 export class AuthModule {}

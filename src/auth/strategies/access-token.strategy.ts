@@ -21,7 +21,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "jwt") {
         ignoreExpiration: false,
         })
     }
-
+    
     validate(payload: JwtAccessPayload) {
         return payload
     }
