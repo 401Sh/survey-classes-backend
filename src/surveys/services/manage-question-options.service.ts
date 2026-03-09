@@ -15,7 +15,7 @@ export class ManageQuestionOptionsService {
 
     async update(questionOptionId: number, data: UpdateQuestionOptionBodyDto) {
         // creating transaction
-        await this.questionOptionsRepository.manager.transaction(async (manager) => {
+        const updatedQuestionOption = await this.questionOptionsRepository.manager.transaction(async (manager) => {
             const option = await manager.findOne(
                 QuestionOptionEntity,
                 {
@@ -66,15 +66,15 @@ export class ManageQuestionOptionsService {
             }
     
             // updating question
-            const updatedQuestionOption = await manager.update(
+            return await manager.update(
                 QuestionOptionEntity,
                 { id: questionOptionId },
                 data,
             )
-
-            this.logger.log(`Updated question option with id: ${questionOptionId}`)
-            return updatedQuestionOption
         })
+
+        this.logger.log(`Updated question option with id: ${questionOptionId}`)
+        return updatedQuestionOption
     }
 
 

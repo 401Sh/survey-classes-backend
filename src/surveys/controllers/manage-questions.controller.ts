@@ -31,9 +31,11 @@ export class ManageQuestionsController {
         @Param("questionId", ParseIntPipe) questionId: number,
         @Body() data: UpdateQuestionBodyDto,
     ) {
-        const result = await this.manageQuestionsService.update(questionId, data)
+        await this.manageQuestionsService.update(questionId, data)
 
-        return result
+        return {
+            message: "Question updated successfully"
+        }
     }
 
 
@@ -49,9 +51,11 @@ export class ManageQuestionsController {
     })
     @Delete(":questionId")
     async remove(@Param("questionId", ParseIntPipe) questionId: number) {
-        const result = await this.manageQuestionsService.delete(questionId)
+        await this.manageQuestionsService.delete(questionId)
 
-        return result
+        return {
+            message: "Question deleted successfully"
+        }
     }
 
     

@@ -42,8 +42,8 @@ export class ManageQuestionsService {
 
         const position = lastOption ? lastOption.position + 1 : 1
 
-        const option = await this.questionRepository.save({
-            data,
+        const option = await this.questionOptionRepository.save({
+            ...data,
             position,
             question: { id: questionId },
         })
@@ -125,14 +125,14 @@ export class ManageQuestionsService {
             }            
     
             // updating question
-            const updatedQuestion = await manager.update(
+            const updateResult = await manager.update(
                 QuestionEntity,
                 { id: questionId },
                 data,
             )
 
             this.logger.log(`Updated question with id: ${questionId}`)
-            return updatedQuestion
+            return updateResult
         })
     }
 

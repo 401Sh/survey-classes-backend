@@ -30,9 +30,11 @@ export class ManageQuestionOptionsController {
         @Param("questionOptionId", ParseIntPipe) questionOptionId: number,
         @Body() data: UpdateQuestionOptionBodyDto,
     ) {
-        const result = await this.manageQuestionOptionsService.update(questionOptionId, data)
+        await this.manageQuestionOptionsService.update(questionOptionId, data)
 
-        return result
+        return {
+            message: "Option updated successfully"
+        }
     }
 
 
@@ -48,8 +50,10 @@ export class ManageQuestionOptionsController {
     })
     @Delete(":questionOptionId")
     async remove(@Param("questionOptionId", ParseIntPipe) questionOptionId: number) {
-        const result = await this.manageQuestionOptionsService.delete(questionOptionId)
+        await this.manageQuestionOptionsService.delete(questionOptionId)
 
-        return result
+        return {
+            message: "Option deleted successfully"
+        }
     }
 }

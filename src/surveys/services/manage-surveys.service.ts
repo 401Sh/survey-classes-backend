@@ -44,7 +44,7 @@ export class ManageSurveysService {
 
 
     async createQuestion(surveyId: number, data: CreateQuestionBodyDto) {
-        const isSurveyExists = await this.lessonsService.existsById(surveyId)
+        const isSurveyExists = await this.existsById(surveyId)
         if (!isSurveyExists) throw new NotFoundException(`Survey with id ${surveyId} not found`)
 
         const lastQuestion = await this.questionRepository.findOne({
@@ -61,7 +61,7 @@ export class ManageSurveysService {
         const position = lastQuestion ? lastQuestion.position + 1 : 1
 
         const question = await this.questionRepository.save({
-            data,
+            ...data,
             position,
             survey: { id: surveyId },
         })
@@ -118,7 +118,7 @@ export class ManageSurveysService {
         const queryBuilder = this.surveyRepository.createQueryBuilder("surveys")
 
         queryBuilder.leftJoinAndSelect("surveys.questions", "questions")
-        queryBuilder.leftJoinAndSelect("questions", "options")
+        queryBuilder.leftJoinAndSelect("questions.options", "options")
 
         if (isActive) {
             queryBuilder.where("surveys.isActive >= :isActive", { isActive })
@@ -132,7 +132,7 @@ export class ManageSurveysService {
             queryBuilder.andWhere("surveys.createdAt >= :dateTo", { dateTo })
         }
 
-        queryBuilder.orderBy("surveys.startsAt", sortDirection)
+        queryBuilder.orderBy("surveys.createdAt", sortDirection)
         queryBuilder.skip((page - 1) * limit).take(limit)
 
         const [surveys, totalCount] = await queryBuilder.getManyAndCount()

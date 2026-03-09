@@ -176,9 +176,11 @@ export class ManageSurveysController {
         @Param("surveyId", ParseIntPipe) surveyId: number,
         @Body() data: UpdateSurveyBodyDto,
     ) {
-        const result = await this.manageSurveysService.update(surveyId, data)
+        await this.manageSurveysService.update(surveyId, data)
 
-        return result
+        return {
+            message: "Survey updated successfully",
+        }
     }
 
     
