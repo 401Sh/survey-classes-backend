@@ -1,6 +1,6 @@
 {
   "name": "survey-courses-backend",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "description": "A Node.js backend setup, built with NestJS, designed to sidplay course data and course surveys. https://github.com/401Sh",
   "author": "401Sh",
   "private": true,
