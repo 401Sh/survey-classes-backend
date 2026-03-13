@@ -4,11 +4,11 @@ import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { Response } from "express"
 import { SignInDto } from "./dto/signin.dto"
-import { AccessTokenGuard } from "../common/guards/access-token.guard"
 import { RefreshTokenGuard } from "../common/guards/refresh-token.guard"
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiResponse } from "@nestjs/swagger"
 import { JWTTokensReturnDto } from "./dto/jwt-tokens-return.dto"
 import { Public } from "src/common/decorators/public.decorator"
+import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 
 @Controller("auth")
 export class AuthController {
@@ -130,6 +130,29 @@ export class AuthController {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
         })
+    }
+
+
+    @ApiOperation({
+        summary: "Запрос на восстановление пароля",
+    })
+    @ApiBody({
+        description: "Данные для восстановления пароля",
+        type: ForgotPasswordBodyDto,
+        required: true,
+    })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: "Код подтверждения отправлен на почту",
+    })
+    @Public()
+    @Post("forgot-password")
+    async forgotPassword(@Body() data: ForgotPasswordBodyDto) {
+        await this.authService.forgotPassword(data)
+
+        return {
+            message: "Confirmation code sent to your mail",
+        }
     }
 
 

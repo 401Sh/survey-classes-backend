@@ -11,9 +11,11 @@ import { MAIL_CONFIRMATION_SUBJECT, MAIL_FROM_NAME, MAIL_TEMPLATES_PATH } from "
 export class MailService {
     private readonly mailer: nodemailer.Transporter
     private readonly confirmationTemplate: handlebars.TemplateDelegate
+    private readonly resetPasswordTemplate: handlebars.TemplateDelegate
 
     constructor(private readonly configService: ConfigService) {
         this.confirmationTemplate = this.loadTemplate("confirmation.hbs")
+        this.resetPasswordTemplate = this.loadTemplate("reset-password.hbs")
 
         this.mailer = nodemailer.createTransport(
             {
@@ -36,6 +38,17 @@ export class MailService {
 
     async sendUserConfirmation(user: UserEntity, code: string) {
         const html = this.confirmationTemplate({ name: user.firstName, code })
+
+        await this.mailer.sendMail({
+            to: user.email,
+            subject: MAIL_CONFIRMATION_SUBJECT,
+            html,
+        })
+    }
+
+
+    async sendPasswordReset(user: UserEntity, code: string) {
+        const html = this.resetPasswordTemplate({ name: user.firstName, code })
 
         await this.mailer.sendMail({
             to: user.email,

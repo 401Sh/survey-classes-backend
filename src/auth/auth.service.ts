@@ -11,6 +11,8 @@ import { Repository } from "typeorm"
 import { MailService } from "src/mail/mail.service"
 import { TokensService } from "./services/tokens.service"
 import { randomInt } from "crypto"
+import { VerificationType } from "./enums/verification-type.enum"
+import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 
 @Injectable()
 export class AuthService {
@@ -48,6 +50,7 @@ export class AuthService {
         await this.emailVerificationRepository.save({
             user: newUser,
             code: hashedCode,
+            type: VerificationType.EMAIL,
             expiresAt,
         })
     
@@ -64,6 +67,7 @@ export class AuthService {
     
         const updateResult = await this.emailVerificationRepository.update({
             user: { id: user.id },
+            type: VerificationType.EMAIL,
         }, {
             code: hashedCode,
             expiresAt: expiresAt,
@@ -73,6 +77,7 @@ export class AuthService {
             await this.emailVerificationRepository.save({
                 user,
                 code: hashedCode,
+                type: VerificationType.EMAIL,
                 expiresAt,
             })
         }
@@ -116,6 +121,7 @@ export class AuthService {
 
         await this.emailVerificationRepository.delete({
             user: { id: user.id },
+            type: VerificationType.EMAIL,
         })
 
         await this.usersService.update(
@@ -176,6 +182,51 @@ export class AuthService {
             fingerprint,
         )
         return tokens
+    }
+
+
+    async forgotPassword(data: ForgotPasswordBodyDto) {
+        const user = await this.usersService.findByEmail(data.email)
+
+        // do not disclose whether the user exists
+        if (!user || !user.isEmailVerified) return
+    
+        const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
+        const hashedCode = await this.tokensService.hashData(code)
+        const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
+    
+        const emailVerification = await this.emailVerificationRepository.findOne({
+            where: {
+                user: {
+                    id: user.id,
+                },
+                type: VerificationType.PASSWORD_RESET,
+            },
+        })
+    
+        if (emailVerification) {
+            await this.emailVerificationRepository.update(
+                {
+                    user: {
+                        id: user.id,
+                    },
+                    type: VerificationType.PASSWORD_RESET,
+                },
+                {
+                    code: hashedCode,
+                    expiresAt,
+                },
+            )
+        }
+
+        await this.emailVerificationRepository.save({
+            user,
+            code: hashedCode,
+            type: VerificationType.PASSWORD_RESET,
+            expiresAt,
+        })
+    
+        await this.mailService.sendPasswordReset(user, code)
     }
     
     
