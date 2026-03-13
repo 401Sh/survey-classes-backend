@@ -6,6 +6,7 @@ export class SignUpConfirmDto {
     @ApiProperty({
         description: "Почта пользователя",
         example: "user123@mail.example",
+        type: String,
     })
     @Type(() => String)
     @IsString()
@@ -14,6 +15,7 @@ export class SignUpConfirmDto {
 
     @ApiProperty({
         description: "Код подтверждения",
+        type: String,
     })
     @Type(() => String)
     @IsString()

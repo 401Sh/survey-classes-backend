@@ -7,6 +7,7 @@ export class SignInDto {
     @ApiProperty({
         description: "Почта пользователя",
         example: "user123@mail.example",
+        type: String,
     })
     @Type(() => String)
     @IsString()
@@ -16,6 +17,7 @@ export class SignInDto {
     @ApiProperty({
         description: "Пароль пользователя",
         example: "securePassword123",
+        type: String,
     })
     @Type(() => String)
     @IsString()

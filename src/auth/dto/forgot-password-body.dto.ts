@@ -6,6 +6,7 @@ export class ForgotPasswordBodyDto {
     @ApiProperty({
         description: "Почта пользователя",
         example: "user123@mail.example",
+        type: String,
     })
     @Type(() => String)
     @IsString()

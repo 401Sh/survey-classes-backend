@@ -7,6 +7,7 @@ export class SignUpDto {
     @ApiProperty({
         description: "Почта пользователя",
         example: "user123@mail.example",
+        type: String,
     })
     @Type(() => String)
     @IsString()
@@ -16,6 +17,7 @@ export class SignUpDto {
     @ApiProperty({
         description: "Пароль пользователя",
         example: "securePassword123",
+        type: String,
     })
     @Type(() => String)
     @IsString()
@@ -28,6 +30,7 @@ export class SignUpDto {
     @ApiProperty({
         description: "Имя пользователя",
         example: "John",
+        type: String,
     })
     @Type(() => String)
     @IsString()
@@ -36,6 +39,7 @@ export class SignUpDto {
     @ApiProperty({
         description: "Фамилия пользователя",
         example: "Edwards",
+        type: String,
     })
     @Type(() => String)
     @IsString()
