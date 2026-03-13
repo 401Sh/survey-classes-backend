@@ -13,6 +13,7 @@ import { TokensService } from "./services/tokens.service"
 import { randomInt } from "crypto"
 import { VerificationType } from "./enums/verification-type.enum"
 import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
+import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
 
 @Injectable()
 export class AuthService {
@@ -227,6 +228,50 @@ export class AuthService {
         })
     
         await this.mailService.sendPasswordReset(user, code)
+    }
+
+
+    async confirmForgotPassword(data: ForgotPasswordConfirmBodyDto) {
+        const user = await this.usersService.findByEmail(data.email)
+    
+        if (!user) throw new NotFoundException("User does not exist")
+    
+        const passwordReset = await this.emailVerificationRepository.findOne({
+            where: {
+                user: {
+                    id: user.id,
+                },
+                type: VerificationType.PASSWORD_RESET,
+            },
+        })
+    
+        if (!passwordReset) {
+            throw new BadRequestException("No reset code found")
+        }
+    
+        if (passwordReset.expiresAt < new Date()) {
+            throw new BadRequestException("Reset code has expired")
+        }
+    
+        const isCodeValid = await this.tokensService.verifyData(
+            data.code,
+            passwordReset.code,
+        )
+        if (!isCodeValid) {
+            this.logger.log(`Access denied for user: ${user.id}. Incorrect reset code`)
+            throw new ForbiddenException("Invalid reset code")
+        }
+    
+        const resetToken = this.tokensService.signResetToken(user.id)
+    
+        await this.emailVerificationRepository.delete({
+            user: {
+                id: user.id,
+            },
+            type: VerificationType.PASSWORD_RESET,
+        })
+    
+        return resetToken
     }
     
     

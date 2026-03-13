@@ -9,6 +9,7 @@ import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiResponse } from "@n
 import { JWTTokensReturnDto } from "./dto/jwt-tokens-return.dto"
 import { Public } from "src/common/decorators/public.decorator"
 import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
+import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
 
 @Controller("auth")
 export class AuthController {
@@ -152,6 +153,29 @@ export class AuthController {
 
         return {
             message: "Confirmation code sent to your mail",
+        }
+    }
+
+
+    @ApiOperation({
+        summary: "Подтверждение кода восстановления пароля",
+    })
+    @ApiBody({
+        description: "Данные для получения кода восстановления пароля",
+        type: ForgotPasswordConfirmBodyDto,
+        required: true,
+    })
+    @ApiResponse({ 
+        status: HttpStatus.OK,
+        description: "Код подтверждён, возвращён reset токен",
+    })
+    @Public()
+    @Post("forgot-password/confirm")
+    async forgotPasswordConfirm(@Body() data: ForgotPasswordConfirmBodyDto) {
+        const resetToken = await this.authService.confirmForgotPassword(data)
+
+        return {
+            resetToken,
         }
     }
 
