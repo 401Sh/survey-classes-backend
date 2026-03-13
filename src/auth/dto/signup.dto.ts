@@ -23,7 +23,7 @@ export class SignUpDto {
     @IsString()
     @IsNotEmpty({ message: "Password is required" })
     @MinLength(PASSWORD_MIN_LENGTH, {
-        message: "Password must be at least 6 characters long.",
+        message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters long.`,
     })
     password: string
 

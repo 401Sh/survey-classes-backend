@@ -94,7 +94,19 @@ export class TokensService {
 
         return resetToken
     }
-    
+
+
+    verifyResetToken(token: string) {
+        try {
+            const payload = this.jwtService.verify(token, {
+                secret: this.accessSecret,
+            })
+            return payload.sub
+        } catch {
+            return null
+        }
+    }
+
 
     private createFutureDate(milliseconds: number): Date {
         const now = new Date()

@@ -10,6 +10,7 @@ import { JWTTokensReturnDto } from "./dto/jwt-tokens-return.dto"
 import { Public } from "src/common/decorators/public.decorator"
 import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
+import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 
 @Controller("auth")
 export class AuthController {
@@ -176,6 +177,29 @@ export class AuthController {
 
         return {
             resetToken,
+        }
+    }
+
+
+    @ApiOperation({
+        summary: "Сброс пароля",
+    })
+    @ApiBody({
+        description: "Данные для сброса пароля",
+        type: ResetPasswordBodyDto,
+        required: true,
+    })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: "Пароль успешно изменён",
+    })
+    @Public()
+    @Post("reset-password")
+    async resetPassword(@Body() data: ResetPasswordBodyDto) {
+        await this.authService.resetPassword(data)
+
+        return {
+            message: "Password successfully changed",
         }
     }
 

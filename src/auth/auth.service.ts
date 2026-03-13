@@ -14,6 +14,7 @@ import { randomInt } from "crypto"
 import { VerificationType } from "./enums/verification-type.enum"
 import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
+import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 
 @Injectable()
 export class AuthService {
@@ -272,6 +273,20 @@ export class AuthService {
         })
     
         return resetToken
+    }
+
+
+    async resetPassword(data: ResetPasswordBodyDto) {
+        const userId = await this.tokensService.verifyResetToken(data.resetToken)
+    
+        if (!userId) throw new ForbiddenException("Invalid or expired reset token")
+    
+        const hashedPassword = await this.tokensService.hashData(data.password)
+    
+        await this.usersService.update(
+            userId, { password: hashedPassword })
+    
+        this.logger.log(`Password reset for user: ${userId}`)
     }
     
     
