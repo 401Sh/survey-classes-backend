@@ -2,8 +2,8 @@ import { UserEntity } from "src/users/entities/user.entity"
 import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm"
 import { VerificationType } from "../enums/verification-type.enum"
 
-@Entity("email_verifications")
-export class EmailVerificationEntity extends BaseEntity {
+@Entity("code_verifications")
+export class CodeVerificationEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 

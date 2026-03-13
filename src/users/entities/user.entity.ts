@@ -13,7 +13,7 @@ import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { ApplicationEntity } from "src/applications/entities/application.entity"
 import { UserRole } from "../enums/user-role.enum"
-import { EmailVerificationEntity } from "src/auth/entities/email-verification.entity"
+import { CodeVerificationEntity } from "src/auth/entities/code-verification.entity"
 import { RefreshSessionEntity } from "src/auth/entities/refresh-session.entity"
 
 @Entity("users")
@@ -45,8 +45,8 @@ export class UserEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @OneToOne(() => EmailVerificationEntity, (verification) => verification.user)
-    emailVerification: EmailVerificationEntity
+    @OneToOne(() => CodeVerificationEntity, (verification) => verification.user)
+    emailVerification: CodeVerificationEntity
 
     @OneToMany(() => RefreshSessionEntity, (refreshSession) => refreshSession.user)
     refreshSessions: RefreshSessionEntity[]

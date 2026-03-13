@@ -3,7 +3,7 @@ import { AuthController } from "./auth.controller"
 import { AuthService } from "./auth.service"
 import { TokensService } from "./services/tokens.service"
 import { TypeOrmModule } from "@nestjs/typeorm"
-import { EmailVerificationEntity } from "./entities/email-verification.entity"
+import { CodeVerificationEntity } from "./entities/code-verification.entity"
 import { RefreshSessionEntity } from "./entities/refresh-session.entity"
 import { UsersModule } from "src/users/users.module"
 import { MailModule } from "src/mail/mail.module"
@@ -15,7 +15,7 @@ import { RefreshTokenStrategy } from "./strategies/refresh-token.strategy"
     imports: [
         TypeOrmModule.forFeature([
             RefreshSessionEntity,
-            EmailVerificationEntity,
+            CodeVerificationEntity,
         ]),
         JwtModule.register({}),
         UsersModule,

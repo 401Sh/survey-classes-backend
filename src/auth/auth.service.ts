@@ -6,7 +6,7 @@ import { UsersService } from "src/users/users.service"
 import { MAIL_CONFIRMATION_CODE_LENGTH, MAIL_CONFIRMATION_CODE_TTL } from "src/common/constants/mail.constant"
 import { type UserEntity } from "src/users/entities/user.entity"
 import { InjectRepository } from "@nestjs/typeorm"
-import { EmailVerificationEntity } from "./entities/email-verification.entity"
+import { CodeVerificationEntity } from "./entities/code-verification.entity"
 import { Repository } from "typeorm"
 import { MailService } from "src/mail/mail.service"
 import { TokensService } from "./services/tokens.service"
@@ -21,8 +21,8 @@ export class AuthService {
     private readonly logger = new Logger(AuthService.name)
 
     constructor(
-        @InjectRepository(EmailVerificationEntity)
-        private emailVerificationRepository: Repository<EmailVerificationEntity>,
+        @InjectRepository(CodeVerificationEntity)
+        private emailVerificationRepository: Repository<CodeVerificationEntity>,
 
         private usersService: UsersService,
         private mailService: MailService,
