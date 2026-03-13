@@ -13,6 +13,17 @@ export class ManageQuestionOptionsService {
         private questionOptionsRepository: Repository<QuestionOptionEntity>,
     ) {}
 
+    async findById(id: number) {
+        const option = await this.questionOptionsRepository.findOne({
+            where: { id },
+        })
+
+        this.logger.log(`Finded question option with id: ${id}`)
+        this.logger.debug('Get question option: ', id)
+        return option
+    }
+
+
     async update(questionOptionId: number, data: UpdateQuestionOptionBodyDto) {
         // creating transaction
         const updatedQuestionOption = await this.questionOptionsRepository.manager.transaction(async (manager) => {

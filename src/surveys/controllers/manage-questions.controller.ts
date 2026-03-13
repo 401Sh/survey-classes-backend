@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, ParseIntPipe, Patch, Post } from "@nestjs/common"
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from "@nestjs/common"
 import { ManageQuestionsService } from "../services/manage-questions.service"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
@@ -36,6 +36,32 @@ export class ManageQuestionsController {
         return {
             message: "Question updated successfully"
         }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        description: "Найти вопрос"
+    })
+    @ApiParam({
+        name: "questionId",
+        required: true,
+        description: "ID вопроса",
+        example: 1,
+    })
+    @Get(":questionId")
+    async findById(@Param("questionId", ParseIntPipe) questionId: number) {
+        const result = await this.manageQuestionsService.findById(questionId)
+
+        return result
+    }
+
+
+    @Get(":questionId/question-options")
+    async findAllOptionsByQuestionid(@Param("questionId", ParseIntPipe) questionId: number) {
+        const result = await this.manageQuestionsService.findAllOptionsByQuestionid(questionId)
+
+        return result
     }
 
 

@@ -150,11 +150,6 @@ export class ManageSurveysService {
     }
 
 
-    async existsById(id: number): Promise<boolean> {
-        return this.surveyRepository.existsBy({ id })
-    }
-
-
     async findById(id: number): Promise<SurveyEntity> {
         const survey = await this.surveyRepository.findOne({
             where: { id },
@@ -171,7 +166,34 @@ export class ManageSurveysService {
         }
     
         this.logger.log(`Finded survey with id: ${id}`)
+        this.logger.debug('Get survey: ', id)
         return survey
+    }
+
+
+    async findAllQuestionsBySurveyId(surveyId: number) {
+        const surveyExists = await this.existsById(surveyId)
+        if (!surveyExists) throw new NotFoundException(`Survey with id ${surveyExists} not found`)
+
+        const questions = await this.questionRepository.find({
+            where: {
+                survey: {
+                    id: surveyId,
+                },
+            },
+            relations: {
+                options: true,
+            },
+        })
+
+        this.logger.log(`Finded questions for survey with id: ${surveyId}`)
+        this.logger.debug('Get questions list: ', questions)
+        return questions
+    }
+
+
+    async existsById(id: number): Promise<boolean> {
+        return this.surveyRepository.existsBy({ id })
     }
 
 

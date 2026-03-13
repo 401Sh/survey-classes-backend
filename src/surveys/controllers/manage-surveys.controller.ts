@@ -158,6 +158,24 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
+        description: "Найти все вопросы для опроса",
+    })
+    @ApiParam({
+        name: "surveyId",
+        required: true,
+        description: "ID опроса",
+        example: 1,
+    })
+    @Get(":surveyId/questions")
+    async findAllQuestionsBySurveyId(@Param("surveyId", ParseIntPipe) surveyId: number) {
+        const result = await this.manageSurveysService.findAllQuestionsBySurveyId(surveyId)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
         description: "Обновление данных опроса",
     })
     @ApiParam({

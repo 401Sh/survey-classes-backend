@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, ParseIntPipe, Patch } from "@nestjs/common"
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch } from "@nestjs/common"
 import { ManageQuestionOptionsService } from "../services/manage-question-options.service"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
@@ -9,6 +9,14 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 @Controller("manage/question-options")
 export class ManageQuestionOptionsController {
     constructor(private manageQuestionOptionsService: ManageQuestionOptionsService) {}
+
+    @Get(":questionOptionId")
+    async findById(@Param("questionOptionId", ParseIntPipe) questionOptionId: number) {
+        const result = await this.manageQuestionOptionsService.findById(questionOptionId)
+
+        return result
+    }
+
 
     @ApiBearerAuth()
     @ApiOperation({

@@ -54,6 +54,41 @@ export class ManageQuestionsService {
     }
 
 
+    async findById(id: number) {
+        const question = await this.questionRepository.findOne({
+            where: { id },
+            relations: {
+                options: true,
+            },
+        })
+
+        this.logger.log(`Finded question with id: ${id}`)
+        this.logger.debug('Get question: ', id)
+        return question
+    }
+
+
+    async findAllOptionsByQuestionid(questionId: number) {
+        const questionExists = await this.existsById(questionId)
+        if (!questionExists) throw new NotFoundException(`Question with id ${questionExists} not found`)
+
+        const options = await this.questionRepository.find({
+            where: {
+                survey: {
+                    id: questionId,
+                },
+            },
+            relations: {
+                options: true,
+            },
+        })
+
+        this.logger.log(`Finded question options for question with id: ${questionId}`)
+        this.logger.debug('Get question options list: ', options)
+        return options
+    }
+
+
     async existsById(id: number): Promise<boolean> {
         return this.questionRepository.existsBy({ id })
     }
