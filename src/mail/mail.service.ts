@@ -5,7 +5,11 @@ import * as handlebars from "handlebars"
 import { UserEntity } from "src/users/entities/user.entity"
 import { join } from "path"
 import { readFileSync } from "fs"
-import { MAIL_CONFIRMATION_SUBJECT, MAIL_FROM_NAME, MAIL_TEMPLATES_PATH } from "src/common/constants/mail.constant"
+import {
+    MAIL_CONFIRMATION_SUBJECT,
+    MAIL_FROM_NAME, MAIL_RESET_PASSWORD_SUBJECT,
+    MAIL_TEMPLATES_PATH
+} from "src/common/constants/mail.constant"
 
 @Injectable()
 export class MailService {
@@ -38,23 +42,18 @@ export class MailService {
 
     async sendUserConfirmation(user: UserEntity, code: string) {
         const html = this.confirmationTemplate({ name: user.firstName, code })
-
-        await this.mailer.sendMail({
-            to: user.email,
-            subject: MAIL_CONFIRMATION_SUBJECT,
-            html,
-        })
+        await this.send(user.email, MAIL_CONFIRMATION_SUBJECT, html)
     }
 
 
     async sendPasswordReset(user: UserEntity, code: string) {
         const html = this.resetPasswordTemplate({ name: user.firstName, code })
+        await this.send(user.email, MAIL_RESET_PASSWORD_SUBJECT, html)
+    }
 
-        await this.mailer.sendMail({
-            to: user.email,
-            subject: MAIL_CONFIRMATION_SUBJECT,
-            html,
-        })
+
+    private async send(to: string, subject: string, html: string) {
+        await this.mailer.sendMail({ to, subject, html })
     }
 
 
