@@ -1,9 +1,10 @@
 import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
-import { UserEntity } from "./entities/user.entity"
+import { UserEntity } from "../entities/user.entity"
 import { Repository } from "typeorm"
 import * as argon2 from "argon2"
 import { SignUpDto } from "src/auth/dto/signup.dto"
+import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
 
 @Injectable()
 export class UsersService {
@@ -48,40 +49,75 @@ export class UsersService {
     }
 
 
-    async findById(id: number): Promise<UserEntity> {
-        const user = await this.userRepository
-            .createQueryBuilder("users")
-            .where("users.id = :id", { id })
-            .select(["users.firstName", "users.id", "users.email", "users.role"])
-            .getOne()
-        
-        if (!user) {
-            this.logger.log(`No user with id: ${id}`)
-            throw new UnauthorizedException()
+    async updateName(userId: number, data: UpdateUserBodyDto) {
+        const updateResult = await this.userRepository.update(
+            { id: userId },
+            { ...data },
+        )
+
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update user with id: ${userId}`)
+            throw new NotFoundException("User not found")
         }
     
-        this.logger.log(`Finded user with id: ${id}`)
-        return user
+        return updateResult
     }
 
 
-    async findByEmail(email: string): Promise<UserEntity | null> {
-        const user = await this.userRepository
-            .createQueryBuilder("users")
-            .where("users.email = :email", { email })
-            .getOne()
+    async findByEmail(email: string) {
+        const user = await this.userRepository.findOne({
+            where: { email },
+        })
 
         this.logger.log(`Finded user with email: ${email}`)
+
         return user
     }
 
 
-    async findByEmailWithVerification(email: string): Promise<UserEntity | null> {
-        return this.userRepository
-            .createQueryBuilder("users")
-            .leftJoinAndSelect("users.emailVerification", "emailVerification")
-            .where("users.email = :email", { email })
-            .getOne()
+    async findByEmailWithVerification(email: string) {
+        const user = this.userRepository.findOne({
+            where: { email },
+            relations: {
+                emailVerification: true
+            },
+        })
+
+        return user
+    }
+
+
+    async findByIdOrUnauthorized(id: number) {
+        const user = await this.findUser(id)
+
+        if (!user) throw new UnauthorizedException()
+        
+        return user
+    }
+
+
+    async findById(id: number) {
+        const user = await this.findUser(id)
+
+        if (!user) throw new NotFoundException("User not found")
+        
+        return user
+    }
+
+
+    private async findUser(id: number): Promise<UserEntity | null> {
+        const user = this.userRepository.findOne({
+            where: { id },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                secondName: true,
+                role: true,
+            },
+        })
+
+        return user
     }
 
 

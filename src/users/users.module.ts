@@ -1,9 +1,11 @@
 import { Module } from "@nestjs/common"
-import { UsersController } from "./users.controller"
-import { UsersService } from "./users.service"
+import { UsersController } from "./controllers/users.controller"
+import { UsersService } from "./services/users.service"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { UserEntity } from "./entities/user.entity"
 import { UserChildEntity } from "./entities/user-child.entity"
+import { ChildrenController } from "./controllers/children.controller"
+import { ChildrenService } from "./services/children.service"
 
 @Module({
     imports: [
@@ -12,8 +14,14 @@ import { UserChildEntity } from "./entities/user-child.entity"
             UserChildEntity,
         ]),
     ],
-    controllers: [UsersController],
-    providers: [UsersService],
+    controllers: [
+        UsersController,
+        ChildrenController,
+    ],
+    providers: [
+        UsersService,
+        ChildrenService,
+    ],
     exports: [UsersService],
 })
 export class UsersModule {}

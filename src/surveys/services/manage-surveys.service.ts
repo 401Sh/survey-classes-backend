@@ -78,8 +78,8 @@ export class ManageSurveysService {
             relations: {
                 questions: {
                     options: true
-                }
-            }
+                },
+            },
         })
     
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)

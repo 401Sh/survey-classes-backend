@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { SignInDto } from "./dto/signin.dto"
-import { UsersService } from "src/users/users.service"
+import { UsersService } from "src/users/services/users.service"
 import { MAIL_CONFIRMATION_CODE_LENGTH, MAIL_CONFIRMATION_CODE_TTL } from "src/common/constants/mail.constant"
 import { type UserEntity } from "src/users/entities/user.entity"
 import { InjectRepository } from "@nestjs/typeorm"
@@ -296,7 +296,7 @@ export class AuthService {
 
 
     async refreshTokens(userId: number, refreshToken: string, userAgent: string, ip: string, fingerprint: string) {
-        const user = await this.usersService.findById(userId)
+        const user = await this.usersService.findByIdOrUnauthorized(userId)
 
         if (!fingerprint) {
             throw new BadRequestException("Fingerprint header is required")

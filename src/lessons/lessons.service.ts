@@ -18,12 +18,14 @@ export class LessonsService {
     
 
     async findById(id: number): Promise<LessonEntity>{
-        const lesson = await this.lessonRepository
-            .createQueryBuilder("lessons")
-            .where("lessons.id = :id", { id })
-            .select(["lessons.name", "lessons.id"])
-            .getOne()
-        
+        const lesson = await this.lessonRepository.findOne({
+            where: { id },
+            select: {
+                id: true,
+                name: true,
+            }
+        })
+    
         if (!lesson) {
             this.logger.log(`No lesson with id: ${id}`)
             throw new NotFoundException(`Lesson with id ${id} not found`)
