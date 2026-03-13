@@ -16,7 +16,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Создание опроса",
+        summary: "Создание опроса",
     })
     @ApiBody({
         description: "Данные для создания опроса",
@@ -37,7 +37,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Копирование опроса по ID",
+        summary: "Копирование опроса по ID",
     })
     @ApiParam({
         name: "surveyId",
@@ -63,7 +63,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Создание вопроса для опроса",
+        summary: "Создание вопроса для опроса",
     })
     @ApiParam({
         name: "surveyId",
@@ -89,7 +89,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Получить все существующие опросы",
+        summary: "Получить все существующие опросы",
     })
     @ApiQuery({
         name: "limit",
@@ -140,7 +140,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Найти опрос по ID",
+        summary: "Найти опрос по ID",
     })
     @ApiParam({
         name: "surveyId",
@@ -158,7 +158,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Найти все вопросы для опроса",
+        summary: "Найти все вопросы для опроса",
     })
     @ApiParam({
         name: "surveyId",
@@ -176,7 +176,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Обновление данных опроса",
+        summary: "Обновление данных опроса",
     })
     @ApiParam({
         name: "surveyId",

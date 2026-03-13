@@ -13,7 +13,7 @@ export class ManageQuestionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Обновление вопроса",
+        summary: "Обновление вопроса",
     })
     @ApiParam({
         name: "questionId",
@@ -41,7 +41,7 @@ export class ManageQuestionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Найти вопрос"
+        summary: "Найти вопрос"
     })
     @ApiParam({
         name: "questionId",
@@ -67,7 +67,7 @@ export class ManageQuestionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Удаление вопроса у опроса",
+        summary: "Удаление вопроса у опроса",
     })
     @ApiParam({
         name: "questionId",
@@ -87,7 +87,7 @@ export class ManageQuestionsController {
     
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Создание варианта ответа для вопроса",
+        summary: "Создание варианта ответа для вопроса",
     })
     @ApiParam({
         name: "questionId",

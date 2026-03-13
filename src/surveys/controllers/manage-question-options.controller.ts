@@ -20,7 +20,7 @@ export class ManageQuestionOptionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Обновление варианта ответа вопроса",
+        summary: "Обновление варианта ответа вопроса",
     })
     @ApiParam({
         name: "questionOptionId",
@@ -48,7 +48,7 @@ export class ManageQuestionOptionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        description: "Удаление варианта ответа вопроса",
+        summary: "Удаление варианта ответа вопроса",
     })
     @ApiParam({
         name: "questionOptionId",
