@@ -166,7 +166,7 @@ export class ManageSurveysService {
         }
     
         this.logger.log(`Finded survey with id: ${id}`)
-        this.logger.debug('Get survey: ', id)
+        this.logger.debug('Get survey: ', survey)
         return survey
     }
 

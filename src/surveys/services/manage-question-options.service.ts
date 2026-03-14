@@ -19,7 +19,7 @@ export class ManageQuestionOptionsService {
         })
 
         this.logger.log(`Finded question option with id: ${id}`)
-        this.logger.debug('Get question option: ', id)
+        this.logger.debug('Get question option: ', option)
         return option
     }
 

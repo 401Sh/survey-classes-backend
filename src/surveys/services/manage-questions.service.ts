@@ -63,7 +63,7 @@ export class ManageQuestionsService {
         })
 
         this.logger.log(`Finded question with id: ${id}`)
-        this.logger.debug('Get question: ', id)
+        this.logger.debug('Get question: ', question)
         return question
     }
 
