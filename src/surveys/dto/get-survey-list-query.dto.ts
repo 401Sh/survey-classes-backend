@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
 import { IsBoolean, IsDate, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from "class-validator"
-import { PAGE_MIN_VALUE, SURVEY_AMOUNT_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
+import { PAGE_MIN_VALUE, AMOUNT_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 export class GetSurveyListQueryDto {
@@ -9,15 +9,15 @@ export class GetSurveyListQueryDto {
         description: "Количество опросов на страницу",
         example: 5,
         type: Number,
-        default: SURVEY_AMOUNT_MIN_VALUE,
+        default: AMOUNT_MIN_VALUE,
     })
     @Type(() => Number)
     @IsInt()
     @IsOptional()
-    @Min(SURVEY_AMOUNT_MIN_VALUE, {
-        message: `Limit cannot be less than ${SURVEY_AMOUNT_MIN_VALUE}`,
+    @Min(AMOUNT_MIN_VALUE, {
+        message: `Limit cannot be less than ${AMOUNT_MIN_VALUE}`,
     })
-    limit: number = SURVEY_AMOUNT_MIN_VALUE
+    limit: number = AMOUNT_MIN_VALUE
 
     @ApiPropertyOptional({
         description: "Номер страницы",

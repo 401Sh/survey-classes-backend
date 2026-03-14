@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
 import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
-import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { TEXT_MAX_LENGTH, LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class UpdateSurveyBodyDto {
     @ApiPropertyOptional({
@@ -21,8 +21,8 @@ export class UpdateSurveyBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `Description must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `Description must be at most ${LABEL_MAX_LENGTH} characters`
     })
     title?: string
 
@@ -33,8 +33,8 @@ export class UpdateSurveyBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(DESCRIPTION_MAX_LENGTH, {
-        message: `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`
+    @MaxLength(TEXT_MAX_LENGTH, {
+        message: `Description must be at most ${TEXT_MAX_LENGTH} characters`
     })
     description?: string
 

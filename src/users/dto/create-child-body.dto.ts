@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
 import { IsDate, IsOptional, IsString, MaxLength } from "class-validator"
-import { TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class CreateChildBodyDto {
     @ApiProperty({
@@ -10,8 +10,8 @@ export class CreateChildBodyDto {
         type: String,
     })
     @IsString()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `FirstName must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `FirstName must be at most ${LABEL_MAX_LENGTH} characters`
     })
     firstName: string
 
@@ -22,8 +22,8 @@ export class CreateChildBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `SecondName must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `SecondName must be at most ${LABEL_MAX_LENGTH} characters`
     })
     secondName: string
 

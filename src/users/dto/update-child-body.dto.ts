@@ -1,6 +1,6 @@
 import { Type } from "class-transformer"
 import { IsDate, IsOptional, IsString, MaxLength } from "class-validator"
-import { TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 import { ApiPropertyOptional } from "@nestjs/swagger"
 
 export class UpdateChildBodyDto {
@@ -11,8 +11,8 @@ export class UpdateChildBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `FirstName must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `FirstName must be at most ${LABEL_MAX_LENGTH} characters`
     })
     firstName: string
 
@@ -23,8 +23,8 @@ export class UpdateChildBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `SecondName must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `SecondName must be at most ${LABEL_MAX_LENGTH} characters`
     })
     secondName: string
 

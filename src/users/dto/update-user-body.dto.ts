@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { IsOptional, IsString, MaxLength } from "class-validator"
-import { TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class UpdateUserBodyDto {
     @ApiPropertyOptional({
@@ -10,8 +10,8 @@ export class UpdateUserBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `FirstName must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `FirstName must be at most ${LABEL_MAX_LENGTH} characters`
     })
     firstName: string
 
@@ -22,8 +22,8 @@ export class UpdateUserBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `SecondName must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `SecondName must be at most ${LABEL_MAX_LENGTH} characters`
     })
     secondName: string
 }

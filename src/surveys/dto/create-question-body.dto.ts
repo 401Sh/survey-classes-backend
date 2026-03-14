@@ -1,4 +1,4 @@
-import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { TEXT_MAX_LENGTH, LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 import { QuestionType } from "../enums/question-type.enum"
 import { IsEnum, IsOptional, IsString, MaxLength } from "class-validator"
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
@@ -10,8 +10,8 @@ export class CreateQuestionBodyDto {
         type: String,
     })
     @IsString()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `Title must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `Title must be at most ${LABEL_MAX_LENGTH} characters`
     })
     label: string
 
@@ -22,8 +22,8 @@ export class CreateQuestionBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(DESCRIPTION_MAX_LENGTH, {
-        message: `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`
+    @MaxLength(TEXT_MAX_LENGTH, {
+        message: `Description must be at most ${TEXT_MAX_LENGTH} characters`
     })
     description?: string
 

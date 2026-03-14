@@ -1,8 +1,8 @@
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from "class-validator"
 import {
-    DESCRIPTION_MAX_LENGTH,
+    TEXT_MAX_LENGTH,
     POSITION_MIN_VALUE,
-    TITLE_MAX_LENGTH,
+    LABEL_MAX_LENGTH,
 } from "src/common/constants/dto-request-limits.constant"
 import { QuestionType } from "../enums/question-type.enum"
 import { Type } from "class-transformer"
@@ -16,8 +16,8 @@ export class UpdateQuestionBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(TITLE_MAX_LENGTH, {
-        message: `Label must be at most ${TITLE_MAX_LENGTH} characters`
+    @MaxLength(LABEL_MAX_LENGTH, {
+        message: `Label must be at most ${LABEL_MAX_LENGTH} characters`
     })
     label?: string
 
@@ -28,8 +28,8 @@ export class UpdateQuestionBodyDto {
     })
     @IsString()
     @IsOptional()
-    @MaxLength(DESCRIPTION_MAX_LENGTH, {
-        message: `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`
+    @MaxLength(TEXT_MAX_LENGTH, {
+        message: `Description must be at most ${TEXT_MAX_LENGTH} characters`
     })
     description?: string
 

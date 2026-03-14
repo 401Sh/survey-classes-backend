@@ -7,7 +7,7 @@ import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
 
 @Injectable()
 export class ChildrenService {
-    private logger = new Logger(ChildrenService.name)
+    private readonly logger = new Logger(ChildrenService.name)
 
     constructor(
         @InjectRepository(UserChildEntity)
