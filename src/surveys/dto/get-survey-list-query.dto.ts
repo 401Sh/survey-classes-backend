@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from "class-validator"
+import { IsBoolean, IsDate, IsEnum, IsInt, IsOptional, IsString, Matches, Min } from "class-validator"
 import { PAGE_MIN_VALUE, SURVEY_AMOUNT_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 
@@ -38,24 +38,20 @@ export class GetSurveyListQueryDto {
         example: '2026-01-27T21:10:42Z',
         type: Date,
     })
-    @IsString()
+    @Type(() => Date)
+    @IsDate()
     @IsOptional()
-    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-        message: "Date must be in the format YYYY-MM-DD",
-    })
-    dateFrom?: string
+    dateFrom?: Date
     
     @ApiPropertyOptional({
         description: "Дата до которой искать опросы",
         example: "2026-02-14T21:10:42Z",
         type: Date,
     })
-    @IsString()
+    @Type(() => Date)
+    @IsDate()
     @IsOptional()
-    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-        message: "Date must be in the format YYYY-MM-DD",
-    })
-    dateTo?: string
+    dateTo?: Date
 
     @ApiPropertyOptional({
         description: "Доступен ли опрос для пользователей",

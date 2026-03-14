@@ -18,7 +18,7 @@ export class ChildrenController {
         type: CreateChildBodyDto,
     })
     @Post()
-    async createChild(
+    async create(
         @Body() data: CreateChildBodyDto,
         @Request() req,
     ) {
@@ -83,7 +83,7 @@ export class ChildrenController {
         type: UpdateChildBodyDto,
     })
     @Patch(":childId")
-    async updateChild(
+    async update(
         @Param("childId", ParseIntPipe) childId: number,
         @Body() data: UpdateChildBodyDto,
         @Request() req,

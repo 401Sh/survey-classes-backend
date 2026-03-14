@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { Type } from "class-transformer"
 import { IsString } from "class-validator"
 
 export class JWTTokensReturnDto {
@@ -7,7 +6,6 @@ export class JWTTokensReturnDto {
         description: "Access токен доступа",
         type: String,
     })
-    @Type(() => String)
     @IsString()
     accessToken: string
 
@@ -15,7 +13,6 @@ export class JWTTokensReturnDto {
         description: "Refresh токен для обновления токена доступа",
         type: String,
     })
-    @Type(() => String)
     @IsString()
     refreshToken: string
 }

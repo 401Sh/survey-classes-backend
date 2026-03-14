@@ -9,7 +9,6 @@ export class CreateChildBodyDto {
         example: "Adam",
         type: String,
     })
-    @Type(() => String)
     @IsString()
     @MaxLength(TITLE_MAX_LENGTH, {
         message: `FirstName must be at most ${TITLE_MAX_LENGTH} characters`
@@ -21,7 +20,6 @@ export class CreateChildBodyDto {
         example: "Smith",
         type: String,
     })
-    @Type(() => String)
     @IsString()
     @IsOptional()
     @MaxLength(TITLE_MAX_LENGTH, {

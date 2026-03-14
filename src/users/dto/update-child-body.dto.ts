@@ -9,7 +9,6 @@ export class UpdateChildBodyDto {
         example: "Adam",
         type: String,
     })
-    @Type(() => String)
     @IsString()
     @IsOptional()
     @MaxLength(TITLE_MAX_LENGTH, {
@@ -22,7 +21,6 @@ export class UpdateChildBodyDto {
         example: "Smith",
         type: String,
     })
-    @Type(() => String)
     @IsString()
     @IsOptional()
     @MaxLength(TITLE_MAX_LENGTH, {
