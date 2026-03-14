@@ -26,7 +26,7 @@ export class AnswerEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => ApplicationEntity, (response) => response.answers)
+    @ManyToOne(() => ApplicationEntity, (response) => response.answers, { onDelete: "CASCADE" })
     response: ApplicationEntity
 
     @ManyToOne(() => QuestionEntity, (question) => question.answers)
