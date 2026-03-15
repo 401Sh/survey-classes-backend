@@ -121,7 +121,7 @@ export class ManageSurveysService {
         queryBuilder.leftJoinAndSelect("questions.options", "options")
 
         if (isActive) {
-            queryBuilder.where("surveys.isActive >= :isActive", { isActive })
+            queryBuilder.where("surveys.isActive = :isActive", { isActive })
         }
 
         if (dateFrom) {
@@ -129,7 +129,7 @@ export class ManageSurveysService {
         }
 
         if (dateTo) {
-            queryBuilder.andWhere("surveys.createdAt >= :dateTo", { dateTo })
+            queryBuilder.andWhere("surveys.createdAt <= :dateTo", { dateTo })
         }
 
         queryBuilder.orderBy("surveys.createdAt", sortDirection)

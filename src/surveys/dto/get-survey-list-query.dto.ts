@@ -65,7 +65,7 @@ export class GetSurveyListQueryDto {
 
     @ApiPropertyOptional({
         description: "Направление сортировки - ASC для восходящей и DESC для нисходящей",
-        example: "DESC",
+        example: SortDirection.DESC,
         enum: SortDirection,
         default: SortDirection.ASC,
     })
