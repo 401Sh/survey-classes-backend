@@ -8,6 +8,7 @@ import { GetSurveyListQueryDto } from "../dto/get-survey-list-query.dto"
 import { UpdateSurveyBodyDto } from "../dto/update-survey-body.dto"
 import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/surveys")
@@ -127,8 +128,8 @@ export class ManageSurveysController {
         name: "sortDirection",
         required: false,
         description: "Направление сортировки. ASC - восходящая, DESC - нисходящая",
-        example: "DESC",
-        default: "ASC",
+        example: SortDirection.DESC,
+        default: SortDirection.ASC,
     })
     @Get()
     async findAll(@Query() query: GetSurveyListQueryDto) {

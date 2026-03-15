@@ -6,6 +6,7 @@ import { UpdateQuestionBodyDto } from "../dto/update-question-body.dto"
 import { CreateQuestionOptionBodyDto } from "../dto/create-question-option-body.dto"
 import { QuestionOptionEntity } from "../entities/question-option.entity"
 import { QuestionType } from "../enums/question-type.enum"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Injectable()
 export class ManageQuestionsService {
@@ -36,7 +37,7 @@ export class ManageQuestionsService {
                 },
             },
             order: {
-                position: "DESC",
+                position: SortDirection.DESC,
             },
         })
 

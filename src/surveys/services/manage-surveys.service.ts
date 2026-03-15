@@ -9,6 +9,7 @@ import { Repository } from "typeorm"
 import { LessonsService } from "src/lessons/lessons.service"
 import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
 import { QuestionEntity } from "../entities/question.entity"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Injectable()
 export class ManageSurveysService {
@@ -54,7 +55,7 @@ export class ManageSurveysService {
                 },
             },
             order: {
-                position: "DESC",
+                position: SortDirection.DESC,
             },
         })
 
