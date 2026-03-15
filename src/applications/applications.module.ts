@@ -1,10 +1,12 @@
 import { Module } from "@nestjs/common"
-import { ApplicationsController } from "./applications.controller"
-import { ApplicationsService } from "./applications.service"
+import { ApplicationsController } from "./controllers/applications.controller"
+import { ApplicationsService } from "./services/applications.service"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { ApplicationEntity } from "./entities/application.entity"
 import { AnswerEntity } from "./entities/answer.entity"
 import { EnrollmentEntity } from "./entities/enrollment.entity"
+import { ManageApplicationsService } from "./services/manage-applications.service"
+import { ManageApplicationsController } from "./controllers/manage-applications.controller"
 
 @Module({
     imports: [
@@ -14,7 +16,13 @@ import { EnrollmentEntity } from "./entities/enrollment.entity"
             EnrollmentEntity,
         ]),
     ],
-    controllers: [ApplicationsController],
-    providers: [ApplicationsService],
+    controllers: [
+        ApplicationsController,
+        ManageApplicationsController,
+    ],
+    providers: [
+        ApplicationsService,
+        ManageApplicationsService,
+    ],
 })
 export class ApplicationsModule {}

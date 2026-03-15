@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { CreateApplicationBodyDto } from "./dto/create-application-body.dto"
+import { CreateApplicationBodyDto } from "../dto/create-application-body.dto"
 import { InjectRepository } from "@nestjs/typeorm"
-import { ApplicationEntity } from "./entities/application.entity"
-import { Not, Repository } from "typeorm"
-import { AnswerEntity } from "./entities/answer.entity"
-import { ApplicationStatus } from "./enums/application-status.enum"
+import { ApplicationEntity } from "../entities/application.entity"
+import { In, Not, Repository } from "typeorm"
+import { AnswerEntity } from "../entities/answer.entity"
+import { ApplicationStatus } from "../enums/application-status.enum"
 
 @Injectable()
 export class ApplicationsService {
@@ -25,7 +25,7 @@ export class ApplicationsService {
                         id: data.lessonId,
                     },
                 },
-                status: Not(ApplicationStatus.CANCELLED),
+                status: Not(In([ApplicationStatus.CANCELLED, ApplicationStatus.REJECTED])),
             },
         })
     
@@ -89,6 +89,35 @@ export class ApplicationsService {
             where: {
                 id: applicationId,
                 createdBy: { id: userId },
+            },
+            select: {
+                id: true,
+                status: true,
+                consentedAt: true,
+                createdAt: true,
+                createdFor: {
+                    id: true,
+                    firstName: true,
+                    secondName: true,
+                    birthDate: true,
+                },
+                survey: {
+                    id: true,
+                    title: true,
+                },
+                answers: {
+                    id: true,
+                    textValue: true,
+                    question: {
+                        id: true,
+                        label: true,
+                        type: true,
+                    },
+                    selectedOption: {
+                        id: true,
+                        label: true,
+                    },
+                },
             },
             relations: {
                 createdFor: true,

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Request } from "@nestjs/common"
-import { ApplicationsService } from "./applications.service"
-import { CreateApplicationBodyDto } from "./dto/create-application-body.dto"
+import { ApplicationsService } from "../services/applications.service"
+import { CreateApplicationBodyDto } from "../dto/create-application-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 
 @Controller("applications/me")
@@ -76,7 +76,7 @@ export class ApplicationsController {
         description: "ID заявки",
         example: 1,
     })
-    @Patch(":applicationId")
+    @Patch(":applicationId/cancel")
     async cancelApplication(
         @Param("applicationId", ParseIntPipe) applicationId: number,
         @Request() req,
