@@ -13,6 +13,7 @@ export class CategoryEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
+    // TODO: remove length numbers from all entities
     @Column({ type: "varchar", length: 100, unique: true })
     name: string
 
