@@ -1,17 +1,20 @@
 import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
-import { UserEntity } from "src/users/entities/user.entity"
 import {
     BaseEntity,
     Column,
     CreateDateColumn,
     Entity,
-    ManyToOne,
+    JoinTable,
+    ManyToMany,
     OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm"
+import { LessonScheduleEntity } from "./lesson-schedule.entity"
+import { LessonPricingTierEntity } from "./lesson-pricing-tier.entity"
+import { CategoryEntity } from "../../dictionaries/entities/category.entity"
 
 @Entity("lessons")
 export class LessonEntity extends BaseEntity {
@@ -39,9 +42,16 @@ export class LessonEntity extends BaseEntity {
     @OneToOne(() => SurveyEntity, (survey) => survey.lesson)
     survey: SurveyEntity
 
-    @ManyToOne(() => UserEntity, (user) => user.lessons)
-    createdBy: UserEntity
-
     @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.lesson)
     enrollments: EnrollmentEntity[]
+
+    @OneToMany(() => LessonScheduleEntity, (shedule) => shedule.lesson)
+    schedules: LessonScheduleEntity
+
+    @OneToMany(() => LessonPricingTierEntity, (pricingTier) => pricingTier.lesson)
+    pricingTiers: LessonPricingTierEntity
+
+    @ManyToMany(() => CategoryEntity, (category) => category.lessons)
+    @JoinTable()
+    categories: CategoryEntity[]
 }

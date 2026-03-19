@@ -13,6 +13,7 @@ import { ConfigModule } from "@nestjs/config"
 import { APP_GUARD } from "@nestjs/core"
 import { AccessTokenGuard } from "./common/guards/access-token.guard"
 import { RolesGuard } from "./common/guards/role.guard"
+import { DictionariesModule } from "./dictionaries/dictionaries.module"
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { RolesGuard } from "./common/guards/role.guard"
         SurveysModule,
         ApplicationsModule,
         MailModule,
+        DictionariesModule,
     ],
     controllers: [AppController],
     providers: [
