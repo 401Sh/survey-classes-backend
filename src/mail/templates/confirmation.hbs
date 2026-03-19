@@ -1,7 +1,270 @@
-<p>Hey {{ name }},</p>
-<p>Please enter code below to confirm your email</p>
-<p>
-    <strong>{{ code }}</strong>
-</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirm your email</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-<p>If you did not request this email you can safely ignore it.</p>
+    body {
+      background-color: #f0ede8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      padding: 40px 16px;
+    }
+
+    .wrapper {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Header logo area */
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg {
+      width: 16px;
+      height: 16px;
+      fill: #f0ede8;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+    }
+
+    /* Card */
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 48px 44px;
+      border: 1px solid #e4e0da;
+    }
+
+    .icon-wrap {
+      width: 52px;
+      height: 52px;
+      background: #f5f3f0;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .icon-wrap svg {
+      width: 24px;
+      height: 24px;
+      stroke: #1a1a1a;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #7a756e;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* Code block */
+    .code-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9e998f;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .code-block {
+      background: #f5f3f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 36px;
+      border: 1px solid #e4e0da;
+    }
+
+    .code-value {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 28px;
+      font-weight: 500;
+      color: #1a1a1a;
+      letter-spacing: 6px;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      background: #1a1a1a;
+      color: #f0ede8;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover { background: #333; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: #e4e0da;
+      margin-bottom: 28px;
+    }
+
+    /* Expiry notice */
+    .expiry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .expiry svg {
+      width: 15px;
+      height: 15px;
+      stroke: #9e998f;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .expiry p {
+      font-size: 13px;
+      color: #9e998f;
+      line-height: 1.5;
+    }
+
+    /* Ignore notice */
+    .ignore {
+      background: #faf9f7;
+      border: 1px solid #e4e0da;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #9e998f;
+      line-height: 1.55;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #b0a99f;
+      line-height: 1.6;
+    }
+
+    .footer a {
+      color: #7a756e;
+      text-decoration: none;
+    }
+
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <div class="header">
+      <a class="logo" href="#">
+        <div class="logo-mark">
+          <svg viewBox="0 0 16 16"><path d="M8 1L15 5V11L8 15L1 11V5L8 1Z"/></svg>
+        </div>
+        <span class="logo-name">YourApp</span>
+      </a>
+    </div>
+
+    <div class="card">
+
+      <div class="icon-wrap">
+        <!-- Mail icon -->
+        <svg viewBox="0 0 24 24">
+          <rect x="2" y="4" width="20" height="16" rx="3"/>
+          <polyline points="2,4 12,13 22,4"/>
+        </svg>
+      </div>
+
+      <h1>Confirm your email</h1>
+      <p class="subtitle">Hey <strong>{{ name }}</strong>, use the code below to verify your email address and get started.</p>
+
+      <div class="code-label">Your confirmation code</div>
+      <div class="code-block">
+        <span class="code-value">{{ code }}</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="expiry">
+        <!-- Clock icon -->
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12,6 12,12 16,14"/></svg>
+        <p>This code expires in <strong>15 minutes</strong>. Request a new one if it runs out.</p>
+      </div>
+
+      <div class="ignore">
+        Didn't request this? You can safely ignore this email — your account won't be affected.
+      </div>
+
+    </div>
+
+    <div class="footer">
+      © 2026 YourApp &nbsp;·&nbsp;
+      <a href="#">Unsubscribe</a> &nbsp;·&nbsp;
+      <a href="#">Privacy Policy</a>
+    </div>
+
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.previousElementSibling.textContent.trim();
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+  </script>
+</body>
+</html>
