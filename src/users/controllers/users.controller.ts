@@ -3,7 +3,7 @@ import { UsersService } from "../services/users.service"
 import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation } from "@nestjs/swagger"
 
-@Controller("users")
+@Controller("users/me")
 export class UsersController {
     constructor(private usersService: UsersService) {}
 
@@ -11,11 +11,25 @@ export class UsersController {
     @ApiOperation({
         summary: "Получение данных профиля",
     })
-    @Get("me")
+    @Get()
     async findById(@Request() req) {
         const userId = req.user.sub
 
         const result = await this.usersService.findById(userId)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Получение всех записей на занятия",
+    })
+    @Get("enrollments")
+    async findAll(@Request() req) {
+        const userId = req.user.sub
+
+        const result = await this.usersService.findAllUserEnrollments(userId)
 
         return result
     }
@@ -30,7 +44,7 @@ export class UsersController {
         required: true,
         type: UpdateUserBodyDto,
     })
-    @Patch("me")
+    @Patch()
     async update(
         @Body() data: UpdateUserBodyDto,
         @Request() req,

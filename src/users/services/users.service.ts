@@ -5,6 +5,8 @@ import { Repository } from "typeorm"
 import * as argon2 from "argon2"
 import { SignUpDto } from "src/auth/dto/signup.dto"
 import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
+import { EnrollmentStatus } from "src/applications/enums/enrollment-status.enum"
+import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 
 @Injectable()
 export class UsersService {
@@ -13,6 +15,8 @@ export class UsersService {
     constructor(
         @InjectRepository(UserEntity)
         private userRepository: Repository<UserEntity>,
+        @InjectRepository(EnrollmentEntity)
+        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async create(data: SignUpDto): Promise<UserEntity> {
@@ -118,6 +122,41 @@ export class UsersService {
         })
 
         return user
+    }
+
+
+    // TODO: add sorting queries
+    async findAllUserEnrollments(userId: number) {
+        const enrollments = await this.enrollmentRepository.find({
+            where: {
+                child: {
+                    user: { id: userId },
+                },
+                status: EnrollmentStatus.ACTIVE,
+            },
+            relations: {
+                child: true,
+                lesson: true,
+            },
+            select: {
+                id: true,
+                status: true,
+                enrolledAt: true,
+                child: {
+                    id: true,
+                    firstName: true,
+                    secondName: true,
+                },
+                lesson: {
+                    id: true,
+                    name: true,
+                    description: true,
+                },
+            },
+        })
+
+        this.logger.debug('Get enrollments list: ', enrollments)
+        return enrollments
     }
 
 

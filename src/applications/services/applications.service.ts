@@ -53,6 +53,7 @@ export class ApplicationsService {
     }
 
 
+    // TODO: add sorting queries
     async findAll(userId: number) {
         const applications = await this.applicationRepository.find({
             where: {

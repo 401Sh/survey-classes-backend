@@ -4,6 +4,8 @@ import { UserChildEntity } from "../entities/user-child.entity"
 import { Repository } from "typeorm"
 import { CreateChildBodyDto } from "../dto/create-child-body.dto"
 import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
+import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
+import { EnrollmentStatus } from "src/applications/enums/enrollment-status.enum"
 
 @Injectable()
 export class ChildrenService {
@@ -12,6 +14,8 @@ export class ChildrenService {
     constructor(
         @InjectRepository(UserChildEntity)
         private childRepository: Repository<UserChildEntity>,
+        @InjectRepository(EnrollmentEntity)
+        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async create(userId: number, data: CreateChildBodyDto) {
@@ -55,6 +59,42 @@ export class ChildrenService {
         if (!child) throw new NotFoundException("Child not found")
         
         return child
+    }
+
+
+    // TODO: add sorting queries
+    async findChildEnrollments(userId: number, childId: number) {
+        const child = await this.childRepository.findOne({
+            where: {
+                id: childId,
+                user: { id: userId },
+            },
+        })
+    
+        if (!child) throw new NotFoundException("Child not found")
+    
+        const enrollments = await this.enrollmentRepository.find({
+            where: {
+                child: { id: childId },
+                status: EnrollmentStatus.ACTIVE,
+            },
+            relations: {
+                lesson: true,
+            },
+            select: {
+                id: true,
+                status: true,
+                enrolledAt: true,
+                lesson: {
+                    id: true,
+                    name: true,
+                    description: true,
+                },
+            },
+        })
+
+        this.logger.debug('Get child enrollments list: ', enrollments)
+        return enrollments
     }
 
 
