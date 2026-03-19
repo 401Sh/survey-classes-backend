@@ -57,6 +57,16 @@ export class ManageQuestionsController {
     }
 
 
+    @ApiBearerAuth()
+    @ApiOperation({
+        description: "Получение всех вариантов ответа у вопроса"
+    })
+    @ApiParam({
+        name: "questionId",
+        required: true,
+        description: "ID вопроса",
+        example: 1,
+    })
     @Get(":questionId/question-options")
     async findAllOptionsByQuestionid(@Param("questionId", ParseIntPipe) questionId: number) {
         const result = await this.manageQuestionsService.findAllOptionsByQuestionid(questionId)

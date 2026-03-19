@@ -10,6 +10,16 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 export class ManageQuestionOptionsController {
     constructor(private manageQuestionOptionsService: ManageQuestionOptionsService) {}
 
+    @ApiBearerAuth()
+    @ApiOperation({
+        description: "Получение варианта ответа",
+    })
+    @ApiParam({
+        name: "questionOptionId",
+        required: true,
+        description: "ID варианта ответа",
+        example: 1,
+    })
     @Get(":questionOptionId")
     async findById(@Param("questionOptionId", ParseIntPipe) questionOptionId: number) {
         const result = await this.manageQuestionOptionsService.findById(questionOptionId)
