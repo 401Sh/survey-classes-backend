@@ -7,6 +7,7 @@ import {
     Entity,
     JoinTable,
     ManyToMany,
+    ManyToOne,
     OneToMany,
     OneToOne,
     PrimaryGeneratedColumn,
@@ -15,6 +16,8 @@ import {
 import { LessonScheduleEntity } from "./lesson-schedule.entity"
 import { LessonPricingTierEntity } from "./lesson-pricing-tier.entity"
 import { CategoryEntity } from "../../dictionaries/entities/category.entity"
+import { LessonImageEntity } from "./lesson-image.entity"
+import { UserEntity } from "src/users/entities/user.entity"
 
 @Entity("lessons")
 export class LessonEntity extends BaseEntity {
@@ -33,23 +36,32 @@ export class LessonEntity extends BaseEntity {
     @Column({ type: "bool", default: false })
     isActive: boolean = false
 
+    @Column({ type: "varchar", length: 255, nullable: true })
+    teacher?: string
+
     @CreateDateColumn()
     createdAt: Date
 
     @UpdateDateColumn()
     updatedAt: Date
-    
+
     @OneToOne(() => SurveyEntity, (survey) => survey.lesson)
     survey: SurveyEntity
+
+    @ManyToOne(() => UserEntity, (user) => user.lessons)
+    createdBy: UserEntity
 
     @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.lesson)
     enrollments: EnrollmentEntity[]
 
     @OneToMany(() => LessonScheduleEntity, (shedule) => shedule.lesson)
-    schedules: LessonScheduleEntity
+    schedules: LessonScheduleEntity[]
 
     @OneToMany(() => LessonPricingTierEntity, (pricingTier) => pricingTier.lesson)
-    pricingTiers: LessonPricingTierEntity
+    pricingTiers: LessonPricingTierEntity[]
+
+    @OneToMany(() => LessonImageEntity, (image) => image.lesson)
+    images: LessonImageEntity[]
 
     @ManyToMany(() => CategoryEntity, (category) => category.lessons)
     @JoinTable()
