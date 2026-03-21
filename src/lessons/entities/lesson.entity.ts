@@ -38,6 +38,12 @@ export class LessonEntity extends BaseEntity {
 
     @Column({ type: "varchar", length: 255, nullable: true })
     teacher?: string
+    
+    @Column({ type: "date", nullable: true })
+    startsAt?: Date
+
+    @Column({ type: "date", nullable: true })
+    endsAt?: Date
 
     @CreateDateColumn()
     createdAt: Date

@@ -18,6 +18,7 @@ import { AttendanceEntity } from "src/lessons/entities/attendance.entity"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { LessonScheduleEntity } from "src/lessons/entities/lesson-schedule.entity"
 import { PaymentStatus } from "../enums/payment-status.enum"
+import { EnrollmentType } from "../enums/enrollment-type.enum"
 
 @Entity("enrollments")
 export class EnrollmentEntity extends BaseEntity {
@@ -29,6 +30,9 @@ export class EnrollmentEntity extends BaseEntity {
 
     @Column({ type: "enum", enum: EnrollmentStatus })
     status: EnrollmentStatus
+
+    @Column({ type: "enum", enum: EnrollmentType })
+    type: EnrollmentType
 
     @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.UNPAID })
     paymentStatus: PaymentStatus

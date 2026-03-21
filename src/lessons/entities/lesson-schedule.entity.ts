@@ -32,6 +32,9 @@ export class LessonScheduleEntity extends BaseEntity {
     @Column({ type: "smallint", nullable: true })
     capacity?: number
 
+    @Column({ type: "smallint", default: 0 })
+    occupiedSpots: number = 0
+
     @Column({ type: "bool", default: false })
     isCancelled: boolean
 

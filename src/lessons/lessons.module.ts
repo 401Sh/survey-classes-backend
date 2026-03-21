@@ -6,6 +6,7 @@ import { LessonEntity } from "./entities/lesson.entity"
 import { LessonScheduleEntity } from "./entities/lesson-schedule.entity"
 import { LessonPricingTierEntity } from "./entities/lesson-pricing-tier.entity"
 import { AttendanceEntity } from "./entities/attendance.entity"
+import { DictionariesModule } from "src/dictionaries/dictionaries.module"
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { AttendanceEntity } from "./entities/attendance.entity"
             LessonPricingTierEntity,
             AttendanceEntity,
         ]),
+        DictionariesModule,
     ],
     controllers: [LessonsController],
     providers: [LessonsService],
