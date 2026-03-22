@@ -8,7 +8,7 @@ import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {
-    constructor(private enrollmentsService: ManageEnrollmentsService) {}
+    constructor(private manageEnrollmentsService: ManageEnrollmentsService) {}
 
     @ApiBearerAuth()
     @ApiOperation({
@@ -73,7 +73,7 @@ export class ManageEnrollmentsController {
     })
     @Get()
     async findAll(@Query() query: GetEnrollmentListQueryDto) {
-        const result = await this.enrollmentsService.findAll(query)
+        const result = await this.manageEnrollmentsService.findAll(query)
 
         return result
     }
@@ -91,7 +91,7 @@ export class ManageEnrollmentsController {
     })
     @Get(":enrollmentId")
     async findById(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
-        const result = await this.enrollmentsService.findById(enrollmentId)
+        const result = await this.manageEnrollmentsService.findById(enrollmentId)
 
         return result
     }
@@ -117,7 +117,7 @@ export class ManageEnrollmentsController {
         @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
         @Body() data: UpdateEnrollmentBodyDto,
     ) {
-        const result = await this.enrollmentsService.update(enrollmentId, data)
+        const result = await this.manageEnrollmentsService.update(enrollmentId, data)
 
         return result
     }

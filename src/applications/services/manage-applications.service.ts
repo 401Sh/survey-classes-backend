@@ -149,11 +149,16 @@ export class ManageApplicationsService {
 
 
     async reject(applicationId: number) {
-        const updateResult = this.changeStatus(
+        const updateResult = await this.changeStatus(
             applicationId,
             ApplicationStatus.REJECTED,
             ApplicationStatus.PENDING,
         )
+
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update application with id: ${applicationId}`)
+            throw new NotFoundException(`Application with id ${applicationId} not found`)
+        }
 
         return updateResult
     }

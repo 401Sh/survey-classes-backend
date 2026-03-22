@@ -6,7 +6,7 @@ import { CreateSurveyBodyDto } from "../dto/create-survey-body.dto"
 import { InjectRepository } from "@nestjs/typeorm"
 import { SurveyEntity } from "../entities/survey.entity"
 import { Repository } from "typeorm"
-import { LessonsService } from "src/lessons/lessons.service"
+import { LessonsService } from "src/lessons/services/lessons.service"
 import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
 import { QuestionEntity } from "../entities/question.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
@@ -223,7 +223,7 @@ export class ManageSurveysService {
             )
         }
         
-        const updatedSurvey = await this.surveyRepository.update(
+        const updateResult = await this.surveyRepository.update(
             {
                 id: surveyId,
             },
@@ -233,8 +233,13 @@ export class ManageSurveysService {
             },
         )
 
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update survey with id: ${surveyId}`)
+            throw new NotFoundException(`Survey with id ${surveyId} not found`)
+        }
+
         this.logger.log(`Survey with id ${surveyId} updated successfully`)
-        return updatedSurvey
+        return updateResult
     }
 
 

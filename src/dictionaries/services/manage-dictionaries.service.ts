@@ -54,6 +54,11 @@ export class ManageDictionariesService {
         }
 
         const updateResult = await this.categoryRepository.update({ id: categoryId }, data)
+
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update category with id: ${categoryId}`)
+            throw new NotFoundException(`category with id ${categoryId} not found`)
+        }
  
         this.logger.log(`Updated category ${categoryId}`)
         return updateResult

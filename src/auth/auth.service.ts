@@ -284,7 +284,9 @@ export class AuthService {
         const hashedPassword = await this.tokensService.hashData(data.password)
     
         await this.usersService.update(
-            userId, { password: hashedPassword })
+            userId,
+            { password: hashedPassword },
+        )
     
         this.logger.log(`Password reset for user: ${userId}`)
     }

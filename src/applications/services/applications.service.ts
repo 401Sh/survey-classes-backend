@@ -157,6 +157,11 @@ export class ApplicationsService {
             { status: ApplicationStatus.CANCELLED },
         )
 
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update application with id: ${applicationId}`)
+            throw new NotFoundException(`Application with id ${applicationId} not found`)
+        }
+
         this.logger.log(`Application with id ${application.id} status changed successfully`)
         return updateResult
     }

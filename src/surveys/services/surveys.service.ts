@@ -3,7 +3,7 @@ import { GetSurveyByLessonQueryDto } from "../dto/get-survey-by-lesson-query.dto
 import { InjectRepository } from "@nestjs/typeorm"
 import { SurveyEntity } from "../entities/survey.entity"
 import { Repository } from "typeorm"
-import { LessonsService } from "src/lessons/lessons.service"
+import { LessonsService } from "src/lessons/services/lessons.service"
 
 @Injectable()
 export class SurveysService {

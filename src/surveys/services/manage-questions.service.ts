@@ -167,6 +167,11 @@ export class ManageQuestionsService {
                 data,
             )
 
+            if (updateResult.affected === 0) {
+                this.logger.debug(`Cannot update question with id: ${questionId}`)
+                throw new NotFoundException(`Question with id ${questionId} not found`)
+            }
+
             this.logger.log(`Updated question with id: ${questionId}`)
             return updateResult
         })

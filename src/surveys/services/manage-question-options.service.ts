@@ -83,6 +83,11 @@ export class ManageQuestionOptionsService {
                 data,
             )
 
+            if (updateResult.affected === 0) {
+                this.logger.debug(`Cannot update question option with id: ${questionOptionId}`)
+                throw new NotFoundException(`Question option with id ${questionOptionId} not found`)
+            }
+
             this.logger.log(`Updated question option with id: ${questionOptionId}`)
             return updateResult
         })
