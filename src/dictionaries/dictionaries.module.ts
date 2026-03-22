@@ -16,5 +16,6 @@ import { ManageDictionariesService } from "./services/manage-dictionaries.servic
         DictionariesService,
         ManageDictionariesService
     ],
+    exports: [ManageDictionariesService],
 })
 export class DictionariesModule {}

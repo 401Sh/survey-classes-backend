@@ -1,10 +1,10 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from "@nestjs/common"
-import { LessonsService } from "./lessons.service"
+import { LessonsService } from "../services/lessons.service"
 import { Public } from "src/common/decorators/public.decorator"
-import { GetLessonListQueryDto } from "./dto/get-lesson-list-query.dto"
+import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
 import { ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { ScheduleStatus } from "./enums/schedule-status.enum"
+import { ScheduleStatus } from "../enums/schedule-status.enum"
 
 @Controller("lessons")
 export class LessonsController {

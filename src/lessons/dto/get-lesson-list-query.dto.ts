@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsDate, IsEnum, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from "class-validator"
+import { IsBoolean, IsDate, IsEnum, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from "class-validator"
 import {
     AMOUNT_MIN_VALUE,
     LABEL_MAX_LENGTH,
@@ -58,6 +58,16 @@ export class GetLessonListQueryDto {
     @IsDate()
     @IsOptional()
     dateTo?: Date
+
+    @ApiPropertyOptional({
+        description: "Доступно ли занятие для пользователей",
+        example: true,
+        type: Boolean,
+    })
+    @Type(() => Boolean)
+    @IsBoolean()
+    @IsOptional()
+    isActive?: boolean
 
     @ApiPropertyOptional({
         description: "ID категории",

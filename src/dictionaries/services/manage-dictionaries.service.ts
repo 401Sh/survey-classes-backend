@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { CategoryEntity } from "../entities/category.entity"
-import { Repository } from "typeorm"
+import { In, Repository } from "typeorm"
 import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
 import { CreateCategoryBodyDto } from "../dto/create-category-body.dto"
 
@@ -29,6 +29,13 @@ export class ManageDictionariesService {
 
         this.logger.log(`Created category: ${name}`)
         return category
+    }
+
+
+    async findCategoriesByIds(categoryIds: number[]): Promise<CategoryEntity[]> {
+        return this.categoryRepository.find({
+            where: { id: In(categoryIds) },
+        })
     }
 
 

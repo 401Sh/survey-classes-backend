@@ -1,10 +1,10 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { LessonEntity } from "./entities/lesson.entity"
+import { LessonEntity } from "../entities/lesson.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
-import { GetLessonListQueryDto } from "./dto/get-lesson-list-query.dto"
-import { LessonScheduleEntity } from "./entities/lesson-schedule.entity"
-import { LessonPricingTierEntity } from "./entities/lesson-pricing-tier.entity"
+import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
+import { LessonScheduleEntity } from "../entities/lesson-schedule.entity"
+import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Injectable()
