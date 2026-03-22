@@ -58,7 +58,7 @@ export class ManageApplicationsService {
         const [applications, totalCount] = await queryBuilder.getManyAndCount()
         const totalPagesAmount = Math.ceil(totalCount / limit)
 
-        this.logger.debug('Get application list: ', applications)
+        this.logger.debug("Get application list: ", applications)
         return {
             data: applications,
             meta: {
@@ -103,7 +103,7 @@ export class ManageApplicationsService {
         }
     
         this.logger.log(`Finded application with id: ${id}`)
-        this.logger.debug('Get application: ', application)
+        this.logger.debug("Get application: ", application)
         return application
     }
 

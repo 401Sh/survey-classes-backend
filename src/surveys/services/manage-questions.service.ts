@@ -64,7 +64,7 @@ export class ManageQuestionsService {
         })
 
         this.logger.log(`Finded question with id: ${id}`)
-        this.logger.debug('Get question: ', question)
+        this.logger.debug("Get question: ", question)
         return question
     }
 
@@ -85,7 +85,7 @@ export class ManageQuestionsService {
         })
 
         this.logger.log(`Finded question options for question with id: ${questionId}`)
-        this.logger.debug('Get question options list: ', options)
+        this.logger.debug("Get question options list: ", options)
         return options
     }
 

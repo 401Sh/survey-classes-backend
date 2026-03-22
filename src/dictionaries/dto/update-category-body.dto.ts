@@ -5,7 +5,7 @@ import { LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.consta
 export class UpdateCategoryBodyDto {
     @ApiPropertyOptional({
         description: "Название категории",
-        example: "Спорт",
+        example: "Sport",
         type: String,
     })
     @IsString()

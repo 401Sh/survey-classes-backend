@@ -55,7 +55,7 @@ export class ManageEnrollmentsService {
         const [enrollments, totalCount] = await queryBuilder.getManyAndCount()
         const totalPagesAmount = Math.ceil(totalCount / limit)
 
-        this.logger.debug('Get enrollment list: ', enrollments)
+        this.logger.debug("Get enrollment list: ", enrollments)
         return {
             data: enrollments,
             meta: {
@@ -85,7 +85,7 @@ export class ManageEnrollmentsService {
         }
     
         this.logger.log(`Finded enrollment with id: ${id}`)
-        this.logger.debug('Get enrollment: ', enrollment)
+        this.logger.debug("Get enrollment: ", enrollment)
         return enrollment
     }
 

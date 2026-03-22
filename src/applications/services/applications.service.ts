@@ -80,7 +80,7 @@ export class ApplicationsService {
             },
         })
 
-        this.logger.debug('Get application list: ', applications)
+        this.logger.debug("Get application list: ", applications)
         return applications
     }
 
@@ -133,7 +133,7 @@ export class ApplicationsService {
         if (!application) throw new NotFoundException("Application not found")
     
         this.logger.log(`Finded application with id: ${application.id}`)
-        this.logger.debug('Get application: ', application)
+        this.logger.debug("Get application: ", application)
         return application
     }
 

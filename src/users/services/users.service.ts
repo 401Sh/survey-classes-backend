@@ -155,7 +155,7 @@ export class UsersService {
             },
         })
 
-        this.logger.debug('Get enrollments list: ', enrollments)
+        this.logger.debug("Get enrollments list: ", enrollments)
         return enrollments
     }
 

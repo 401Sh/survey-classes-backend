@@ -108,7 +108,7 @@ export class ManageLessonsService {
         const [lessons, totalCount] = await queryBuilder.getManyAndCount()
         const totalPagesAmount = Math.ceil(totalCount / limit)
 
-        this.logger.debug('Get lessons list: ', lessons)
+        this.logger.debug("Get lessons list: ", lessons)
         return {
             data: lessons,
             meta: {
@@ -135,7 +135,7 @@ export class ManageLessonsService {
         }
     
         this.logger.log(`Finded lesson with id: ${id}`)
-        this.logger.debug('Get lesson: ', lesson)
+        this.logger.debug("Get lesson: ", lesson)
         return lesson
     }
 

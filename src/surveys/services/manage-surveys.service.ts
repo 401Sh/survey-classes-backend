@@ -139,7 +139,7 @@ export class ManageSurveysService {
         const [surveys, totalCount] = await queryBuilder.getManyAndCount()
         const totalPagesAmount = Math.ceil(totalCount / limit)
 
-        this.logger.debug('Get survey list: ', surveys)
+        this.logger.debug("Get survey list: ", surveys)
         return {
             data: surveys,
             meta: {
@@ -167,7 +167,7 @@ export class ManageSurveysService {
         }
     
         this.logger.log(`Finded survey with id: ${id}`)
-        this.logger.debug('Get survey: ', survey)
+        this.logger.debug("Get survey: ", survey)
         return survey
     }
 
@@ -188,7 +188,7 @@ export class ManageSurveysService {
         })
 
         this.logger.log(`Finded questions for survey with id: ${surveyId}`)
-        this.logger.debug('Get questions list: ', questions)
+        this.logger.debug("Get questions list: ", questions)
         return questions
     }
 

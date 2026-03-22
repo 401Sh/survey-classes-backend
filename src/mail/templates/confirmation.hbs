@@ -9,7 +9,7 @@
 
     body {
       background-color: #f0ede8;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       padding: 40px 16px;
     }
 
@@ -121,7 +121,7 @@
     }
 
     .code-value {
-      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
       font-size: 28px;
       font-weight: 500;
       color: #1a1a1a;
@@ -135,7 +135,7 @@
       border: none;
       border-radius: 8px;
       padding: 8px 14px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -244,7 +244,7 @@
       </div>
 
       <div class="ignore">
-        Didn't request this? You can safely ignore this email — your account won't be affected.
+        Didn"t request this? You can safely ignore this email — your account won"t be affected.
       </div>
 
     </div>
@@ -261,8 +261,8 @@
     function copyCode(btn) {
       const code = btn.previousElementSibling.textContent.trim();
       navigator.clipboard.writeText(code).then(() => {
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 2000);
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 2000);
       });
     }
   </script>

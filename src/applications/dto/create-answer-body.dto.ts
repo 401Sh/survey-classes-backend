@@ -15,7 +15,7 @@ export class CreateAnswerBodyDto {
 
     @ApiPropertyOptional({
         description: "Текст ответа",
-        example: 1,
+        example: "Probably yes",
         type: String,
     })
     @IsString()

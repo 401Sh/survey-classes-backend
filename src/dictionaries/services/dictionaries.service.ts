@@ -21,7 +21,7 @@ export class DictionariesService {
             },
         })
 
-        this.logger.debug('Get category list: ', categories)
+        this.logger.debug("Get category list: ", categories)
         return categories
     }
 }

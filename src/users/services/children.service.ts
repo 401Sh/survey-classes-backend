@@ -37,7 +37,7 @@ export class ChildrenService {
             },
         })
 
-        this.logger.debug('Get survey list: ', children)
+        this.logger.debug("Get survey list: ", children)
         return children
     }
 
@@ -93,7 +93,7 @@ export class ChildrenService {
             },
         })
 
-        this.logger.debug('Get child enrollments list: ', enrollments)
+        this.logger.debug("Get child enrollments list: ", enrollments)
         return enrollments
     }
 

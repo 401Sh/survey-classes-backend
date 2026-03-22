@@ -26,14 +26,14 @@ async function bootstrap() {
     app.useLogger(logLevels)
 
     const swaggerConfig = new DocumentBuilder()
-    .setDescription('API documentation')
-    .setVersion('1.0')
+    .setDescription("API documentation")
+    .setVersion("1.0")
     .addBearerAuth()
     .build()
 
     const document = SwaggerModule.createDocument(app, swaggerConfig)
   
-    SwaggerModule.setup('api/v1/docs', app, document)
+    SwaggerModule.setup("api/v1/docs", app, document)
 
     await app.listen(port, host).then(() => {
         Logger.log(`http://${host}:${port}/api/v1 - server start`)

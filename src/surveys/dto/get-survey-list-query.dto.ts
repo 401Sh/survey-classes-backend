@@ -34,8 +34,8 @@ export class GetSurveyListQueryDto {
     page: number = PAGE_MIN_VALUE
 
     @ApiPropertyOptional({
-        description: 'Дата с которой искать опросы',
-        example: '2026-01-27T21:10:42Z',
+        description: "Дата с которой искать опросы",
+        example: "2026-01-27T21:10:42Z",
         type: Date,
     })
     @Type(() => Date)
