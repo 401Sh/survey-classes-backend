@@ -12,7 +12,7 @@ export class ManageEnrollmentsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение все существующие записи на занятия",
+        summary: "Получение всех существующих записей на занятия",
     })
     @ApiQuery({
         name: "limit",

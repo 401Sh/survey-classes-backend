@@ -87,7 +87,7 @@ export class LessonsController {
 
 
     @ApiOperation({
-        summary: "Получение все существующие записи на занятия",
+        summary: "Получение всех существующих записей на занятия",
     })
     @ApiParam({
         name: "lessonId",

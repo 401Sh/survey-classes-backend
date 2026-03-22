@@ -14,7 +14,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получить все существующие заявки на занятия",
+        summary: "Получение всех существующих заявок на занятия",
     })
     @ApiQuery({
         name: "limit",

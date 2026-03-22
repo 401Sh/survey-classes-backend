@@ -90,7 +90,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получить все существующие опросы",
+        summary: "Получение всех существующих опросов",
     })
     @ApiQuery({
         name: "limit",
