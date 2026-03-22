@@ -102,4 +102,40 @@ export class LessonsController {
 
         return result
     }
+
+
+    @ApiOperation({
+        summary: "Получение всех не отмененных дат занятий",
+    })
+    @ApiParam({
+        name: "lessonId",
+        required: true,
+        description: "ID занятия",
+        example: 1,
+    })
+    @Public()
+    @Get(":lessonId/schedules")
+    async findSchedulesByLessonId(@Param("lessonId", ParseIntPipe) lessonId: number) {
+        const result = await this.lessonService.findSchedulesByLessonId(lessonId)
+
+        return result
+    }
+
+
+    @ApiOperation({
+        summary: "Получение всех цен занятий",
+    })
+    @ApiParam({
+        name: "lessonId",
+        required: true,
+        description: "ID занятия",
+        example: 1,
+    })
+    @Public()
+    @Get(":lessonId/pricing-tiers")
+    async findPricingTiersByLessonId(@Param("lessonId", ParseIntPipe) lessonId: number) {
+        const result = await this.lessonService.findPricingTiersByLessonId(lessonId)
+
+        return result
+    }
 }

@@ -3,6 +3,9 @@ import { LessonEntity } from "./entities/lesson.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 import { GetLessonListQueryDto } from "./dto/get-lesson-list-query.dto"
+import { LessonScheduleEntity } from "./entities/lesson-schedule.entity"
+import { LessonPricingTierEntity } from "./entities/lesson-pricing-tier.entity"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Injectable()
 export class LessonsService {
@@ -11,6 +14,10 @@ export class LessonsService {
     constructor(
         @InjectRepository(LessonEntity)
         private lessonRepository: Repository<LessonEntity>,
+        @InjectRepository(LessonScheduleEntity)
+        private scheduleRepository: Repository<LessonScheduleEntity>,
+        @InjectRepository(LessonPricingTierEntity)
+        private pricingTierRepository: Repository<LessonPricingTierEntity>,
     ) {}
 
     async existsById(id: number): Promise<boolean> {
@@ -104,12 +111,8 @@ export class LessonsService {
             where: { 
                 id, 
                 isActive: true,
-                schedules: { isCancelled: false },
-                pricingTiers: { isActive: true },
             },
             relations: {
-                pricingTiers: true,
-                schedules: true,
                 images: true,
                 categories: true,
             },
@@ -121,21 +124,6 @@ export class LessonsService {
                 teacher: true,
                 startsAt: true,
                 endsAt: true,
-                pricingTiers: {
-                    id: true,
-                    label: true,
-                    price: true,
-                    enrollmentType: true,
-                },
-                schedules: {
-                    id: true,
-                    date: true,
-                    startTime: true,
-                    durationMinutes: true,
-                    address: true,
-                    occupiedSpots: true,
-                    capacity: true,
-                },
                 images: {
                     id: true,
                     url: true,
@@ -155,5 +143,51 @@ export class LessonsService {
     
         this.logger.log(`Finded lesson with id: ${id}`)
         return lesson
+    }
+
+
+    async findSchedulesByLessonId(lessonId: number) {
+        const schedules = await this.scheduleRepository.find({
+            where: {
+                lesson: {
+                    id: lessonId,
+                },
+                isCancelled: false,
+            },
+            select: {
+                id: true,
+                date: true,
+                startTime: true,
+                durationMinutes: true,
+                address: true,
+                occupiedSpots: true,
+                capacity: true,
+            },
+            order: {
+                date: SortDirection.ASC,
+            },
+        })
+
+        return schedules
+    }
+
+
+    async findPricingTiersByLessonId(lessonId: number) {
+        const pricingTiers = await this.pricingTierRepository.find({
+            where: {
+                lesson: {
+                    id: lessonId,
+                },
+                isActive: true,
+            },
+            select: {
+                id: true,
+                label: true,
+                price: true,
+                enrollmentType: true,
+            },
+        })
+
+        return pricingTiers
     }
 }
