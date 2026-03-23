@@ -13,11 +13,12 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm"
-import { LessonScheduleEntity } from "./lesson-schedule.entity"
 import { LessonPricingTierEntity } from "./lesson-pricing-tier.entity"
 import { CategoryEntity } from "../../dictionaries/entities/category.entity"
 import { LessonImageEntity } from "./lesson-image.entity"
 import { UserEntity } from "src/users/entities/user.entity"
+import { LessonWeeklySlotEntity } from "./lesson-weekly-slot.entity"
+import { LessonScheduleOverrideEntity } from "./lesson-schedule-override.entity"
 
 @Entity("lessons")
 export class LessonEntity extends BaseEntity {
@@ -29,9 +30,6 @@ export class LessonEntity extends BaseEntity {
 
     @Column({ type: "text", nullable: true })
     description?: string
-
-    @Column({ type: "smallint"})
-    capacity: number
 
     @Column({ type: "bool", default: false })
     isActive: boolean = false
@@ -60,14 +58,17 @@ export class LessonEntity extends BaseEntity {
     @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.lesson)
     enrollments: EnrollmentEntity[]
 
-    @OneToMany(() => LessonScheduleEntity, (shedule) => shedule.lesson)
-    schedules: LessonScheduleEntity[]
-
     @OneToMany(() => LessonPricingTierEntity, (pricingTier) => pricingTier.lesson)
     pricingTiers: LessonPricingTierEntity[]
 
     @OneToMany(() => LessonImageEntity, (image) => image.lesson)
     images: LessonImageEntity[]
+
+    @OneToMany(() => LessonWeeklySlotEntity, (slot) => slot.lesson)
+    weeklySlots: LessonWeeklySlotEntity[]
+
+    @OneToMany(() => LessonScheduleOverrideEntity, (override) => override.lesson)
+    scheduleOverrides: LessonScheduleOverrideEntity[]
 
     @ManyToMany(() => CategoryEntity, (category) => category.lessons)
     @JoinTable()

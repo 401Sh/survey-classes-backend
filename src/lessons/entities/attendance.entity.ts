@@ -7,12 +7,14 @@ import { BaseEntity,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
-import { LessonScheduleEntity } from "./lesson-schedule.entity"
 
 @Entity("attendances")
 export class AttendanceEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
+
+    @Column({ type: "date" })
+    date: Date
  
     @Column({ type: "bool", default: false })
     isPresent: boolean = false
@@ -28,7 +30,4 @@ export class AttendanceEntity extends BaseEntity {
  
     @ManyToOne(() => EnrollmentEntity, (enrollment) => enrollment.attendances, { onDelete: "CASCADE" })
     enrollment: EnrollmentEntity
- 
-    @ManyToOne(() => LessonScheduleEntity, (schedule) => schedule.attendances, { onDelete: "CASCADE" })
-    schedule: LessonScheduleEntity
 }

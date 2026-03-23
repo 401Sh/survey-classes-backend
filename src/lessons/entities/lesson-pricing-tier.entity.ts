@@ -10,15 +10,11 @@ import { BaseEntity,
 import { LessonEntity } from "./lesson.entity"
 import { ApplicationEntity } from "src/applications/entities/application.entity"
 import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
-import { EnrollmentType } from "src/applications/enums/enrollment-type.enum"
 
-@Entity("lesson-pricing-tier")
+@Entity("lesson-pricing-tiers")
 export class LessonPricingTierEntity  extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
-
-    @Column({ type: "enum", enum: EnrollmentType })
-    enrollmentType: EnrollmentType
 
     @Column({ type: "varchar", length: 100 })
     label: string
@@ -26,8 +22,8 @@ export class LessonPricingTierEntity  extends BaseEntity {
     @Column({ type: "decimal", precision: 10, scale: 2 })
     price: number
 
-    @Column({ type: "date" })
-    validFrom: Date
+    @Column({ type: "smallint", default: 8 })
+    sessionsCount: number
 
     @Column({ type: "bool", default: true })
     isActive: boolean = true

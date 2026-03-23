@@ -16,9 +16,7 @@ import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { AttendanceEntity } from "src/lessons/entities/attendance.entity"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
-import { LessonScheduleEntity } from "src/lessons/entities/lesson-schedule.entity"
 import { PaymentStatus } from "../enums/payment-status.enum"
-import { EnrollmentType } from "../enums/enrollment-type.enum"
 
 @Entity("enrollments")
 export class EnrollmentEntity extends BaseEntity {
@@ -31,11 +29,21 @@ export class EnrollmentEntity extends BaseEntity {
     @Column({ type: "enum", enum: EnrollmentStatus })
     status: EnrollmentStatus
 
-    @Column({ type: "enum", enum: EnrollmentType })
-    type: EnrollmentType
-
     @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.UNPAID })
     paymentStatus: PaymentStatus
+
+    @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+    paidAmount?: number
+
+    @Column({ type: "datetime", nullable: true })
+    paidAt?: Date
+
+    // copying pricingTier.sessionsCount via enrollment creation
+    @Column({ type: "smallint" })
+    sessionsTotal: number
+
+    @Column({ type: "smallint" })
+    sessionsLeft: number
 
     @CreateDateColumn()
     createdAt: Date
@@ -49,9 +57,6 @@ export class EnrollmentEntity extends BaseEntity {
 
     @ManyToOne(() => LessonEntity, (lesson) => lesson.enrollments)
     lesson: LessonEntity
-
-    @ManyToOne(() => LessonScheduleEntity, { nullable: true, onDelete: "SET NULL" })
-    schedule?: LessonScheduleEntity
 
     @OneToMany(() => AttendanceEntity, (attendance) => attendance.enrollment)
     attendances: AttendanceEntity[]

@@ -16,6 +16,7 @@ import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { AnswerEntity } from "./answer.entity"
 import { EnrollmentEntity } from "./enrollment.entity"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
+import { LessonEntity } from "src/lessons/entities/lesson.entity"
 
 @Entity("applications")
 export class ApplicationEntity extends BaseEntity {
@@ -49,7 +50,17 @@ export class ApplicationEntity extends BaseEntity {
     })
     survey: SurveyEntity
 
-    @ManyToOne(() => LessonPricingTierEntity, (pricingTier) => pricingTier.applications)
+    // can be usefull, but does not required now
+    // @ManyToOne(() => LessonEntity, {
+    //     onDelete: "SET NULL",
+    //     nullable: true,
+    // })
+    // lesson?: LessonEntity
+
+    @ManyToOne(() => LessonPricingTierEntity, (pricingTier) => pricingTier.applications, {
+        nullable: true,
+        onDelete: "SET NULL",
+    })
     pricingTier: LessonPricingTierEntity
 
     @OneToMany(() => AnswerEntity, (answer) => answer.response)
