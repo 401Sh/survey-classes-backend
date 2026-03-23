@@ -7,6 +7,9 @@ import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
 import { CategoryEntity } from "src/dictionaries/entities/category.entity"
 import { ManageDictionariesService } from "src/dictionaries/services/manage-dictionaries.service"
+import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
+import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
+import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 
 @Injectable()
 export class ManageLessonsService {
@@ -36,6 +39,21 @@ export class ManageLessonsService {
         this.logger.log(`Created new lesson for user: ${userId}`)
         this.logger.debug("Created new lesson: ", lesson)
         return lesson
+    }
+
+
+    createWeeklySlot(lessonId: number, data: CreateWeeklySlotBodyDto) {
+        throw new Error("Method not implemented.")
+    }
+
+
+    createScheduleOverride(lessonId: number, data: CreateScheduleOverrideBodyDto) {
+        throw new Error("Method not implemented.")
+    }
+
+
+    createPricingTier(lessonId: number, data: CreatePricingTierBodyDto) {
+        throw new Error("Method not implemented.")
     }
 
 

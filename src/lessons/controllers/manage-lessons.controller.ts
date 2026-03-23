@@ -7,6 +7,9 @@ import { Roles } from "src/common/decorators/role.decorator"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
+import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
+import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/lessons")
@@ -29,6 +32,66 @@ export class ManageLessonsController {
     ) {
         const userId = req.user.sub
         const result = await this.manageLessonsService.create(userId, data)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Создание тарифа оплаты",
+    })
+    @ApiBody({
+        description: "Данные для тарифа оплаты",
+        required: true,
+        type: CreatePricingTierBodyDto,
+    })
+    @Post(":lessonId/pricing-tiers")
+    async createPricingTier(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Body() data: CreatePricingTierBodyDto,
+    ) {
+        const result = await this.manageLessonsService.createPricingTier(lessonId, data)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Создание расписания занятия",
+    })
+    @ApiBody({
+        description: "Данные для создания расписания занятия",
+        required: true,
+        type: CreateWeeklySlotBodyDto,
+    })
+    @Post(":lessonId/weekly-slots")
+    async createWeeklySlot(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Body() data: CreateWeeklySlotBodyDto,
+    ) {
+        const result = await this.manageLessonsService.createWeeklySlot(lessonId, data)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Создание временного изменения расписания",
+    })
+    @ApiBody({
+        description: "Данные для создания временного изменения расписания",
+        required: true,
+        type: CreateScheduleOverrideBodyDto,
+    })
+    @Post(":lessonId/schedule-overrides")
+    async createScheduleOverride(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Body() data: CreateScheduleOverrideBodyDto,
+    ) {
+        const result = await this.manageLessonsService.createScheduleOverride(lessonId, data)
 
         return result
     }

@@ -22,7 +22,7 @@ export class LessonPricingTierEntity  extends BaseEntity {
     @Column({ type: "decimal", precision: 10, scale: 2 })
     price: number
 
-    @Column({ type: "smallint", default: 8 })
+    @Column({ type: "smallint", default: 1 })
     sessionsCount: number
 
     @Column({ type: "bool", default: true })
