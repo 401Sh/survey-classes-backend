@@ -141,7 +141,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Найти опрос по ID",
+        summary: "Получение опроса по ID",
     })
     @ApiParam({
         name: "surveyId",
@@ -159,7 +159,7 @@ export class ManageSurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Найти все вопросы для опроса",
+        summary: "Получение всех вопросов для опроса",
     })
     @ApiParam({
         name: "surveyId",

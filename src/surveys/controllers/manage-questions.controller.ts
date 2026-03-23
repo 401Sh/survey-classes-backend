@@ -41,7 +41,7 @@ export class ManageQuestionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Найти вопрос"
+        summary: "Получение вопроса по ID"
     })
     @ApiParam({
         name: "questionId",
