@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Patch, Request } from "@nestjs/common"
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Request } from "@nestjs/common"
 import { UsersService } from "../services/users.service"
 import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 
 @Controller("users/me")
 export class UsersController {
@@ -30,6 +30,29 @@ export class UsersController {
         const userId = req.user.sub
 
         const result = await this.usersService.findAllUserEnrollments(userId)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Получение записи на занятие по ID",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи на занятие",
+        example: 1,
+    })
+    @Get("enrollments/:enrollmentId")
+    async findEnrollmentById(
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+        @Request() req,
+    ) {
+        const userId = req.user.sub
+
+        const result = await this.usersService.findUserEnrollmentById(userId, enrollmentId)
 
         return result
     }

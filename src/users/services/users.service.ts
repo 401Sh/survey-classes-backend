@@ -142,6 +142,10 @@ export class UsersService {
                 id: true,
                 status: true,
                 enrolledAt: true,
+                sessionsTotal: true,
+                sessionsLeft: true,
+                paymentStatus: true,
+                paidAmount: true,
                 child: {
                     id: true,
                     firstName: true,
@@ -157,6 +161,64 @@ export class UsersService {
 
         this.logger.debug("Get enrollments list: ", enrollments)
         return enrollments
+    }
+
+
+    async findUserEnrollmentById(userId: number, enrollmentId: number) {
+        const enrollment = await this.enrollmentRepository.findOne({
+            where: {
+                id: enrollmentId,
+                child: {
+                    user: { id: userId },
+                },
+            },
+            relations: {
+                child: true,
+                lesson: true,
+                pricingTier: true,
+                attendances: true,
+            },
+            select: {
+                id: true,
+                status: true,
+                enrolledAt: true,
+                sessionsTotal: true,
+                sessionsLeft: true,
+                paymentStatus: true,
+                paidAmount: true,
+                paidAt: true,
+                child: {
+                    id: true,
+                    firstName: true,
+                    secondName: true,
+                },
+                lesson: {
+                    id: true,
+                    name: true,
+                    description: true,
+                },
+                pricingTier: {
+                    id: true,
+                    label: true,
+                    price: true,
+                    sessionsCount: true,
+                },
+                attendances: {
+                    id: true,
+                    date: true,
+                    isPresent: true,
+                    note: true,
+                },
+            },
+        })
+
+        if (!enrollment) {
+            this.logger.log(`No enrollment with id: ${enrollmentId}`)
+            throw new NotFoundException(`Lesson with id ${enrollmentId} not found`)
+        }
+
+        this.logger.log(`Finded enrollment with id: ${enrollmentId}`)
+        return enrollment
     }
 
 

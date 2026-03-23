@@ -85,6 +85,10 @@ export class ChildrenService {
                 id: true,
                 status: true,
                 enrolledAt: true,
+                sessionsTotal: true,
+                sessionsLeft: true,
+                paymentStatus: true,
+                paidAmount: true,
                 lesson: {
                     id: true,
                     name: true,
