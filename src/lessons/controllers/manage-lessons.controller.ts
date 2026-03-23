@@ -10,6 +10,9 @@ import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
 import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
+import { GetPricingTierQueryDto } from "../dto/get-pricing-tier-query.dto"
+import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
+import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/lessons")
@@ -67,11 +70,11 @@ export class ManageLessonsController {
         type: CreateWeeklySlotBodyDto,
     })
     @Post(":lessonId/weekly-slots")
-    async createWeeklySlot(
+    async createWeeklySlots(
         @Param("lessonId", ParseIntPipe) lessonId: number,
         @Body() data: CreateWeeklySlotBodyDto,
     ) {
-        const result = await this.manageLessonsService.createWeeklySlot(lessonId, data)
+        const result = await this.manageLessonsService.createWeeklySlots(lessonId, data)
 
         return result
     }

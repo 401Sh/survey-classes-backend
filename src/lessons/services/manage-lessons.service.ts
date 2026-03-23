@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonEntity } from "../entities/lesson.entity"
-import { Repository } from "typeorm"
+import { In, Repository } from "typeorm"
 import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
 import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
@@ -10,6 +10,12 @@ import { ManageDictionariesService } from "src/dictionaries/services/manage-dict
 import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
 import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
 import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
+import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
+import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
+import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
+import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
+import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
+import { GetPricingTierQueryDto } from "../dto/get-pricing-tier-query.dto"
 
 @Injectable()
 export class ManageLessonsService {
@@ -18,6 +24,12 @@ export class ManageLessonsService {
     constructor(
         @InjectRepository(LessonEntity)
         private lessonRepository: Repository<LessonEntity>,
+        @InjectRepository(LessonPricingTierEntity)
+        private pricingTierRepository: Repository<LessonPricingTierEntity>,
+        @InjectRepository(LessonWeeklySlotEntity)
+        private weeklySlotRepository: Repository<LessonWeeklySlotEntity>,
+        @InjectRepository(LessonScheduleOverrideEntity)
+        private scheduleOverrideRepository: Repository<LessonScheduleOverrideEntity>,
 
         private manageDictionariesService: ManageDictionariesService,
     ) {}
@@ -42,18 +54,53 @@ export class ManageLessonsService {
     }
 
 
-    createWeeklySlot(lessonId: number, data: CreateWeeklySlotBodyDto) {
-        throw new Error("Method not implemented.")
+    async createPricingTier(lessonId: number, data: CreatePricingTierBodyDto) {
+        const isLessonExists = await this.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const pricingTier = await this.pricingTierRepository.save({
+            ...data,
+            lesson: { id: lessonId },
+        })
+
+        this.logger.log(`Created new pricing tier override for lesson: ${lessonId}`)
+        this.logger.debug("Created new pricing tier override: ", pricingTier)
+        return pricingTier
     }
 
 
-    createScheduleOverride(lessonId: number, data: CreateScheduleOverrideBodyDto) {
-        throw new Error("Method not implemented.")
+    async createWeeklySlots(lessonId: number, data: CreateWeeklySlotBodyDto) {
+        const { daysOfWeek, ...slotData } = data
+
+        const isLessonExists = await this.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const slots = daysOfWeek.map(dayOfWeek => ({
+            ...slotData,
+            dayOfWeek,
+            lesson: { id: lessonId },
+        }))
+
+        const weeklySlots = await this.weeklySlotRepository.save(slots)
+
+        this.logger.log(`Created new weekly slots for lesson: ${lessonId}`)
+        this.logger.debug("Created new weekly slots: ", weeklySlots)
+        return weeklySlots
     }
 
 
-    createPricingTier(lessonId: number, data: CreatePricingTierBodyDto) {
-        throw new Error("Method not implemented.")
+    async createScheduleOverride(lessonId: number, data: CreateScheduleOverrideBodyDto) {
+        const isLessonExists = await this.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const scheduleOverride = await this.scheduleOverrideRepository.save({
+            ...data,
+            lesson: { id: lessonId },
+        })
+
+        this.logger.log(`Created new schedule override for lesson: ${lessonId}`)
+        this.logger.debug("Created new schedule override: ", scheduleOverride)
+        return scheduleOverride
     }
 
 
