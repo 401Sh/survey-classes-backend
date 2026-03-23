@@ -196,6 +196,69 @@ export class ManageLessonsController {
 
     @ApiBearerAuth()
     @ApiOperation({
+        summary: "Получение всех тарифов оплаты для занятия",
+    })
+    @ApiParam({
+        name: "lessonId",
+        required: true,
+        description: "ID занятия",
+        example: 1,
+    })
+    @Get(":lessonId/pricing-tiers")
+    async findAllPricingTiersByLessonId(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Query() query: GetPricingTierQueryDto,
+    ) {
+        const result = await this.manageLessonsService.findAllPricingTiersByLessonId(lessonId, query)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Получение всех дней недели, в которые проходит занятие",
+    })
+    @ApiParam({
+        name: "lessonId",
+        required: true,
+        description: "ID занятия",
+        example: 1,
+    })
+    @Get(":lessonId/weekly-slots")
+    async findAllWeeklySlotsByLessonId(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Query() query: GetWeeklySlotQueryDto,
+    ) {
+        const result = await this.manageLessonsService.findAllWeeklySlotsByLessonId(lessonId, query)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Получение измененных дат занятий",
+    })
+    @ApiParam({
+        name: "lessonId",
+        required: true,
+        description: "ID занятия",
+        example: 1,
+    })
+    @Get(":lessonId/schedule-overrides")
+    async findAllScheduleOverridesByLessonId(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Query() query: GetScheduleOverrideQueryDto,
+    ) {
+        const result = await this.manageLessonsService.findAllScheduleOverridesByLessonId(lessonId, query)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
         summary: "Обновление занятия",
     })
     @ApiParam({

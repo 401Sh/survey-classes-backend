@@ -16,6 +16,7 @@ import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
 import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
 import { GetPricingTierQueryDto } from "../dto/get-pricing-tier-query.dto"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Injectable()
 export class ManageLessonsService {
@@ -199,6 +200,70 @@ export class ManageLessonsService {
 
     async existsById(id: number): Promise<boolean> {
         return this.lessonRepository.existsBy({ id })
+    }
+
+
+    async findAllPricingTiersByLessonId(lessonId: number, query: GetPricingTierQueryDto) {
+        const { isActive } = query
+
+        const isLessonExists = await this.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const pricingTiers = await this.pricingTierRepository.find({
+            where: {
+                lesson: { id: lessonId },
+                isActive,
+            },
+        })
+
+        this.logger.log(`Finded pricing tiers for lesson with id: ${lessonId}`)
+        this.logger.debug("Get pricing tiers list: ", pricingTiers)
+        return pricingTiers
+    }
+
+
+    async findAllWeeklySlotsByLessonId(lessonId: number, query: GetWeeklySlotQueryDto) {
+        const { isActive, daysOfWeek } = query
+
+        const isLessonExists = await this.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const weeklySlots = await this.weeklySlotRepository.find({
+            where: {
+                lesson: { id: lessonId },
+                isActive,
+                dayOfWeek: daysOfWeek ? In(daysOfWeek) : undefined,
+            },
+            order: {
+                dayOfWeek: SortDirection.ASC,
+            }
+        })
+
+        this.logger.log(`Finded weekly slots for lesson with id: ${lessonId}`)
+        this.logger.debug("Get weekly slots list: ", weeklySlots)
+        return weeklySlots
+    }
+
+
+    async findAllScheduleOverridesByLessonId(lessonId: number, query: GetScheduleOverrideQueryDto) {
+        const { status } = query
+
+        const isLessonExists = await this.existsById(lessonId)
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+
+        const scheduleOverrides = await this.scheduleOverrideRepository.find({
+            where: {
+                lesson: { id: lessonId },
+                status,
+            },
+            order: {
+                date: SortDirection.ASC,
+            }
+        })
+
+        this.logger.log(`Finded schedule overrides for lesson with id: ${lessonId}`)
+        this.logger.debug("Get schedule overrides list: ", scheduleOverrides)
+        return scheduleOverrides
     }
 
 
