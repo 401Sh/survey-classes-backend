@@ -86,8 +86,8 @@ export class ManageSurveysService {
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
     
         if (data.lessonId) {
-            const lessonExists = await this.lessonsService.existsById(data.lessonId)
-            if (!lessonExists) throw new NotFoundException(`Lesson with id ${data.lessonId} not found`)
+            const isLessonExists = await this.lessonsService.existsById(data.lessonId)
+            if (!isLessonExists) throw new NotFoundException(`Lesson with id ${data.lessonId} not found`)
         }
     
         const newSurvey = await this.surveyRepository.save({
@@ -173,8 +173,8 @@ export class ManageSurveysService {
 
 
     async findAllQuestionsBySurveyId(surveyId: number) {
-        const surveyExists = await this.existsById(surveyId)
-        if (!surveyExists) throw new NotFoundException(`Survey with id ${surveyExists} not found`)
+        const isSurveyExists = await this.existsById(surveyId)
+        if (!isSurveyExists) throw new NotFoundException(`Survey with id ${isSurveyExists} not found`)
 
         const questions = await this.questionRepository.find({
             where: {

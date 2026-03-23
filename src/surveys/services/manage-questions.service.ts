@@ -70,8 +70,8 @@ export class ManageQuestionsService {
 
 
     async findAllOptionsByQuestionid(questionId: number) {
-        const questionExists = await this.existsById(questionId)
-        if (!questionExists) throw new NotFoundException(`Question with id ${questionExists} not found`)
+        const isQuestionExists = await this.existsById(questionId)
+        if (!isQuestionExists) throw new NotFoundException(`Question with id ${isQuestionExists} not found`)
 
         const options = await this.questionRepository.find({
             where: {
