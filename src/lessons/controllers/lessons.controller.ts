@@ -4,7 +4,6 @@ import { Public } from "src/common/decorators/public.decorator"
 import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
 import { ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { ScheduleStatus } from "../enums/schedule-status.enum"
 
 @Controller("lessons")
 export class LessonsController {
@@ -65,12 +64,6 @@ export class LessonsController {
         example: 200,
     })
     @ApiQuery({
-        name: "scheduleStatus",
-        required: false,
-        description: "Поиск по состоянию занятий. upcoming - не начавшиеся, ongoing - уже идущие",
-        example: ScheduleStatus.UPCOMING,
-    })
-    @ApiQuery({
         name: "sortDirection",
         required: false,
         description: "Направление сортировки. ASC - восходящая, DESC - нисходящая",
@@ -87,7 +80,7 @@ export class LessonsController {
 
 
     @ApiOperation({
-        summary: "Получение всех существующих записей на занятия",
+        summary: "Получение занятия по ID",
     })
     @ApiParam({
         name: "lessonId",
@@ -105,7 +98,7 @@ export class LessonsController {
 
 
     @ApiOperation({
-        summary: "Получение всех не отмененных дат занятий",
+        summary: "Получение расписания занятий по дням недели и временных изменений расписания",
     })
     @ApiParam({
         name: "lessonId",

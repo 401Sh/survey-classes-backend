@@ -3,9 +3,11 @@ import { LessonEntity } from "../entities/lesson.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
-import { LessonScheduleEntity } from "../entities/lesson-schedule.entity"
+
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
+import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 
 @Injectable()
 export class LessonsService {
@@ -14,10 +16,12 @@ export class LessonsService {
     constructor(
         @InjectRepository(LessonEntity)
         private lessonRepository: Repository<LessonEntity>,
-        @InjectRepository(LessonScheduleEntity)
-        private scheduleRepository: Repository<LessonScheduleEntity>,
         @InjectRepository(LessonPricingTierEntity)
         private pricingTierRepository: Repository<LessonPricingTierEntity>,
+        @InjectRepository(LessonWeeklySlotEntity)
+        private weeklySlotRepository: Repository<LessonWeeklySlotEntity>,
+        @InjectRepository(LessonScheduleOverrideEntity)
+        private scheduleOverrideRepository: Repository<LessonScheduleOverrideEntity>,
     ) {}
 
     async existsById(id: number): Promise<boolean> {
@@ -36,13 +40,11 @@ export class LessonsService {
             categoryId,
             priceFrom,
             priceTo,
-            scheduleStatus
         } = query
 
         const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
 
         queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers", "pricingTiers.isActive = true")
-        queryBuilder.leftJoinAndSelect("lessons.schedules", "schedules", "schedules.isCancelled = false")
         queryBuilder.leftJoinAndSelect("lessons.images", "images", "images.isCover = true")
         queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
 
@@ -69,23 +71,11 @@ export class LessonsService {
         }
 
         if (dateFrom) {
-            queryBuilder.andWhere("schedules.date >= :dateFrom", { dateFrom })
+            queryBuilder.andWhere("lessons.startsAt >= :dateFrom", { dateFrom })
         }
 
         if (dateTo) {
-            queryBuilder.andWhere("schedules.date <= :dateTo", { dateTo })
-        }
-
-        if (scheduleStatus === "upcoming") {
-            queryBuilder.andWhere(
-                "lessons.startsAt > :now",
-                { now: new Date() },
-            )
-        } else if (scheduleStatus === "ongoing") {
-            queryBuilder.andWhere(
-                "lessons.startsAt <= :now AND lessons.endsAt >= :now",
-                { now: new Date() },
-            )
+            queryBuilder.andWhere("lessons.endsAt <= :dateTo", { dateTo })
         }
 
         queryBuilder.orderBy("lessons.startsAt", sortDirection)
@@ -120,7 +110,6 @@ export class LessonsService {
                 id: true,
                 name: true,
                 description: true,
-                capacity: true,
                 teacher: true,
                 startsAt: true,
                 endsAt: true,
@@ -147,28 +136,42 @@ export class LessonsService {
 
 
     async findSchedulesByLessonId(lessonId: number) {
-        const schedules = await this.scheduleRepository.find({
-            where: {
-                lesson: {
-                    id: lessonId,
+        const [weeklySlots, overrides] = await Promise.all([
+            this.weeklySlotRepository.find({
+                where: {
+                    lesson: {
+                        id: lessonId,
+                    },
+                    isActive: true,
                 },
-                isCancelled: false,
-            },
-            select: {
-                id: true,
-                date: true,
-                startTime: true,
-                durationMinutes: true,
-                address: true,
-                occupiedSpots: true,
-                capacity: true,
-            },
-            order: {
-                date: SortDirection.ASC,
-            },
-        })
+                select: {
+                    id: true,
+                    dayOfWeek: true,
+                    startTime: true,
+                    durationMinutes: true,
+                    address: true,
+                },
+                order: {
+                    dayOfWeek: SortDirection.ASC,
+                },
+            }),
+            this.scheduleOverrideRepository.find({
+                where: { lesson: { id: lessonId } },
+                select: {
+                    id: true,
+                    date: true,
+                    startTime: true,
+                    address: true,
+                    status: true,
+                    note: true,
+                },
+                order: {
+                    date: SortDirection.ASC,
+                },
+            }),
+        ])
 
-        return schedules
+        return { weeklySlots, overrides }
     }
 
 
@@ -184,7 +187,7 @@ export class LessonsService {
                 id: true,
                 label: true,
                 price: true,
-                enrollmentType: true,
+                sessionsCount: true,
             },
         })
 

@@ -8,7 +8,6 @@ import {
     PRICE_MIN_VALUE,
 } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { ScheduleStatus } from "../enums/schedule-status.enum"
 
 export class GetLessonListQueryDto {
     @ApiPropertyOptional({
@@ -40,7 +39,7 @@ export class GetLessonListQueryDto {
     page: number = PAGE_MIN_VALUE
 
     @ApiPropertyOptional({
-        description: "Дата с которой искать занятия на которые доступна запись",
+        description: "Дата после которой начинаются занятия",
         example: "2026-01-27T21:10:42Z",
         type: Date,
     })
@@ -50,7 +49,7 @@ export class GetLessonListQueryDto {
     dateFrom?: Date
     
     @ApiPropertyOptional({
-        description: "Дата до которой искать занятия на которые доступна запись",
+        description: "Дата до которой идут занятия",
         example: "2026-02-14T21:10:42Z",
         type: Date,
     })
@@ -58,16 +57,6 @@ export class GetLessonListQueryDto {
     @IsDate()
     @IsOptional()
     dateTo?: Date
-
-    @ApiPropertyOptional({
-        description: "Доступно ли занятие для пользователей",
-        example: true,
-        type: Boolean,
-    })
-    @Type(() => Boolean)
-    @IsBoolean()
-    @IsOptional()
-    isActive?: boolean
 
     @ApiPropertyOptional({
         description: "ID категории",
@@ -116,15 +105,6 @@ export class GetLessonListQueryDto {
         message: `Price cannot be less than ${PRICE_MIN_VALUE}`,
     })
     priceTo?: number
-
-    @ApiPropertyOptional({
-        description: "Статус занятий по датам проведения — upcoming (ещё не начались), ongoing (идут сейчас)",
-        example: ScheduleStatus.ONGOING,
-        enum: ScheduleStatus,
-    })
-    @IsEnum(ScheduleStatus)
-    @IsOptional()
-    scheduleStatus?: ScheduleStatus
 
     @ApiPropertyOptional({
         description: "Направление сортировки - ASC для восходящей и DESC для нисходящей",
