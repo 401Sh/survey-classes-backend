@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonEntity } from "../entities/lesson.entity"
 import { Repository } from "typeorm"
-import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
+import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
 import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
 import { CategoryEntity } from "src/dictionaries/entities/category.entity"
@@ -39,7 +39,7 @@ export class ManageLessonsService {
     }
 
 
-    async findAll(query: GetLessonListQueryDto) {
+    async findAll(query: GetManageLessonListQueryDto) {
         const {
             limit,
             page,
@@ -51,17 +51,17 @@ export class ManageLessonsService {
             categoryId,
             priceFrom,
             priceTo,
-            scheduleStatus
         } = query
 
         const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
 
         queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers")
-        queryBuilder.leftJoinAndSelect("lessons.schedules", "schedules")
         queryBuilder.leftJoinAndSelect("lessons.images", "images")
         queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
 
-        queryBuilder.where("lessons.isActive = :isActive", { isActive })
+        if (isActive !== undefined) {
+            queryBuilder.where("lessons.isActive = :isActive", { isActive })
+        }
 
         if (search) {
             queryBuilder.andWhere(
@@ -71,6 +71,7 @@ export class ManageLessonsService {
         }
 
         if (categoryId) {
+            // TODO: add array query search
             queryBuilder.andWhere("categories.id = :categoryId", { categoryId })
         }
 
@@ -83,23 +84,11 @@ export class ManageLessonsService {
         }
 
         if (dateFrom) {
-            queryBuilder.andWhere("schedules.date >= :dateFrom", { dateFrom })
+            queryBuilder.andWhere("lessons.startsAt >= :dateFrom", { dateFrom })
         }
 
         if (dateTo) {
-            queryBuilder.andWhere("schedules.date <= :dateTo", { dateTo })
-        }
-
-        if (scheduleStatus === "upcoming") {
-            queryBuilder.andWhere(
-                "lessons.startsAt > :now",
-                { now: new Date() },
-            )
-        } else if (scheduleStatus === "ongoing") {
-            queryBuilder.andWhere(
-                "lessons.startsAt <= :now AND lessons.endsAt >= :now",
-                { now: new Date() },
-            )
+            queryBuilder.andWhere("lessons.endsAt <= :dateTo", { dateTo })
         }
 
         queryBuilder.orderBy("lessons.startsAt", sortDirection)
@@ -126,6 +115,9 @@ export class ManageLessonsService {
             relations: {
                 images: true,
                 categories: true,
+                pricingTiers: true,
+                weeklySlots: true,
+                scheduleOverrides: true,
             },
         })
         

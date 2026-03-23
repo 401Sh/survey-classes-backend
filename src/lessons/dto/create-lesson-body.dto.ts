@@ -15,15 +15,6 @@ export class CreateLessonBodyDto {
     })
     name: string
 
-    @ApiProperty({
-        description: "Количество людей на занятие",
-        example: 15,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    capacity: number
-
     @ApiPropertyOptional({
         description: "Доступно ли занятие для пользователей",
         example: true,
