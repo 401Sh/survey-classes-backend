@@ -10,6 +10,12 @@ import { AttendanceEntity } from "./entities/attendance.entity"
 import { DictionariesModule } from "src/dictionaries/dictionaries.module"
 import { ManageLessonsController } from "./controllers/manage-lessons.controller"
 import { ManageLessonsService } from "./services/manage-lessons.service"
+import { ManagePricingTiersService } from "./services/manage-pricing-tiers.service"
+import { ManageWeeklySlotsService } from "./services/manage-weekly-slots.service"
+import { ManageScheduleOverridesService } from "./services/manage-schedule-overrides.service"
+import { ManagePricingTiersController } from "./controllers/manage-pricing-tiers.controller"
+import { ManageWeeklySlotsController } from "./controllers/manage-weekly-slots.controller"
+import { ManageScheduleOverridesController } from "./controllers/manage-schedule-overrides.controller"
 
 @Module({
     imports: [
@@ -25,10 +31,16 @@ import { ManageLessonsService } from "./services/manage-lessons.service"
     controllers: [
         LessonsController,
         ManageLessonsController,
+        ManagePricingTiersController,
+        ManageWeeklySlotsController,
+        ManageScheduleOverridesController,
     ],
     providers: [
         LessonsService,
         ManageLessonsService,
+        ManagePricingTiersService,
+        ManageWeeklySlotsService,
+        ManageScheduleOverridesService,
     ],
     exports: [LessonsService],
 })
