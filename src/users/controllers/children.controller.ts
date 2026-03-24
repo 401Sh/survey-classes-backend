@@ -67,6 +67,7 @@ export class ChildrenController {
     }
 
 
+    // TODO: remove route and add query logic in user controller
     @ApiBearerAuth()
     @ApiOperation({
         summary: "Получение всех записей на занятия ребенка",

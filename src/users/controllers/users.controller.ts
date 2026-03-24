@@ -26,7 +26,7 @@ export class UsersController {
         summary: "Получение всех записей на занятия",
     })
     @Get("enrollments")
-    async findAll(@Request() req) {
+    async findAllUserEnrollments(@Request() req) {
         const userId = req.user.sub
 
         const result = await this.usersService.findAllUserEnrollments(userId)
