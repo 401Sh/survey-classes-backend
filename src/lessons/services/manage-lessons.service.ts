@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonEntity } from "../entities/lesson.entity"
 import { In, Repository } from "typeorm"
@@ -76,17 +76,33 @@ export class ManageLessonsService {
         const isLessonExists = await this.existsById(lessonId)
         if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
 
+        // check date + time dublication
+        const existingSlots = await this.weeklySlotRepository.find({
+            where: {
+                lesson: { id: lessonId },
+                dayOfWeek: In(daysOfWeek),
+                startTime: slotData.startTime,
+            },
+        })
+
+        if (existingSlots.length > 0) {
+            const duplicateDays = existingSlots.map(s => s.dayOfWeek).join(", ")
+            throw new ConflictException(
+                `Weekly slots for days [${duplicateDays}] at ${slotData.startTime} already exist`
+            )
+        }
+
         const slots = daysOfWeek.map(dayOfWeek => ({
             ...slotData,
             dayOfWeek,
             lesson: { id: lessonId },
         }))
 
-        const weeklySlots = await this.weeklySlotRepository.save(slots)
+        const savedWeeklySlots = await this.weeklySlotRepository.save(slots)
 
-        this.logger.log(`Created new weekly slots for lesson: ${lessonId}`)
-        this.logger.debug("Created new weekly slots: ", weeklySlots)
-        return weeklySlots
+        this.logger.log(`Created ${savedWeeklySlots.length} new weekly slots for lesson: ${lessonId}`)
+        this.logger.debug("Created new weekly slots: ", savedWeeklySlots)
+        return savedWeeklySlots
     }
 
 
