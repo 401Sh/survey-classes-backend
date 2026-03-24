@@ -32,6 +32,15 @@ export class CreateApplicationBodyDto {
     consentedAt: string
 
     @ApiProperty({
+        description: "ID тарифа оплаты",
+        example: 1,
+        type: Number,
+    })
+    @Type(() => Number)
+    @IsInt()
+    pricingTierId: number
+
+    @ApiProperty({
         description: "Ответы на вопросы",
         example: [
             { questionId: 1, textValue: "Текст ответа" },

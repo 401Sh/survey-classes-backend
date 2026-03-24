@@ -9,6 +9,8 @@ import { ManageApplicationsService } from "./services/manage-applications.servic
 import { ManageApplicationsController } from "./controllers/manage-applications.controller"
 import { ManageEnrollmentsController } from "./controllers/manage-enrollments.controller"
 import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
+import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
+import { UserChildEntity } from "src/users/entities/user-child.entity"
 
 @Module({
     imports: [
@@ -16,6 +18,8 @@ import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
             ApplicationEntity,
             AnswerEntity,
             EnrollmentEntity,
+            LessonPricingTierEntity,
+            UserChildEntity,
         ]),
     ],
     controllers: [

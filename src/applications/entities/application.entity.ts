@@ -50,12 +50,11 @@ export class ApplicationEntity extends BaseEntity {
     })
     survey: SurveyEntity
 
-    // can be usefull, but does not required now
-    // @ManyToOne(() => LessonEntity, {
-    //     onDelete: "SET NULL",
-    //     nullable: true,
-    // })
-    // lesson?: LessonEntity
+    @ManyToOne(() => LessonEntity, {
+        onDelete: "SET NULL",
+        nullable: true,
+    })
+    lesson?: LessonEntity
 
     @ManyToOne(() => LessonPricingTierEntity, (pricingTier) => pricingTier.applications, {
         nullable: true,
