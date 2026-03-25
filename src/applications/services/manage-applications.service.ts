@@ -25,8 +25,8 @@ export class ManageApplicationsService {
         queryBuilder.leftJoinAndSelect("applications.createdFor", "children")
         queryBuilder.leftJoinAndSelect("applications.answers", "answers")
 
-        queryBuilder.leftJoinAndSelect("applications.survey", "surveys")
-        queryBuilder.leftJoinAndSelect("surveys.lesson", "lessons")
+        queryBuilder.leftJoinAndSelect("applications.lesson", "lessons")
+        queryBuilder.leftJoinAndSelect("surveys.pricingTier", "pricingTiers")
 
         if (status) {
             queryBuilder.where("applications.status = :status", { status })
@@ -43,11 +43,11 @@ export class ManageApplicationsService {
         if (lessonId) {
             queryBuilder.andWhere("surveys.lessons.id = :lessonId", { lessonId })
         }
-        
+
         if (createdBy) {
             queryBuilder.andWhere("users.id = :createdBy", { createdBy })
         }
-        
+
         if (createdFor) {
             queryBuilder.andWhere("children.id = :createdFor", { createdFor })
         }
@@ -86,7 +86,7 @@ export class ManageApplicationsService {
                     secondName: true,
                     birthDate: true,
                 },
-            },            
+            },
             relations: {
                 createdBy: true,
                 createdFor: true,
@@ -96,12 +96,12 @@ export class ManageApplicationsService {
                 },
             },
         })
-        
+
         if (!application) {
             this.logger.log(`No application with id: ${id}`)
             throw new NotFoundException(`Application with id ${id} not found`)
         }
-    
+
         this.logger.log(`Finded application with id: ${id}`)
         this.logger.debug("Get application: ", application)
         return application
@@ -114,34 +114,34 @@ export class ManageApplicationsService {
                 where: { id: applicationId },
                 relations: {
                     createdFor: true,
-                    survey: {
-                        lesson: true,
-                    },
+                    lesson: true,
+                    pricingTier: true,
                 },
             })
-    
+
             if (!application) throw new NotFoundException("Application not found")
-    
+
             if (application.status !== ApplicationStatus.PENDING) {
                 throw new BadRequestException("Cannot approve application")
             }
-    
+
             await manager.update(ApplicationEntity,
                 { id: applicationId },
                 { status: ApplicationStatus.APPROVED },
             )
-    
-            const saveResult = await manager.save(
-                EnrollmentEntity,
-                {
+
+            const saveResult = await manager.save(EnrollmentEntity, {
                     application: { id: applicationId },
-                    lesson: { id: application.survey.lesson.id },
+                    lesson: { id: application.lesson?.id },
                     child: { id: application.createdFor.id },
+                    pricingTier: { id: application.pricingTier.id },
+                    sessionsTotal: application.pricingTier.sessionsCount,
+                    sessionsLeft: application.pricingTier.sessionsCount,
                     enrolledAt: new Date(),
                     status: EnrollmentStatus.ACTIVE,
                 },
             )
-    
+
             this.logger.log(`Application with id ${applicationId} approved, enrollment created`)
             return saveResult
         })
@@ -168,18 +168,18 @@ export class ManageApplicationsService {
         const application = await this.applicationRepository.findOne({
             where: { id: applicationId },
         })
-    
+
         if (!application) throw new NotFoundException("Application not found")
-    
-        if (allowedStatus === application.status) {
+
+        if (application.status !== allowedStatus) {
             throw new BadRequestException(`Cannot change application status to ${newStatus}`)
         }
-    
+
         const updateResult = await this.applicationRepository.update(
             { id: applicationId },
             { status: newStatus },
         )
-    
+
         this.logger.log(`Application with id ${applicationId} status changed to ${newStatus}`)
         return updateResult
     }
