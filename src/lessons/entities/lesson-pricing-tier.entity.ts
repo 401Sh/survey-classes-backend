@@ -19,8 +19,8 @@ export class LessonPricingTierEntity  extends BaseEntity {
     @Column({ type: "varchar", length: 100 })
     label: string
  
-    @Column({ type: "decimal", precision: 10, scale: 2 })
-    price: number
+    @Column({ type: "decimal", precision: 10, scale: 2, default: 0.0 })
+    price: number = 0.0
 
     @Column({ type: "smallint", default: 1 })
     sessionsCount: number

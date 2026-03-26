@@ -5,6 +5,7 @@ import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {
@@ -117,8 +118,58 @@ export class ManageEnrollmentsController {
         @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
         @Body() data: UpdateEnrollmentBodyDto,
     ) {
-        const result = await this.manageEnrollmentsService.update(enrollmentId, data)
+        await this.manageEnrollmentsService.update(enrollmentId, data)
 
-        return result
+        return {
+            message: "enrollment updated successfully",
+        }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Фиксация оплаты записи на занятие",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи",
+        example: 1,
+    })
+    @ApiBody({
+        description: "Данные для обновления оплаты",
+        required: true,
+        type: UpdateEnrollmentPaymentBodyDto,
+    })
+    @Patch(":enrollmentId/payment")
+    async payEnrollment(
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+        @Body() data: UpdateEnrollmentPaymentBodyDto,
+    ) {
+        await this.manageEnrollmentsService.payEnrollment(enrollmentId, data)
+
+        return {
+            message: "enrollment payment applied successfully",
+        }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Отмена оплаты записи на занятие",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи",
+        example: 1,
+    })
+    @Patch(":enrollmentId/payment/refund")
+    async refundEnrollment(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
+        await this.manageEnrollmentsService.refundEnrollment(enrollmentId)
+
+        return {
+            message: "enrollment payment refunded successfully",
+        }
     }
 }

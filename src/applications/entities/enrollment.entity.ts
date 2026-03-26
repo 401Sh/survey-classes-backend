@@ -32,11 +32,11 @@ export class EnrollmentEntity extends BaseEntity {
     @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.UNPAID })
     paymentStatus: PaymentStatus
 
-    @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-    paidAmount?: number
+    @Column({ type: "decimal", precision: 10, scale: 2, default: 0.0 })
+    paidAmount: number = 0.0
 
     @Column({ type: "datetime", nullable: true })
-    paidAt?: Date
+    paidAt?: Date | null
 
     // copying pricingTier.sessionsCount via enrollment creation
     @Column({ type: "smallint" })
