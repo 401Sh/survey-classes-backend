@@ -98,15 +98,10 @@ export class ManageQuestionsService {
     async update(questionId: number, data: UpdateQuestionBodyDto) {
         // creating transaction
         await this.questionRepository.manager.transaction(async (manager) => {
-            const question = await manager.findOne(
-                QuestionEntity,
+            const question = await manager.findOne(QuestionEntity,
                 {
-                    where: {
-                        id: questionId,
-                    },
-                    relations: {
-                        survey: true,
-                    },
+                    where: { id: questionId },
+                    relations: { survey: true },
                 },
             )
     
@@ -149,20 +144,16 @@ export class ManageQuestionsService {
 
             // deleting question options if type changed to TEXT
             if (data.type && data.type === QuestionType.TEXT && question.type !== QuestionType.TEXT) {
-                await manager.delete(
-                    QuestionOptionEntity,
+                await manager.delete(QuestionOptionEntity,
                     {
-                        question: {
-                            id: questionId,
-                        },
+                        question: { id: questionId },
                     },
                 )
                 this.logger.debug(`Deleted all options for question ${questionId} due to type change to TEXT`)
             }            
     
             // updating question
-            const updateResult = await manager.update(
-                QuestionEntity,
+            const updateResult = await manager.update(QuestionEntity,
                 { id: questionId },
                 data,
             )

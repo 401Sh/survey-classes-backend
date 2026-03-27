@@ -110,14 +110,16 @@ export class ManageApplicationsService {
 
     async approve(applicationId: number) {
         await this.applicationRepository.manager.transaction(async (manager) => {
-            const application = await manager.findOne(ApplicationEntity, {
-                where: { id: applicationId },
-                relations: {
-                    createdFor: true,
-                    lesson: true,
-                    pricingTier: true,
-                },
-            })
+            const application = await manager.findOne(ApplicationEntity,
+                {
+                    where: { id: applicationId },
+                    relations: {
+                        createdFor: true,
+                        lesson: true,
+                        pricingTier: true,
+                    },
+                }
+            )
 
             if (!application) throw new NotFoundException("Application not found")
 
@@ -130,7 +132,8 @@ export class ManageApplicationsService {
                 { status: ApplicationStatus.APPROVED },
             )
 
-            const saveResult = await manager.save(EnrollmentEntity, {
+            const saveResult = await manager.save(EnrollmentEntity,
+                {
                     application: { id: applicationId },
                     lesson: { id: application.lesson?.id },
                     child: { id: application.createdFor.id },

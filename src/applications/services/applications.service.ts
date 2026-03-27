@@ -66,14 +66,16 @@ export class ApplicationsService {
         }
 
         const application = await this.applicationRepository.manager.transaction(async (manager) => {
-            const application = await manager.save(ApplicationEntity, {
-                consentedAt: data.consentedAt,
-                createdBy: { id: userId },
-                createdFor: { id: data.childId },
-                lesson: { id: data.lessonId },
-                pricingTier: { id: data.pricingTierId },
-                survey: { lesson: { id: data.lessonId } },
-            })
+            const application = await manager.save(ApplicationEntity,
+                {
+                    consentedAt: data.consentedAt,
+                    createdBy: { id: userId },
+                    createdFor: { id: data.childId },
+                    lesson: { id: data.lessonId },
+                    pricingTier: { id: data.pricingTierId },
+                    survey: { lesson: { id: data.lessonId } },
+                }
+            )
 
             const answers = data.answers.map(answer => ({
                 question: { id: answer.questionId },

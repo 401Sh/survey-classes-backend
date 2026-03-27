@@ -29,7 +29,7 @@ export class CreateApplicationBodyDto {
     })
     @Type(() => Date)
     @IsDate()
-    consentedAt: string
+    consentedAt: Date
 
     @ApiProperty({
         description: "ID тарифа оплаты",
