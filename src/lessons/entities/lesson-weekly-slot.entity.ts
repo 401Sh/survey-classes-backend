@@ -15,7 +15,7 @@ export class LessonWeeklySlotEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ type: "enum", enum: DayOfWeek })
+    @Column({ type: "smallint" })
     dayOfWeek: DayOfWeek
 
     @Column({ type: "time" })
