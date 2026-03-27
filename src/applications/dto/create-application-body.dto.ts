@@ -44,13 +44,13 @@ export class CreateApplicationBodyDto {
         description: "Ответы на вопросы",
         example: [
             { questionId: 1, textValue: "Текст ответа" },
-            { questionId: 2, selectedOptionId: 3 },
-            { questionId: 3, selectedOptionId: 5 },
+            { questionId: 2, selectedOptionIds: [3] },
+            { questionId: 3, selectedOptionIds: [5, 11] },
         ],
         type: CreateAnswerBodyDto,
     })
-    @Type(() => CreateAnswerBodyDto)
-    @ValidateNested({ each: true })
     @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CreateAnswerBodyDto)
     answers: CreateAnswerBodyDto[]
 }

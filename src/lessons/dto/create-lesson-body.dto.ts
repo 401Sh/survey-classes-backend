@@ -78,8 +78,8 @@ export class CreateLessonBodyDto {
     })
     @IsArray()
     @ArrayUnique()
-    @IsInt({ each: true })
     @Type(() => Number)
+    @IsInt({ each: true })
     @IsOptional()
     categoryIds: number[] = []
 }

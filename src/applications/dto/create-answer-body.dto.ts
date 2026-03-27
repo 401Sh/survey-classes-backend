@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsInt, IsOptional, IsString, MaxLength } from "class-validator"
+import { ArrayUnique, IsArray, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
 import { TEXT_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class CreateAnswerBodyDto {
@@ -26,12 +26,15 @@ export class CreateAnswerBodyDto {
     textValue?: string
 
     @ApiPropertyOptional({
-        description: "ID варианта ответа",
-        example: 1,
-        type: Number,
+        description: "ID вариантов ответа. Для вопросов типа CHECKBOX - несколько вариантов ответа, для RADIO - один",
+        example: [1, 2],
+        isArray: true,
+        type: () => Number,
     })
+    @IsArray()
+    @ArrayUnique()
     @Type(() => Number)
-    @IsInt()
+    @IsInt({ each: true })
     @IsOptional()
-    selectedOptionId?: number
+    selectedOptionIds?: number[]
 }

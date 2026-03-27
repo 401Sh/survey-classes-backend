@@ -2,13 +2,14 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { CreateApplicationBodyDto } from "../dto/create-application-body.dto"
 import { InjectRepository } from "@nestjs/typeorm"
 import { ApplicationEntity } from "../entities/application.entity"
-import { In, Not, Repository } from "typeorm"
+import { DeepPartial, EntityManager, In, Not, Repository } from "typeorm"
 import { AnswerEntity } from "../entities/answer.entity"
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
+import { CreateAnswerBodyDto } from "../dto/create-answer-body.dto"
 
 @Injectable()
 export class ApplicationsService {
@@ -25,46 +26,11 @@ export class ApplicationsService {
 
     async create(userId: number, data: CreateApplicationBodyDto) {
         // check that the pricing tier belongs to the activity and is active
-        const pricingTier = await this.pricingTierRepository.findOne({
-            where: {
-                id: data.pricingTierId,
-                lesson: { id: data.lessonId },
-                isActive: true,
-            },
-        })
-
-        if (!pricingTier) throw new NotFoundException("Pricing tier not found")
-
+        await this.validatePricingTier(data.pricingTierId, data.lessonId)
         // check that the child belongs to the user
-        const child = await this.childRepository.findOne({
-            where: {
-                id: data.childId,
-                user: { id: userId },
-            },
-        })
-
-        if (!child) throw new NotFoundException("Child not found")
-
+        await this.validateChild(data.childId, userId)
         // check application duplication for this lesson for this child
-        const existingApplication = await this.applicationRepository.findOne({
-            where: {
-                createdBy: { id: userId },
-                createdFor: { id: data.childId },
-                survey: {
-                    lesson: {
-                        id: data.lessonId,
-                    },
-                },
-                status: Not(In([
-                    ApplicationStatus.CANCELLED,
-                    ApplicationStatus.REJECTED,
-                ])),
-            },
-        })
-
-        if (existingApplication) {
-            throw new BadRequestException("Application for this child and lesson already exists")
-        }
+        await this.validateDuplicateApplication(data.childId, data.lessonId)
 
         const application = await this.applicationRepository.manager.transaction(async (manager) => {
             const application = await manager.save(ApplicationEntity,
@@ -74,41 +40,13 @@ export class ApplicationsService {
                     createdFor: { id: data.childId },
                     lesson: { id: data.lessonId },
                     pricingTier: { id: data.pricingTierId },
-                    survey: { lesson: { id: data.lessonId } },
+                    survey: {
+                        lesson: { id: data.lessonId },
+                    },
                 }
             )
 
-            // check questions existing
-            const questionIds = data.answers.map(a => a.questionId)
-
-            const questions = await manager.find(QuestionEntity, {
-                where: {
-                    id: In(questionIds),
-                    survey: {
-                        lesson: {
-                            id: data.lessonId,
-                        }
-                    }
-                }
-            })
-            
-            if (questions.length !== questionIds.length) {
-                throw new BadRequestException("Invalid questions for this survey")
-            }
-
-            const questionMap = new Map(questions.map(q => [q.id, q]))
-
-            // mapping answers through real questions
-            const answers = data.answers.map(answer => ({
-                question: questionMap.get(answer.questionId),
-                selectedOption: answer.selectedOptionId
-                    ? { id: answer.selectedOptionId }
-                    : undefined,
-                textValue: answer.textValue,
-                response: application,
-            }))
-
-            await manager.save(AnswerEntity, answers)
+            await this.saveAnswers(manager, application, data.answers, data.lessonId)
 
             return application
         })
@@ -248,5 +186,103 @@ export class ApplicationsService {
 
         this.logger.log(`Application with id ${application.id} status changed successfully`)
         return updateResult
+    }
+
+
+    private async validatePricingTier(tierId: number, lessonId: number) {
+        const tier = await this.pricingTierRepository.findOne({
+            where: {
+                id: tierId,
+                lesson: { id: lessonId },
+                isActive: true,
+            },
+        })
+
+        if (!tier) throw new NotFoundException("Pricing tier not found")
+    }
+
+
+    private async validateChild(childId: number, userId: number) {
+        const child = await this.childRepository.findOne({
+            where: {
+                id: childId,
+                user: { id: userId },
+            },
+        })
+
+        if (!child) throw new NotFoundException("Child not found")
+    }
+
+
+    private async validateDuplicateApplication(childId: number, lessonId: number) {
+        const existing = await this.applicationRepository.findOne({
+            where: {
+                createdFor: { id: childId },
+                lesson: { id: lessonId },
+                status: Not(In([
+                    ApplicationStatus.CANCELLED,
+                    ApplicationStatus.REJECTED,
+                ])),
+            },
+        })
+
+        if (existing) throw new BadRequestException("Application for this child and lesson already exists")
+    }
+
+
+    private async saveAnswers(
+        manager: EntityManager,
+        application: ApplicationEntity,
+        answers: CreateAnswerBodyDto[],
+        lessonId: number,
+    ) {
+        const questionIds = answers.map(a => a.questionId)
+    
+        const questions = await manager.find(QuestionEntity, {
+            where: {
+                id: In(questionIds),
+                survey: {
+                    lesson: { id: lessonId },
+                },
+            },
+            relations: { options: true },
+        })
+
+        if (questions.length !== questionIds.length) {
+            throw new BadRequestException("Invalid questions for this survey")
+        }
+
+        const questionMap = new Map(questions.map(q => [q.id, q]))
+
+        const answerEntities = answers.flatMap<DeepPartial<AnswerEntity>>(answer => {
+            // a dangerous decision, but previous checks should have ruled out the possibility of an error occurring
+            const question = questionMap.get(answer.questionId)! // danger
+
+            // for checkbox/radio — one Answer for each selected option
+            if (answer.selectedOptionIds?.length) {
+                // validation that the options belong to the question
+                const validOptionIds = new Set(question.options.map(o => o.id))
+                const invalidOptions = answer.selectedOptionIds.filter(id => !validOptionIds.has(id))
+
+                if (invalidOptions.length) {
+                    throw new BadRequestException(`Invalid options ${invalidOptions} for question ${question.id}`)
+                }
+
+                return answer.selectedOptionIds.map(optionId => ({
+                    question,
+                    selectedOption: { id: optionId },
+                    response: application,
+                }))
+            }
+
+            // для text — одна Answer с textValue
+            return [{
+                question,
+                textValue: answer.textValue,
+                response: application,
+            }]
+        })
+
+        await manager.save(AnswerEntity, answerEntities)
     }
 }
