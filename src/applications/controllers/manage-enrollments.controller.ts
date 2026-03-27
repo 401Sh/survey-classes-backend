@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common"
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
 import { UpdateEnrollmentBodyDto } from "../dto/update-enrollment-body.dto"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
@@ -6,10 +6,32 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestj
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
+import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
+import { GetEnrollmentAttendanceListQueryDto } from "../dto/get-enrollment-attendance-list-query.dto"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {
     constructor(private manageEnrollmentsService: ManageEnrollmentsService) {}
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Создание посещения занятия",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи",
+        example: 1,
+    })
+    @Post(":enrollmentId/attendances")
+    async createAttendance(
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+        @Body() data: CreateAttendanceBodyDto,
+    ) {
+        const result = await this.manageEnrollmentsService.createAttendance(enrollmentId, data)
+
+        return result
+    }
 
     @ApiBearerAuth()
     @ApiOperation({
@@ -93,6 +115,27 @@ export class ManageEnrollmentsController {
     @Get(":enrollmentId")
     async findById(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
         const result = await this.manageEnrollmentsService.findById(enrollmentId)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Получение всех посещений занятий",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи",
+        example: 1,
+    })
+    @Get(":enrollmentId/attendances")
+    async findAllAttendancesByEnrollmentId(
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+        @Query() query: GetEnrollmentAttendanceListQueryDto,
+    ) {
+        const result = await this.manageEnrollmentsService.findAllAttendancesByEnrollmentId(enrollmentId, query)
 
         return result
     }

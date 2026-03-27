@@ -14,7 +14,7 @@ import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { ApplicationEntity } from "./application.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
-import { AttendanceEntity } from "src/lessons/entities/attendance.entity"
+import { AttendanceEntity } from "./attendance.entity"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { PaymentStatus } from "../enums/payment-status.enum"
 

@@ -6,7 +6,6 @@ import { LessonEntity } from "./entities/lesson.entity"
 import { LessonPricingTierEntity } from "./entities/lesson-pricing-tier.entity"
 import { LessonWeeklySlotEntity } from "./entities/lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "./entities/lesson-schedule-override.entity"
-import { AttendanceEntity } from "./entities/attendance.entity"
 import { DictionariesModule } from "src/dictionaries/dictionaries.module"
 import { ManageLessonsController } from "./controllers/manage-lessons.controller"
 import { ManageLessonsService } from "./services/manage-lessons.service"
@@ -24,7 +23,6 @@ import { ManageScheduleOverridesController } from "./controllers/manage-schedule
             LessonPricingTierEntity,
             LessonWeeklySlotEntity,
             LessonScheduleOverrideEntity,
-            AttendanceEntity,
         ]),
         DictionariesModule,
     ],

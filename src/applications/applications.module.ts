@@ -11,6 +11,7 @@ import { ManageEnrollmentsController } from "./controllers/manage-enrollments.co
 import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
+import { AttendanceEntity } from "./entities/attendance.entity"
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { UserChildEntity } from "src/users/entities/user-child.entity"
             ApplicationEntity,
             AnswerEntity,
             EnrollmentEntity,
+            AttendanceEntity,
             LessonPricingTierEntity,
             UserChildEntity,
         ]),
