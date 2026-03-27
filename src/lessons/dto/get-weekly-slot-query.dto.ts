@@ -15,7 +15,7 @@ export class GetWeeklySlotQueryDto {
     isActive?: boolean
 
     @ApiPropertyOptional({
-        description: "Список номеров дней недели, в которые проходят занятия",
+        description: "Список номеров дней недели, в которые проходят занятия. 0 - понедельник, 6 - воскресенье",
         example: [DayOfWeek.FRIDAY, DayOfWeek.SATURDAY],
         isArray: true,
         type: () => Number,
