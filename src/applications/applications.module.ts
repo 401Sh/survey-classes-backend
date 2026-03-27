@@ -14,12 +14,14 @@ import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { AttendanceEntity } from "./entities/attendance.entity"
 import { ManageAttendancesController } from "./controllers/manage-attendances.controller"
 import { ManageAttendancesService } from "./services/manage-attendances.service"
+import { QuestionEntity } from "src/surveys/entities/question.entity"
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             ApplicationEntity,
             AnswerEntity,
+            QuestionEntity,
             EnrollmentEntity,
             AttendanceEntity,
             LessonPricingTierEntity,

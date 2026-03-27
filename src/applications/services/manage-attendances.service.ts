@@ -35,7 +35,7 @@ export class ManageAttendancesService {
 
         queryBuilder.leftJoinAndSelect("attendances.enrollment", "enrollments")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-        queryBuilder.leftJoinAndSelect("childs.user", "users")
+        queryBuilder.leftJoinAndSelect("children.user", "users")
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
         
         if (isPresent !== undefined) {

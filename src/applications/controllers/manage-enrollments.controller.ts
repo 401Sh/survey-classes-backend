@@ -63,7 +63,7 @@ export class ManageEnrollmentsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение всех посещений занятий",
+        summary: "Получение всех посещений занятия для данной записи",
     })
     @ApiParam({
         name: "enrollmentId",
@@ -105,7 +105,7 @@ export class ManageEnrollmentsController {
         await this.manageEnrollmentsService.update(enrollmentId, data)
 
         return {
-            message: "enrollment updated successfully",
+            message: "Enrollment updated successfully",
         }
     }
 
@@ -133,7 +133,7 @@ export class ManageEnrollmentsController {
         await this.manageEnrollmentsService.payEnrollment(enrollmentId, data)
 
         return {
-            message: "enrollment payment applied successfully",
+            message: "Enrollment payment applied successfully",
         }
     }
 
@@ -153,7 +153,7 @@ export class ManageEnrollmentsController {
         await this.manageEnrollmentsService.refundEnrollment(enrollmentId)
 
         return {
-            message: "enrollment payment refunded successfully",
+            message: "Enrollment payment refunded successfully",
         }
     }
 }

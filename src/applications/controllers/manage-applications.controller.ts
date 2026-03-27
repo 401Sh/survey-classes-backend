@@ -55,7 +55,7 @@ export class ManageApplicationsController {
         await this.manageApplicationsService.approve(applicationId)
 
         return {
-            message: "application approved successfully - enrollment created",
+            message: "Application approved successfully - enrollment created",
         }
     }
 
@@ -75,7 +75,7 @@ export class ManageApplicationsController {
         await this.manageApplicationsService.reject(applicationId)
 
         return {
-            message: "application rejected successfully",
+            message: "Application rejected successfully",
         }
     }
 }

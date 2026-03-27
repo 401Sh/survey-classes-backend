@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Repository } from "typeorm"
@@ -88,7 +88,7 @@ export class ManageEnrollmentsService {
         queryBuilder.leftJoinAndSelect("enrollments.application", "applications")
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-        queryBuilder.leftJoinAndSelect("enrollment.pricingTier", "pricingTiers")
+        queryBuilder.leftJoinAndSelect("enrollments.pricingTier", "pricingTiers")
 
         queryBuilder.leftJoinAndSelect("children.user", "users")
 
@@ -224,6 +224,10 @@ export class ManageEnrollmentsService {
             throw new NotFoundException(`Enrollment with id ${enrollmentId} not found`)
         }
 
+        if (enrollment.paymentStatus == PaymentStatus.PAID) {
+            throw new ConflictException(`Enrollment weith id ${enrollmentId} has already been paid`)
+        }
+
         const updateResult = await this.enrollmentRepository.update(
             { id: enrollmentId },
             {
@@ -243,6 +247,19 @@ export class ManageEnrollmentsService {
 
 
     async refundEnrollment(enrollmentId: number) {
+        const enrollment = await this.enrollmentRepository.findOne({
+            where: { id: enrollmentId },
+            relations: { pricingTier: true },
+        })
+
+        if (!enrollment || !enrollment.pricingTier) {
+            throw new NotFoundException(`Enrollment with id ${enrollmentId} not found`)
+        }
+
+        if (enrollment.paymentStatus == PaymentStatus.UNPAID) {
+            throw new ConflictException(`Enrollment with id ${enrollmentId} has already been refunded`)
+        }
+
         const updateResult = await this.enrollmentRepository.update(
             { id: enrollmentId },
             {

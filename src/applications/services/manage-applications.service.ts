@@ -26,7 +26,7 @@ export class ManageApplicationsService {
         queryBuilder.leftJoinAndSelect("applications.answers", "answers")
 
         queryBuilder.leftJoinAndSelect("applications.lesson", "lessons")
-        queryBuilder.leftJoinAndSelect("surveys.pricingTier", "pricingTiers")
+        queryBuilder.leftJoinAndSelect("applications.pricingTier", "pricingTiers")
 
         if (status) {
             queryBuilder.where("applications.status = :status", { status })
@@ -41,7 +41,7 @@ export class ManageApplicationsService {
         }
 
         if (lessonId) {
-            queryBuilder.andWhere("surveys.lessons.id = :lessonId", { lessonId })
+            queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
         }
 
         if (createdBy) {
@@ -185,10 +185,5 @@ export class ManageApplicationsService {
 
         this.logger.log(`Application with id ${applicationId} status changed to ${newStatus}`)
         return updateResult
-    }
-
-
-    private async existsById(id: number): Promise<boolean> {
-        return this.applicationRepository.existsBy({ id })
     }
 }

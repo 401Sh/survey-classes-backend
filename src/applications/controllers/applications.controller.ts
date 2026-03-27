@@ -86,7 +86,7 @@ export class ApplicationsController {
         await this.applicationsService.cancel(userId, applicationId)
 
         return {
-            message: "application canceled successfully",
+            message: "Application canceled successfully",
         }
     }
 }

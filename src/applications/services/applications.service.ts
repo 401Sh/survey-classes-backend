@@ -8,6 +8,7 @@ import { ApplicationStatus } from "../enums/application-status.enum"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { QuestionEntity } from "src/surveys/entities/question.entity"
 
 @Injectable()
 export class ApplicationsService {
@@ -77,11 +78,34 @@ export class ApplicationsService {
                 }
             )
 
+            // check questions existing
+            const questionIds = data.answers.map(a => a.questionId)
+
+            const questions = await manager.find(QuestionEntity, {
+                where: {
+                    id: In(questionIds),
+                    survey: {
+                        lesson: {
+                            id: data.lessonId,
+                        }
+                    }
+                }
+            })
+            
+            if (questions.length !== questionIds.length) {
+                throw new BadRequestException("Invalid questions for this survey")
+            }
+
+            const questionMap = new Map(questions.map(q => [q.id, q]))
+
+            // mapping answers through real questions
             const answers = data.answers.map(answer => ({
-                question: { id: answer.questionId },
-                selectedOption: answer.selectedOptionId ? { id: answer.selectedOptionId } : undefined,
+                question: questionMap.get(answer.questionId),
+                selectedOption: answer.selectedOptionId
+                    ? { id: answer.selectedOptionId }
+                    : undefined,
                 textValue: answer.textValue,
-                response: { id: application.id },
+                response: application,
             }))
 
             await manager.save(AnswerEntity, answers)
