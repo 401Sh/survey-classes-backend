@@ -12,6 +12,8 @@ import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { AttendanceEntity } from "./entities/attendance.entity"
+import { ManageAttendancesController } from "./controllers/manage-attendances.controller"
+import { ManageAttendancesService } from "./services/manage-attendances.service"
 
 @Module({
     imports: [
@@ -28,11 +30,13 @@ import { AttendanceEntity } from "./entities/attendance.entity"
         ApplicationsController,
         ManageApplicationsController,
         ManageEnrollmentsController,
+        ManageAttendancesController,
     ],
     providers: [
         ApplicationsService,
         ManageApplicationsService,
         ManageEnrollmentsService,
+        ManageAttendancesService,
     ],
 })
 export class ApplicationsModule {}

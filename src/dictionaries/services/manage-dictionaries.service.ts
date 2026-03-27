@@ -73,18 +73,6 @@ export class ManageDictionariesService {
 
 
     async deleteCategory(categoryId: number) {
-        const category = await this.categoryRepository.findOne({
-            where: { id: categoryId },
-        })
- 
-        if (!category) {
-            throw new NotFoundException("Category not found")
-        }
- 
-        await this.categoryRepository.remove(category)
- 
-        this.logger.log(`Deleted category ${categoryId}`)
-
         this.logger.log(`Deleting category with id: ${categoryId}`)
         const deleteResult = await this.categoryRepository.delete({ id: categoryId })
 

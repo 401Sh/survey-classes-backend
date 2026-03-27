@@ -32,13 +32,14 @@ export class ManageWeeklySlotsService {
     async update(slotId: number, data: UpdateWeeklySlotBodyDto) {
         const weeklySlot = await this.weeklySlotRepository.findOne({
             where: { id: slotId },
+            relations: { lesson: true },
         })
-    
+
         if (!weeklySlot) {
             this.logger.log(`No weekly slot with id: ${slotId}`)
             throw new NotFoundException(`Weekly slot with id ${slotId} not found`)
         }
-    
+
         // check date + time dublication
         if (data.dayOfWeek !== undefined || data.startTime !== undefined) {
             const dayOfWeek = data.dayOfWeek ?? weeklySlot.dayOfWeek
@@ -51,7 +52,7 @@ export class ManageWeeklySlotsService {
                     startTime,
                 },
             })
-        
+
             if (duplicate && duplicate.id !== slotId) {
                 throw new ConflictException(
                     `Weekly slot for day ${dayOfWeek} at ${startTime} already exists for this lesson`
@@ -61,7 +62,7 @@ export class ManageWeeklySlotsService {
     
         Object.assign(weeklySlot, data)
         const updatedResult = await this.weeklySlotRepository.save(weeklySlot)
-    
+
         this.logger.log(`Weekly slot with id ${slotId} updated successfully`)
         return updatedResult
     }

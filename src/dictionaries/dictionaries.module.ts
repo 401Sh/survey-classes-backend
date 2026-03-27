@@ -4,6 +4,7 @@ import { CategoryEntity } from "src/dictionaries/entities/category.entity"
 import { DictionariesService } from "./services/dictionaries.service"
 import { DictionariesController } from "./controllers/dictionaries.controller"
 import { ManageDictionariesService } from "./services/manage-dictionaries.service"
+import { ManageDictionariesController } from "./controllers/manage-dictionaries.controller"
 
 @Module({
     imports: [
@@ -11,7 +12,10 @@ import { ManageDictionariesService } from "./services/manage-dictionaries.servic
             CategoryEntity,
         ]),
     ],
-    controllers: [DictionariesController],
+    controllers: [
+        DictionariesController,
+        ManageDictionariesController,
+    ],
     providers: [
         DictionariesService,
         ManageDictionariesService

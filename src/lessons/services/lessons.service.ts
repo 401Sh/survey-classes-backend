@@ -49,7 +49,6 @@ export class LessonsService {
         queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
 
         queryBuilder.where("lessons.isActive = true")
-        queryBuilder.andWhere("lessons.endsAt >= :now OR lessons.endsAt IS NULL", { now: new Date() })
 
         if (search) {
             queryBuilder.andWhere(
@@ -156,7 +155,11 @@ export class LessonsService {
                 },
             }),
             this.scheduleOverrideRepository.find({
-                where: { lesson: { id: lessonId } },
+                where: {
+                    lesson: {
+                        id: lessonId,
+                    },
+                },
                 select: {
                     id: true,
                     date: true,

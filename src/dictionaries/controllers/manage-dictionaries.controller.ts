@@ -8,7 +8,7 @@ import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/dictionaries")
-export class DictionariesController {
+export class ManageDictionariesController {
     constructor(private manageDictionariesService: ManageDictionariesService) {}
 
     @ApiBearerAuth()
