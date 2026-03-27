@@ -43,8 +43,7 @@ export class CreateWeeklySlotBodyDto {
     @ApiProperty({
         description: "Список номеров дней недели, в которые проходят занятия. 0 - понедельник, 6 - воскресенье",
         example: [DayOfWeek.FRIDAY, DayOfWeek.SATURDAY],
-        isArray: true,
-        type: () => Number,
+        type: [Number],
     })
     @Transform(({ value }) => {
         if (Array.isArray(value)) return value.map(Number)

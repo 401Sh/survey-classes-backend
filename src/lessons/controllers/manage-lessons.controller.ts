@@ -5,15 +5,13 @@ import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
 import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
 import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
 import { GetPricingTierQueryDto } from "../dto/get-pricing-tier-query.dto"
 import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
 import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
-import { DayOfWeek } from "../enums/day-of-week.enum"
 import { ScheduleOverrideStatus } from "../enums/schedule-override-status.enum"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
@@ -124,70 +122,6 @@ export class ManageLessonsController {
     @ApiOperation({
         summary: "Получение всех существующих занятий",
     })
-    @ApiQuery({
-        name: "limit",
-        required: false,
-        description: "Количество занятий на странице",
-        example: 10,
-        default: 4,
-    })
-    @ApiQuery({
-        name: "page",
-        required: false,
-        description: "Номер страницы",
-        example: 2,
-        default: 1,
-    })
-    @ApiQuery({
-        name: "dateFrom",
-        required: false,
-        description: "Фильтрация занятий, созданных позднее указанной даты",
-        example: "2020-12-30",
-    })
-    @ApiQuery({
-        name: "dateTo",
-        required: false,
-        description: "Фильтрация занятий, созданных раньше указанной даты",
-        example: "2020-12-31",
-    })
-    @ApiQuery({
-        name: "categoryId",
-        required: false,
-        description: "ID категории",
-        example: 10,
-        default: 4,
-    })
-    @ApiQuery({
-        name: "search",
-        required: false,
-        description: "Текст для поиска по названию или описанию",
-        example: "some lesson",
-    })
-    @ApiQuery({
-        name: "priceFrom",
-        required: false,
-        description: "Минимальная цена занятия",
-        example: 100,
-    })
-    @ApiQuery({
-        name: "priceTo",
-        required: false,
-        description: "Макисмальная цена занятия",
-        example: 200,
-    })
-    @ApiQuery({
-        name: "isActive",
-        required: false,
-        description: "Доступно ли занятие пользователям",
-        example: true,
-    })
-    @ApiQuery({
-        name: "sortDirection",
-        required: false,
-        description: "Направление сортировки. ASC - восходящая, DESC - нисходящая",
-        example: SortDirection.DESC,
-        default: SortDirection.ASC,
-    })
     @Get()
     async findAll(@Query() query: GetManageLessonListQueryDto) {
         const result = await this.manageLessonsService.findAll(query)
@@ -224,12 +158,6 @@ export class ManageLessonsController {
         description: "ID занятия",
         example: 1,
     })
-    @ApiQuery({
-        name: "isActive",
-        required: false,
-        description: "Доступен ли тариф оплаты пользователям",
-        example: true,
-    })
     @Get(":lessonId/pricing-tiers")
     async findAllPricingTiersByLessonId(
         @Param("lessonId", ParseIntPipe) lessonId: number,
@@ -251,19 +179,6 @@ export class ManageLessonsController {
         description: "ID занятия",
         example: 1,
     })
-    @ApiQuery({
-        name: "isActive",
-        required: false,
-        description: "Доступны ли дни недели пользователям",
-        example: true,
-    })
-    @ApiQuery({
-        name: "daysOfWeek",
-        required: false,
-        description: "Номера дней недели",
-        example: [DayOfWeek.FRIDAY, DayOfWeek.SATURDAY],
-        type: [Number],
-    })
     @Get(":lessonId/weekly-slots")
     async findAllWeeklySlotsByLessonId(
         @Param("lessonId", ParseIntPipe) lessonId: number,
@@ -284,12 +199,6 @@ export class ManageLessonsController {
         required: true,
         description: "ID занятия",
         example: 1,
-    })
-    @ApiQuery({
-        name: "status",
-        required: false,
-        description: "Доступны ли дни недели пользователям",
-        example: ScheduleOverrideStatus.MOVED,
     })
     @Get(":lessonId/schedule-overrides")
     async findAllScheduleOverridesByLessonId(

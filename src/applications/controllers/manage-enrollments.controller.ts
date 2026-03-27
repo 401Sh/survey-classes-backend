@@ -2,9 +2,7 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
 import { UpdateEnrollmentBodyDto } from "../dto/update-enrollment-body.dto"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
 import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
 import { GetEnrollmentAttendanceListQueryDto } from "../dto/get-enrollment-attendance-list-query.dto"
@@ -36,63 +34,6 @@ export class ManageEnrollmentsController {
     @ApiBearerAuth()
     @ApiOperation({
         summary: "Получение всех существующих записей на занятия",
-    })
-    @ApiQuery({
-        name: "limit",
-        required: false,
-        description: "Количество записей на странице",
-        example: 10,
-        default: 4,
-    })
-    @ApiQuery({
-        name: "page",
-        required: false,
-        description: "Номер страницы",
-        example: 2,
-        default: 1,
-    })
-    @ApiQuery({
-        name: "dateFrom",
-        required: false,
-        description: "Фильтрация записей, созданных позднее указанной даты",
-        example: "2020-12-30",
-    })
-    @ApiQuery({
-        name: "dateTo",
-        required: false,
-        description: "Фильтрация записей, созданных раньше указанной даты",
-        example: "2020-12-31",
-    })
-    @ApiQuery({
-        name: "status",
-        required: false,
-        description: "Статус записи на занятие",
-        example: EnrollmentStatus.ACTIVE,
-    })
-    @ApiQuery({
-        name: "lessonId",
-        required: false,
-        description: "ID занятия",
-        example: 1,
-    })
-    @ApiQuery({
-        name: "parentId",
-        required: false,
-        description: "ID родителя",
-        example: 2,
-    })
-    @ApiQuery({
-        name: "childId",
-        required: false,
-        description: "ID ребенка",
-        example: 3,
-    })
-    @ApiQuery({
-        name: "sortDirection",
-        required: false,
-        description: "Направление сортировки. ASC - восходящая, DESC - нисходящая",
-        example: SortDirection.DESC,
-        default: SortDirection.ASC,
     })
     @Get()
     async findAll(@Query() query: GetEnrollmentListQueryDto) {

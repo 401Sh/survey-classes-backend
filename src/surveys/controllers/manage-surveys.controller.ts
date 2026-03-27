@@ -7,8 +7,7 @@ import { CreateSurveyBodyDto } from "../dto/create-survey-body.dto"
 import { GetSurveyListQueryDto } from "../dto/get-survey-list-query.dto"
 import { UpdateSurveyBodyDto } from "../dto/update-survey-body.dto"
 import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/surveys")
@@ -91,45 +90,6 @@ export class ManageSurveysController {
     @ApiBearerAuth()
     @ApiOperation({
         summary: "Получение всех существующих опросов",
-    })
-    @ApiQuery({
-        name: "limit",
-        required: false,
-        description: "Количество опросов на странице",
-        example: 10,
-        default: 4,
-    })
-    @ApiQuery({
-        name: "page",
-        required: false,
-        description: "Номер страницы",
-        example: 2,
-        default: 1,
-    })
-    @ApiQuery({
-        name: "dateFrom",
-        required: false,
-        description: "Фильтрация опросов, созданных позднее указанной даты",
-        example: "2020-12-30",
-    })
-    @ApiQuery({
-        name: "dateTo",
-        required: false,
-        description: "Фильтрация опросов, созданных раньше указанной даты",
-        example: "2020-12-31",
-    })
-    @ApiQuery({
-        name: "isActive",
-        required: false,
-        description: "Доступен ли опрос для пользователей",
-        example: false,
-    })
-    @ApiQuery({
-        name: "sortDirection",
-        required: false,
-        description: "Направление сортировки. ASC - восходящая, DESC - нисходящая",
-        example: SortDirection.DESC,
-        default: SortDirection.ASC,
     })
     @Get()
     async findAll(@Query() query: GetSurveyListQueryDto) {
