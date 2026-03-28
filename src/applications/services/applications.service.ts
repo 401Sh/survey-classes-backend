@@ -4,7 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { ApplicationEntity } from "../entities/application.entity"
 import { DeepPartial, EntityManager, In, Not, Repository } from "typeorm"
 import { AnswerEntity } from "../entities/answer.entity"
-import { ApplicationStatus } from "../enums/application-status.enum"
+import { ApplicationStatus, FINAL_STATUSES, REAPPLICABLE_STATUSES } from "../enums/application-status.enum"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
@@ -216,10 +216,7 @@ export class ApplicationsService {
             where: {
                 createdFor: { id: childId },
                 lesson: { id: lessonId },
-                status: In([
-                    ApplicationStatus.APPROVED,
-                    ApplicationStatus.REJECTED,
-                ]),
+                status: In(REAPPLICABLE_STATUSES),
             },
         })
 
@@ -259,10 +256,7 @@ export class ApplicationsService {
             where: {
                 createdFor: { id: childId },
                 lesson: { id: lessonId },
-                status: Not(In([
-                    ApplicationStatus.CANCELLED,
-                    ApplicationStatus.REJECTED,
-                ])),
+                status: Not(In(FINAL_STATUSES)),
             },
         })
 
