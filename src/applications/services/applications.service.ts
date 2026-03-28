@@ -27,6 +27,8 @@ export class ApplicationsService {
     async create(userId: number, data: CreateApplicationBodyDto) {
         const { lessonId, childId, consentedAt, pricingTierId, answers } = data
 
+        // check blocked application
+        await this.validateNotBlocked(lessonId, childId)
         // check re-application
         const answersLength = answers.length
         await this.validateReapplication(lessonId, childId, answersLength)
@@ -194,6 +196,21 @@ export class ApplicationsService {
     }
 
 
+    private async validateNotBlocked(lessonId: number, childId: number) {
+        const isBlocked = await this.applicationRepository.exists({
+            where: {
+                createdFor: { id: childId },
+                lesson: { id: lessonId },
+                status: ApplicationStatus.BLOCKED,
+            },
+        })
+    
+        if (isBlocked) {
+            throw new BadRequestException("Application is blocked. You cannot apply again")
+        }
+    }
+
+
     private async validateReapplication(lessonId: number, childId: number, answersLength: number) {
         const isCompletedSurveyBefore = await this.applicationRepository.exists({
             where: {
@@ -202,7 +219,6 @@ export class ApplicationsService {
                 status: In([
                     ApplicationStatus.APPROVED,
                     ApplicationStatus.REJECTED,
-                    ApplicationStatus.BLOCKED,
                 ]),
             },
         })
@@ -246,7 +262,6 @@ export class ApplicationsService {
                 status: Not(In([
                     ApplicationStatus.CANCELLED,
                     ApplicationStatus.REJECTED,
-                    ApplicationStatus.BLOCKED,
                 ])),
             },
         })

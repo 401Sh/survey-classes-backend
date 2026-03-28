@@ -82,7 +82,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Блокирование принятой заявки на занятие",
+        summary: "Блокирование принятой заявки на занятие - пользователь не сможет подавать новые заявки",
     })
     @ApiParam({
         name: "applicationId",
@@ -102,7 +102,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Разблокирование приянтой заявки на занятие",
+        summary: "Разблокирование принятой заявки на занятие",
     })
     @ApiParam({
         name: "applicationId",

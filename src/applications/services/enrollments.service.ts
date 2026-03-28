@@ -72,7 +72,7 @@ export class EnrollmentsService {
 
             if (anyApplication.status === ApplicationStatus.BLOCKED) {
                 throw new BadRequestException(
-                    "Enrollment is blocked by administrator — please submit a new application"
+                    "Enrollment is blocked by administrator — please сontact support"
                 )
             }
 
