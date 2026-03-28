@@ -220,8 +220,8 @@ export class AuthController {
     })
     @Post("logout")
     async logout(
-        @Headers("x-fingerprint") fingerprint: string,
         @Request() req,
+        @Headers("x-fingerprint") fingerprint: string,
         @Res() res: Response,
     ) {
         const userId = req.user.sub

@@ -19,8 +19,8 @@ export class ChildrenController {
     })
     @Post()
     async create(
-        @Body() data: CreateChildBodyDto,
         @Request() req,
+        @Body() data: CreateChildBodyDto,
     ) {
         const userId = req.user.sub
 
@@ -56,8 +56,8 @@ export class ChildrenController {
     })
     @Get(":childId")
     async findById(
-        @Param("childId", ParseIntPipe) childId: number,
         @Request() req,
+        @Param("childId", ParseIntPipe) childId: number,
     ) {
         const userId = req.user.sub
 
@@ -84,9 +84,9 @@ export class ChildrenController {
     })
     @Patch(":childId")
     async update(
+        @Request() req,
         @Param("childId", ParseIntPipe) childId: number,
         @Body() data: UpdateChildBodyDto,
-        @Request() req,
     ) {
         const userId = req.user.sub
 
@@ -110,8 +110,8 @@ export class ChildrenController {
     })
     @Delete(":childId")
     async remove(
-        @Param("childId", ParseIntPipe) childId: number,
         @Request() req,
+        @Param("childId", ParseIntPipe) childId: number,
     ) {
         const userId = req.user.sub
 

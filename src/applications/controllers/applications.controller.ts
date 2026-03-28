@@ -18,8 +18,8 @@ export class ApplicationsController {
     })
     @Post()
     async create(
-        @Body() data: CreateApplicationBodyDto,
         @Request() req,
+        @Body() data: CreateApplicationBodyDto,
     ) {
         const userId = req.user.sub
 
@@ -55,8 +55,8 @@ export class ApplicationsController {
     })
     @Get(":applicationId")
     async findById(
-        @Param("applicationId", ParseIntPipe) applicationId: number,
         @Request() req,
+        @Param("applicationId", ParseIntPipe) applicationId: number,
     ) {
         const userId = req.user.sub
 
@@ -78,8 +78,8 @@ export class ApplicationsController {
     })
     @Patch(":applicationId/cancel")
     async cancelApplication(
-        @Param("applicationId", ParseIntPipe) applicationId: number,
         @Request() req,
+        @Param("applicationId", ParseIntPipe) applicationId: number,
     ) {
         const userId = req.user.sub
 

@@ -19,8 +19,8 @@ export class EnrollmentsController {
     })
     @Post()
     async create(
-        @Body() data: CreateEnrollmentBodyDto,
         @Request() req,
+        @Body() data: CreateEnrollmentBodyDto,
     ) {
         const userId = req.user.sub
 
@@ -36,8 +36,8 @@ export class EnrollmentsController {
     })
     @Get()
     async findAll(
-        @Query() query: GetEnrollmentListQueryDto,
         @Request() req,
+        @Query() query: GetEnrollmentListQueryDto,
     ) {
         const userId = req.user.sub
 

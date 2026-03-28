@@ -32,8 +32,8 @@ export class UsersController {
     })
     @Patch()
     async update(
-        @Body() data: UpdateUserBodyDto,
         @Request() req,
+        @Body() data: UpdateUserBodyDto,
     ) {
         const userId = req.user.sub
 
