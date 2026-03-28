@@ -30,67 +30,13 @@ export class EnrollmentsService {
         const { lessonId, childId, pricingTierId } = data
 
         // check that the child belongs to the user
-        const isChildExists = await this.childRepository.exists({
-            where: {
-                id: childId,
-                user: {id: userId },
-            },
-        })
+        await this.validateChildOwnership(childId, userId)
 
-        if (!isChildExists) throw new NotFoundException("Child not found")
+        // check and get approved application
+        const application = await this.getApprovedApplicationOrThrow(childId, lessonId)
 
-        // check approved application
-        const application = await this.applicationRepository.findOne({
-            where: {
-                createdFor: { id: childId },
-                lesson: { id: lessonId },
-                status: ApplicationStatus.APPROVED,
-            },
-        })
-
-        if (!application) {
-            // define error message
-            const anyApplication = await this.applicationRepository.findOne({
-                where: {
-                    createdFor: { id: childId },
-                    lesson: { id: lessonId },
-                },
-                order: { createdAt: SortDirection.DESC },
-            })
-
-            if (!anyApplication) {
-                throw new BadRequestException(
-                    "No application found — please submit an application with survey answers first"
-                )
-            }
-
-            if (anyApplication.status === ApplicationStatus.PENDING) {
-                throw new BadRequestException(
-                    "Application is pending — wait for admin approval"
-                )
-            }
-
-            if (anyApplication.status === ApplicationStatus.BLOCKED) {
-                throw new BadRequestException(
-                    "Enrollment is blocked by administrator — please сontact support"
-                )
-            }
-
-            throw new BadRequestException(
-                "Application was rejected or cancelled — please submit a new application"
-            )
-        }
-
-        // check pricingTier
-        const pricingTier = await this.pricingTierRepository.findOne({
-            where: {
-                id: pricingTierId,
-                lesson: { id: lessonId },
-                isActive: true,
-            },
-        })
-
-        if (!pricingTier) throw new NotFoundException("Pricing tier not found")
+        // check and get pricingTier
+        const pricingTier = await this.getValidPricingTierOrThrow(pricingTierId, lessonId)
 
         const enrollment = await this.enrollmentRepository.save({
             child: { id: childId },
@@ -218,5 +164,74 @@ export class EnrollmentsService {
 
         this.logger.log(`Finded enrollment with id: ${enrollmentId}`)
         return enrollment
+    }
+
+
+    private async validateChildOwnership(childId: number, userId: number) {
+        const exists = await this.childRepository.exists({
+            where: {
+                id: childId,
+                user: { id: userId },
+            },
+        })
+    
+        if (!exists) {
+            throw new NotFoundException("Child not found")
+        }
+    }
+
+
+    private async getApprovedApplicationOrThrow(childId: number, lessonId: number) {
+        const approved = await this.applicationRepository.findOne({
+            where: {
+                createdFor: { id: childId },
+                lesson: { id: lessonId },
+                status: ApplicationStatus.APPROVED,
+            },
+        })
+    
+        if (approved) return approved
+    
+        const lastApplication = await this.applicationRepository.findOne({
+            where: {
+                createdFor: { id: childId },
+                lesson: { id: lessonId },
+            },
+            order: { createdAt: SortDirection.DESC },
+        })
+    
+        if (!lastApplication) {
+            throw new BadRequestException(
+                "No application found — please submit an application with survey answers first"
+            )
+        }
+    
+        switch (lastApplication.status) {
+            case ApplicationStatus.PENDING:
+                throw new BadRequestException("Application is pending — wait for admin approval")
+    
+            case ApplicationStatus.BLOCKED:
+                throw new BadRequestException("Enrollment is blocked by administrator — please contact support")
+    
+            default:
+                throw new BadRequestException("Application was rejected or cancelled — please submit a new application")
+        }
+    }
+
+
+    private async getValidPricingTierOrThrow(tierId: number, lessonId: number) {
+        const tier = await this.pricingTierRepository.findOne({
+            where: {
+                id: tierId,
+                lesson: { id: lessonId },
+                isActive: true,
+            },
+        })
+    
+        if (!tier) {
+            throw new NotFoundException("Pricing tier not found")
+        }
+    
+        return tier
     }
 }

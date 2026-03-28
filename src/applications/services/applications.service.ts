@@ -35,7 +35,7 @@ export class ApplicationsService {
         // check that the pricing tier belongs to the activity and is active
         await this.validatePricingTier(lessonId, pricingTierId)
         // check that the child belongs to the user
-        await this.validateChild(childId, userId)
+        await this.validateChildOwnership(childId, userId)
         // check application duplication for this lesson for this child
         await this.validateDuplicateApplication(lessonId, childId)
 
@@ -239,7 +239,7 @@ export class ApplicationsService {
     }
 
 
-    private async validateChild(childId: number, userId: number) {
+    private async validateChildOwnership(childId: number, userId: number) {
         const child = await this.childRepository.findOne({
             where: {
                 id: childId,
