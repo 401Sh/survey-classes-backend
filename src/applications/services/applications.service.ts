@@ -25,33 +25,38 @@ export class ApplicationsService {
     ) {}
 
     async create(userId: number, data: CreateApplicationBodyDto) {
+        const { lessonId, childId, consentedAt, pricingTierId, answers } = data
+
+        // check re-application
+        const answersLength = answers.length
+        await this.validateReapplication(lessonId, childId, answersLength)
         // check that the pricing tier belongs to the activity and is active
-        await this.validatePricingTier(data.pricingTierId, data.lessonId)
+        await this.validatePricingTier(lessonId, pricingTierId)
         // check that the child belongs to the user
-        await this.validateChild(data.childId, userId)
+        await this.validateChild(childId, userId)
         // check application duplication for this lesson for this child
-        await this.validateDuplicateApplication(data.childId, data.lessonId)
+        await this.validateDuplicateApplication(lessonId, childId)
 
         const application = await this.applicationRepository.manager.transaction(async (manager) => {
             const application = await manager.save(ApplicationEntity,
                 {
-                    consentedAt: data.consentedAt,
+                    consentedAt: consentedAt,
                     createdBy: { id: userId },
-                    createdFor: { id: data.childId },
-                    lesson: { id: data.lessonId },
-                    pricingTier: { id: data.pricingTierId },
+                    createdFor: { id: childId },
+                    lesson: { id: lessonId },
+                    pricingTier: { id: pricingTierId },
                     survey: {
-                        lesson: { id: data.lessonId },
+                        lesson: { id: lessonId },
                     },
                 }
             )
 
-            await this.saveAnswers(manager, application, data.answers, data.lessonId)
+            await this.saveAnswers(manager, application, answers, lessonId)
 
             return application
         })
 
-        this.logger.log(`Created child ${data.childId} application for lesson id: ${data.lessonId}`)
+        this.logger.log(`Created child ${childId} application for lesson id: ${lessonId}`)
         this.logger.debug("Created application", application)
         return application
     }
@@ -189,7 +194,26 @@ export class ApplicationsService {
     }
 
 
-    private async validatePricingTier(tierId: number, lessonId: number) {
+    private async validateReapplication(lessonId: number, childId: number, answersLength: number) {
+        const isCompletedSurveyBefore = await this.applicationRepository.exists({
+            where: {
+                createdFor: { id: childId },
+                lesson: { id: lessonId },
+                status: In([
+                    ApplicationStatus.APPROVED,
+                    ApplicationStatus.REJECTED,
+                    ApplicationStatus.BLOCKED,
+                ]),
+            },
+        })
+
+        if (!isCompletedSurveyBefore && answersLength === 0) {
+            throw new BadRequestException("Survey answers are required for first application")
+        }
+    }
+
+
+    private async validatePricingTier(lessonId: number, tierId: number) {
         const tier = await this.pricingTierRepository.findOne({
             where: {
                 id: tierId,
@@ -214,19 +238,20 @@ export class ApplicationsService {
     }
 
 
-    private async validateDuplicateApplication(childId: number, lessonId: number) {
-        const existing = await this.applicationRepository.findOne({
+    private async validateDuplicateApplication(lessonId: number, childId: number) {
+        const isApplicationExists = await this.applicationRepository.exists({
             where: {
                 createdFor: { id: childId },
                 lesson: { id: lessonId },
                 status: Not(In([
                     ApplicationStatus.CANCELLED,
                     ApplicationStatus.REJECTED,
+                    ApplicationStatus.BLOCKED,
                 ])),
             },
         })
 
-        if (existing) throw new BadRequestException("Application for this child and lesson already exists")
+        if (isApplicationExists) throw new BadRequestException("Application for this child and lesson already exists")
     }
 
 

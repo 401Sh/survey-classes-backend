@@ -67,30 +67,6 @@ export class ChildrenController {
     }
 
 
-    // TODO: remove route and add query logic in user controller
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Получение всех записей на занятия ребенка",
-    })
-    @ApiParam({
-        name: "childId",
-        required: true,
-        description: "ID ребенка",
-        example: 1,
-    })
-    @Get(":childId/enrollments")
-    async findChildEnrollments(
-        @Param("childId", ParseIntPipe) childId: number,
-        @Request() req,
-    ) {
-        const userId = req.user.sub
-
-        const result = await this.childrenService.findChildEnrollments(userId, childId)
-
-        return result
-    }
-
-
     @ApiBearerAuth()
     @ApiOperation({
         summary: "Обновление данных ребенка пользователя",

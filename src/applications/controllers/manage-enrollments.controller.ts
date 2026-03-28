@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common"
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
 import { UpdateEnrollmentBodyDto } from "../dto/update-enrollment-body.dto"
-import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
+import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
 import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
-import { GetEnrollmentAttendanceListQueryDto } from "../dto/get-enrollment-attendance-list-query.dto"
+import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {
@@ -36,7 +36,7 @@ export class ManageEnrollmentsController {
         summary: "Получение всех существующих записей на занятия",
     })
     @Get()
-    async findAll(@Query() query: GetEnrollmentListQueryDto) {
+    async findAll(@Query() query: GetManageEnrollmentListQueryDto) {
         const result = await this.manageEnrollmentsService.findAll(query)
 
         return result
@@ -74,7 +74,7 @@ export class ManageEnrollmentsController {
     @Get(":enrollmentId/attendances")
     async findAllAttendancesByEnrollmentId(
         @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Query() query: GetEnrollmentAttendanceListQueryDto,
+        @Query() query: GetAttendanceListQueryDto,
     ) {
         const result = await this.manageEnrollmentsService.findAllAttendancesByEnrollmentId(enrollmentId, query)
 

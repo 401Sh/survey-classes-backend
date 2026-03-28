@@ -5,8 +5,6 @@ import { Repository } from "typeorm"
 import * as argon2 from "argon2"
 import { SignUpDto } from "src/auth/dto/signup.dto"
 import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
-import { EnrollmentStatus } from "src/applications/enums/enrollment-status.enum"
-import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 
 @Injectable()
 export class UsersService {
@@ -15,8 +13,6 @@ export class UsersService {
     constructor(
         @InjectRepository(UserEntity)
         private userRepository: Repository<UserEntity>,
-        @InjectRepository(EnrollmentEntity)
-        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async create(data: SignUpDto): Promise<UserEntity> {
@@ -122,103 +118,6 @@ export class UsersService {
         })
 
         return user
-    }
-
-
-    // TODO: add sorting queries
-    async findAllUserEnrollments(userId: number) {
-        const enrollments = await this.enrollmentRepository.find({
-            where: {
-                child: {
-                    user: { id: userId },
-                },
-                status: EnrollmentStatus.ACTIVE,
-            },
-            relations: {
-                child: true,
-                lesson: true,
-            },
-            select: {
-                id: true,
-                status: true,
-                enrolledAt: true,
-                sessionsTotal: true,
-                sessionsLeft: true,
-                paymentStatus: true,
-                paidAmount: true,
-                child: {
-                    id: true,
-                    firstName: true,
-                    secondName: true,
-                },
-                lesson: {
-                    id: true,
-                    name: true,
-                    description: true,
-                },
-            },
-        })
-
-        this.logger.debug("Get enrollments list: ", enrollments)
-        return enrollments
-    }
-
-
-    async findUserEnrollmentById(userId: number, enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: {
-                id: enrollmentId,
-                child: {
-                    user: { id: userId },
-                },
-            },
-            relations: {
-                child: true,
-                lesson: true,
-                pricingTier: true,
-                attendances: true,
-            },
-            select: {
-                id: true,
-                status: true,
-                enrolledAt: true,
-                sessionsTotal: true,
-                sessionsLeft: true,
-                paymentStatus: true,
-                paidAmount: true,
-                paidAt: true,
-                child: {
-                    id: true,
-                    firstName: true,
-                    secondName: true,
-                },
-                lesson: {
-                    id: true,
-                    name: true,
-                    description: true,
-                },
-                pricingTier: {
-                    id: true,
-                    label: true,
-                    price: true,
-                    sessionsCount: true,
-                },
-                attendances: {
-                    id: true,
-                    date: true,
-                    isPresent: true,
-                    note: true,
-                },
-            },
-        })
-
-        if (!enrollment) {
-            this.logger.log(`No enrollment with id: ${enrollmentId}`)
-            throw new NotFoundException(`Lesson with id ${enrollmentId} not found`)
-        }
-
-        this.logger.log(`Finded enrollment with id: ${enrollmentId}`)
-        return enrollment
     }
 
 

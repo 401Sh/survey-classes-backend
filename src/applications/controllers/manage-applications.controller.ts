@@ -51,7 +51,7 @@ export class ManageApplicationsController {
         example: 1,
     })
     @Patch(":applicationId/approve")
-    async approveApplication(@Param("applicationId", ParseIntPipe) applicationId: number) {
+    async approve(@Param("applicationId", ParseIntPipe) applicationId: number) {
         await this.manageApplicationsService.approve(applicationId)
 
         return {
@@ -71,11 +71,71 @@ export class ManageApplicationsController {
         example: 1,
     })
     @Patch(":applicationId/reject")
-    async rejectApplication(@Param("applicationId", ParseIntPipe) applicationId: number) {
+    async reject(@Param("applicationId", ParseIntPipe) applicationId: number) {
         await this.manageApplicationsService.reject(applicationId)
 
         return {
             message: "Application rejected successfully",
+        }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Блокирование принятой заявки на занятие",
+    })
+    @ApiParam({
+        name: "applicationId",
+        required: true,
+        description: "ID заявки",
+        example: 1,
+    })
+    @Patch(":applicationId/block")
+    async block(@Param("applicationId", ParseIntPipe) applicationId: number) {
+        await this.manageApplicationsService.block(applicationId)
+
+        return {
+            message: "Application blocked successfully",
+        }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Разблокирование приянтой заявки на занятие",
+    })
+    @ApiParam({
+        name: "applicationId",
+        required: true,
+        description: "ID заявки",
+        example: 1,
+    })
+    @Patch(":applicationId/unblock")
+    async unblock(@Param("applicationId", ParseIntPipe) applicationId: number) {
+        await this.manageApplicationsService.unblock(applicationId)
+
+        return {
+            message: "Application unblocked successfully",
+        }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Окончательное отклонение принятой заявки на занятие",
+    })
+    @ApiParam({
+        name: "applicationId",
+        required: true,
+        description: "ID заявки",
+        example: 1,
+    })
+    @Patch(":applicationId/revoke")
+    async revoke(@Param("applicationId", ParseIntPipe) applicationId: number) {
+        await this.manageApplicationsService.revoke(applicationId)
+
+        return {
+            message: "Application revoked successfully",
         }
     }
 }

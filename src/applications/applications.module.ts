@@ -15,6 +15,8 @@ import { AttendanceEntity } from "./entities/attendance.entity"
 import { ManageAttendancesController } from "./controllers/manage-attendances.controller"
 import { ManageAttendancesService } from "./services/manage-attendances.service"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
+import { EnrollmentsController } from "./controllers/enrollments.controller"
+import { EnrollmentsService } from "./services/enrollments.service"
 
 @Module({
     imports: [
@@ -30,12 +32,14 @@ import { QuestionEntity } from "src/surveys/entities/question.entity"
     ],
     controllers: [
         ApplicationsController,
+        EnrollmentsController,
         ManageApplicationsController,
         ManageEnrollmentsController,
         ManageAttendancesController,
     ],
     providers: [
         ApplicationsService,
+        EnrollmentsService,
         ManageApplicationsService,
         ManageEnrollmentsService,
         ManageAttendancesService,

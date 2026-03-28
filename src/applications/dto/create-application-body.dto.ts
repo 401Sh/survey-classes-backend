@@ -1,27 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsArray, IsDate, IsInt, ValidateNested } from "class-validator"
+import { IsArray, IsDate, ValidateNested } from "class-validator"
 import { CreateAnswerBodyDto } from "./create-answer-body.dto"
+import { CreateEnrollmentBodyDto } from "./create-enrollment-body.dto"
 
-export class CreateApplicationBodyDto {
-    @ApiProperty({
-        description: "ID занятия",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    lessonId: number
-
-    @ApiProperty({
-        description: "ID ребенка",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    childId: number
-
+export class CreateApplicationBodyDto extends CreateEnrollmentBodyDto {
     @ApiProperty({
         description: "Дата согласия",
         example: "2024-05-27T21:10:42Z",
@@ -30,15 +13,6 @@ export class CreateApplicationBodyDto {
     @Type(() => Date)
     @IsDate()
     consentedAt: Date
-
-    @ApiProperty({
-        description: "ID тарифа оплаты",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    pricingTierId: number
 
     @ApiProperty({
         description: "Ответы на вопросы",

@@ -23,43 +23,6 @@ export class UsersController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение всех записей на занятия",
-    })
-    @Get("enrollments")
-    async findAllUserEnrollments(@Request() req) {
-        const userId = req.user.sub
-
-        const result = await this.usersService.findAllUserEnrollments(userId)
-
-        return result
-    }
-
-
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Получение записи на занятие по ID",
-    })
-    @ApiParam({
-        name: "enrollmentId",
-        required: true,
-        description: "ID записи на занятие",
-        example: 1,
-    })
-    @Get("enrollments/:enrollmentId")
-    async findEnrollmentById(
-        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Request() req,
-    ) {
-        const userId = req.user.sub
-
-        const result = await this.usersService.findUserEnrollmentById(userId, enrollmentId)
-
-        return result
-    }
-
-
-    @ApiBearerAuth()
-    @ApiOperation({
         summary: "Обновление данных профиля",
     })
     @ApiBody({

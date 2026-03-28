@@ -3,11 +3,11 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Repository } from "typeorm"
 import { UpdateEnrollmentBodyDto } from "../dto/update-enrollment-body.dto"
-import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
+import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { PaymentStatus } from "../enums/payment-status.enum"
 import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
 import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
-import { GetEnrollmentAttendanceListQueryDto } from "../dto/get-enrollment-attendance-list-query.dto"
+import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
 import { AttendanceEntity } from "../entities/attendance.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 
@@ -69,7 +69,7 @@ export class ManageEnrollmentsService {
     }
 
 
-    async findAll(query: GetEnrollmentListQueryDto) {
+    async findAll(query: GetManageEnrollmentListQueryDto) {
         const {
             limit,
             page,
@@ -162,7 +162,7 @@ export class ManageEnrollmentsService {
     }
 
 
-    async findAllAttendancesByEnrollmentId(enrollmentId: number, query: GetEnrollmentAttendanceListQueryDto) {
+    async findAllAttendancesByEnrollmentId(enrollmentId: number, query: GetAttendanceListQueryDto) {
         const { limit, page, dateFrom, dateTo, isPresent, sortDirection } = query
 
         const queryBuilder = this.attendanceRepository.createQueryBuilder("attendances")

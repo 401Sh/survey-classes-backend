@@ -3,4 +3,5 @@ export enum ApplicationStatus {
     REJECTED = "rejected",
     PENDING = "pending",
     CANCELLED = "cancelled",
+    BLOCKED = "blocked",
 }

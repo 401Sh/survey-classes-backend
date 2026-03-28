@@ -84,16 +84,6 @@ export class GetEnrollmentListQueryDto {
     lessonId?: number
 
     @ApiPropertyOptional({
-        description: "ID родителя",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    @IsOptional()
-    parentId?: number
-
-    @ApiPropertyOptional({
         description: "ID ребенка посещающего занятие",
         example: 1,
         type: Number,

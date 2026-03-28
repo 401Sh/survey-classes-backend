@@ -3,10 +3,8 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    JoinColumn,
     ManyToOne,
     OneToMany,
-    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm"
@@ -51,10 +49,6 @@ export class EnrollmentEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @OneToOne(() => ApplicationEntity, (application) => application.enrollment)
-    @JoinColumn()
-    application: ApplicationEntity
-
     @ManyToOne(() => LessonEntity, (lesson) => lesson.enrollments)
     lesson: LessonEntity
 
@@ -69,4 +63,10 @@ export class EnrollmentEntity extends BaseEntity {
         onDelete: "SET NULL",
     })
     pricingTier?: LessonPricingTierEntity
+
+    @ManyToOne(() => ApplicationEntity, (application) => application.enrollments, {
+        nullable: true,
+        onDelete: "SET NULL",
+    })
+    application?: ApplicationEntity
 }

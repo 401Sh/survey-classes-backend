@@ -35,9 +35,6 @@ export class ApplicationEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @OneToOne(() => EnrollmentEntity, (enrollment) => enrollment.application)
-    enrollment: EnrollmentEntity
-
     @ManyToOne(() => UserEntity, (user) => user.applications)
     createdBy: UserEntity
 
@@ -64,4 +61,7 @@ export class ApplicationEntity extends BaseEntity {
 
     @OneToMany(() => AnswerEntity, (answer) => answer.response)
     answers: AnswerEntity[]
+
+    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.application)
+    enrollments: EnrollmentEntity[]
 }

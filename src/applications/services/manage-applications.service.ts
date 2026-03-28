@@ -158,16 +158,48 @@ export class ManageApplicationsService {
             ApplicationStatus.PENDING,
         )
 
-        if (updateResult.affected === 0) {
-            this.logger.debug(`Cannot update application with id: ${applicationId}`)
-            throw new NotFoundException(`Application with id ${applicationId} not found`)
-        }
-
         return updateResult
     }
 
 
-    private async changeStatus(applicationId: number, newStatus: ApplicationStatus, allowedStatus: ApplicationStatus) {
+    async block(applicationId: number) {
+        const updateResult = await this.changeStatus(
+            applicationId,
+            ApplicationStatus.BLOCKED,
+            ApplicationStatus.APPROVED,
+        )
+        
+        return updateResult
+    }
+
+
+    async unblock(applicationId: number) {
+        const updateResult = await this.changeStatus(
+            applicationId,
+            ApplicationStatus.APPROVED,
+            ApplicationStatus.BLOCKED,
+        )
+        
+        return updateResult
+    }
+
+
+    async revoke(applicationId: number) {
+        const updateResult = await this.changeStatus(
+            applicationId,
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.APPROVED,
+        )
+        
+        return updateResult
+    }
+
+
+    private async changeStatus(
+        applicationId: number,
+        newStatus: ApplicationStatus,
+        allowedStatus: ApplicationStatus,
+    ) {
         const application = await this.applicationRepository.findOne({
             where: { id: applicationId },
         })
@@ -175,13 +207,21 @@ export class ManageApplicationsService {
         if (!application) throw new NotFoundException("Application not found")
 
         if (application.status !== allowedStatus) {
-            throw new BadRequestException(`Cannot change application status to ${newStatus}`)
+            throw new BadRequestException(
+                `Cannot change status to "${newStatus}": application is 
+                "${application.status}" but expected "${allowedStatus}"`
+            )
         }
 
         const updateResult = await this.applicationRepository.update(
             { id: applicationId },
             { status: newStatus },
         )
+
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update application with id: ${applicationId}`)
+            throw new NotFoundException(`Application with id ${applicationId} not found`)
+        }
 
         this.logger.log(`Application with id ${applicationId} status changed to ${newStatus}`)
         return updateResult
