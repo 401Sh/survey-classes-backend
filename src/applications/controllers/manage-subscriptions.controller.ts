@@ -1,13 +1,35 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common"
 import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-subscription-payment-body.dto"
 import { GetManageSubscriptionListQueryDto } from "../dto/get-manage-subscription-list-query.dto"
 import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
+import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
 
 @Controller("manage/subscriptions")
 export class ManageSubscriptionsController {
     constructor(private manageSubscriptionsSerivice: ManageSubscriptionsService) {}
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Создание посещения занятия",
+    })
+    @ApiParam({
+        name: "subscriptionId",
+        required: true,
+        description: "ID выбора тарифа",
+        example: 1,
+    })
+    @Post(":subscriptionId/attendances")
+    async createAttendance(
+        @Param("subscriptionId", ParseIntPipe) subscriptionId: number,
+        @Body() data: CreateAttendanceBodyDto,
+    ) {
+        const result = await this.manageSubscriptionsSerivice.createAttendance(subscriptionId, data)
+
+        return result
+    }
+
 
     @ApiBearerAuth()
     @ApiOperation({

@@ -6,6 +6,8 @@ import { GetManageSubscriptionListQueryDto } from "../dto/get-manage-subscriptio
 import { PaymentStatus } from "../enums/payment-status.enum"
 import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-subscription-payment-body.dto"
 import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
+import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
+import { AttendanceEntity } from "../entities/attendance.entity"
 
 @Injectable()
 export class ManageSubscriptionsService {
@@ -15,6 +17,52 @@ export class ManageSubscriptionsService {
         @InjectRepository(SubscriptionEntity)
         private subscriptionRepository: Repository<SubscriptionEntity>,
     ) {}
+
+    async createAttendance(subscriptionId: number, data: CreateAttendanceBodyDto) {
+        const { isPresent } = data
+
+        const attendance = await this.subscriptionRepository.manager.transaction(async (manager) => {
+            const subscription = await manager.findOne(SubscriptionEntity,
+                {
+                    where: { id: subscriptionId },
+                }
+            )
+        
+            if (!subscription) throw new NotFoundException("Subscription not found")
+
+            if (!subscription.isActive) {
+                throw new BadRequestException("Cannot create attendance for inactive subscription")
+            }
+
+            const attendance = await manager.save(AttendanceEntity,
+                {
+                    ...data,
+                    subscription: { id: subscriptionId },
+                }
+            )
+
+            // change sessionsLeft
+            if (isPresent) {
+                const newSessionsLeft = subscription.sessionsLeft - 1
+
+                // if sessionsLeft is equal to zero - change isActive status to false
+                await manager.update(SubscriptionEntity,
+                    { id: subscription.id },
+                    {
+                        sessionsLeft: newSessionsLeft,
+                        isActive: newSessionsLeft > 0,
+                    },
+                )
+            }
+
+            return attendance
+        })
+
+        this.logger.log(`Created new attendance for subscription: ${subscriptionId}`)
+        this.logger.debug("Created new attendance: ", attendance)
+        return attendance
+    }
+
 
     async findAll(query: GetManageSubscriptionListQueryDto) {
         const {

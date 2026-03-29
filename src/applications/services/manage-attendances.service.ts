@@ -22,6 +22,7 @@ export class ManageAttendancesService {
             dateFrom,
             dateTo,
             isPresent,
+            subscriptionId,
             lessonId,
             userId,
             childId,
@@ -42,6 +43,10 @@ export class ManageAttendancesService {
 
         if (lessonId) {
             queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
+        }
+
+        if (subscriptionId) {
+            queryBuilder.andWhere("subscriptions.id = :subscriptionId", { subscriptionId })
         }
 
         if (userId) {

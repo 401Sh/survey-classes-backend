@@ -64,6 +64,16 @@ export class GetAttendanceBodyDto {
     isPresent?: boolean
 
     @ApiPropertyOptional({
+        description: "ID выбора тарифа",
+        example: 1,
+        type: Number,
+    })
+    @Type(() => Number)
+    @IsInt()
+    @IsOptional()
+    subscriptionId?: number
+
+    @ApiPropertyOptional({
         description: "ID занятия",
         example: 1,
         type: Number,
