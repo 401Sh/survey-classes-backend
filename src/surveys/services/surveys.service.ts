@@ -1,9 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { GetSurveyByLessonQueryDto } from "../dto/get-survey-by-lesson-query.dto"
 import { InjectRepository } from "@nestjs/typeorm"
 import { SurveyEntity } from "../entities/survey.entity"
 import { Repository } from "typeorm"
-import { LessonsService } from "src/lessons/services/lessons.service"
 
 @Injectable()
 export class SurveysService {
@@ -12,21 +10,13 @@ export class SurveysService {
     constructor(
         @InjectRepository(SurveyEntity)
         private surveyRepository: Repository<SurveyEntity>,
-
-        private lessonsService: LessonsService,
     ) {}
 
-
-    async findByLessonId(query: GetSurveyByLessonQueryDto) {
-        const isLessonExists = await this.lessonsService.existsById(query.lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${query.lessonId} not found`)
-        
+    async findById(id: number) {
         const survey = await this.surveyRepository.findOne({
             where: {
                 isActive: true,
-                lesson: {
-                    id: query.lessonId,
-                },
+                id,
             },
             relations: {
                 questions: {
@@ -53,11 +43,11 @@ export class SurveysService {
         })
         
         if (!survey) {
-            this.logger.log(`No survey for lesson with id: ${query.lessonId}`)
-            throw new NotFoundException(`Survey for lesson with id ${query.lessonId} not found`)
+            this.logger.log(`No survey with id: ${id}`)
+            throw new NotFoundException(`Survey with id ${id} not found`)
         }
     
-        this.logger.log(`Finded survey for lesson with id: ${query.lessonId}`)
+        this.logger.log(`Finded survey with id: ${id}`)
         return survey
     }
 }

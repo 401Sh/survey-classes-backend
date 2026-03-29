@@ -151,7 +151,7 @@ export class ManageSurveysService {
     }
 
 
-    async findById(id: number): Promise<SurveyEntity> {
+    async findById(id: number) {
         const survey = await this.surveyRepository.findOne({
             where: { id },
             relations: {

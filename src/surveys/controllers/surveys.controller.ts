@@ -1,7 +1,6 @@
-import { Controller, Get, Query } from "@nestjs/common"
+import { Controller, Get, Param, ParseIntPipe } from "@nestjs/common"
 import { SurveysService } from "../services/surveys.service"
-import { GetSurveyByLessonQueryDto } from "../dto/get-survey-by-lesson-query.dto"
-import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
 
 @Controller("surveys")
 export class SurveysController {
@@ -9,11 +8,17 @@ export class SurveysController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение опроса к занятию",
+        summary: "Получение опроса по ID",
     })
-    @Get()
-    async findByLessonId(@Query() query: GetSurveyByLessonQueryDto) {
-        const result = await this.surveysService.findByLessonId(query)
+    @ApiParam({
+        name: "surveyId",
+        required: true,
+        description: "ID опроса",
+        example: 1,
+    })
+    @Get(":surveyId")
+    async findById(@Param("surveyId", ParseIntPipe) surveyId: number) {
+        const result = await this.surveysService.findById(surveyId)
 
         return result
     }
