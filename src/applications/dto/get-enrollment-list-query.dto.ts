@@ -4,7 +4,6 @@ import { IsDate, IsEnum, IsInt, IsOptional, Min } from "class-validator"
 import { AMOUNT_MIN_VALUE, PAGE_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
-import { PaymentStatus } from "../enums/payment-status.enum"
 
 export class GetEnrollmentListQueryDto {
     @ApiPropertyOptional({

@@ -1,15 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Repository } from "typeorm"
-import { UpdateEnrollmentBodyDto } from "../dto/update-enrollment-body.dto"
 import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
-import { PaymentStatus } from "../enums/payment-status.enum"
-import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
-import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
-import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
-import { AttendanceEntity } from "../entities/attendance.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { ApplicationStatus } from "../enums/application-status.enum"
 
 @Injectable()
 export class ManageEnrollmentsService {
@@ -18,56 +13,7 @@ export class ManageEnrollmentsService {
     constructor(
         @InjectRepository(EnrollmentEntity)
         private enrollmentRepository: Repository<EnrollmentEntity>,
-        @InjectRepository(AttendanceEntity)
-        private attendanceRepository: Repository<AttendanceEntity>,
     ) {}
-
-    async createAttendance(enrollmentId: number, data: CreateAttendanceBodyDto) {
-        const attendance = await this.enrollmentRepository.manager.transaction(async (manager) => {
-            const enrollment = await manager.findOne(EnrollmentEntity,
-                {
-                    where: { id: enrollmentId },
-                }
-            )
-        
-            if (!enrollment) throw new NotFoundException("Enrollment not found")
-
-            if ([EnrollmentStatus.FINISHED, EnrollmentStatus.LEFT].includes(enrollment.status)) {
-                throw new BadRequestException(
-                    `Cannot create attendance for enrollment with status ${enrollment.status}`
-                )
-            }
-
-            const attendance = await manager.save(AttendanceEntity,
-                {
-                    ...data,
-                    enrollment: { id: enrollmentId },
-                }
-            )
-
-            // change sessionsLeft
-            if (data.isPresent) {
-                const newSessionsLeft = enrollment.sessionsLeft - 1
-                // if sessionsLeft is equal to zero - change status to FINISHED
-                const newStatus = newSessionsLeft <= 0 ? EnrollmentStatus.FINISHED : EnrollmentStatus.ACTIVE
-
-                await manager.update(EnrollmentEntity,
-                    { id: enrollmentId },
-                    {
-                        sessionsLeft: newSessionsLeft,
-                        status: newStatus,
-                    },
-                )
-            }
-
-            return attendance
-        })
-
-        this.logger.log(`Created new attendance for enrollment: ${enrollmentId}`)
-        this.logger.debug("Created new attendance: ", attendance)
-        return attendance
-    }
-
 
     async findAll(query: GetManageEnrollmentListQueryDto) {
         const {
@@ -76,7 +22,6 @@ export class ManageEnrollmentsService {
             dateFrom,
             dateTo,
             status,
-            paymentStatus,
             lessonId,
             parentId,
             childId,
@@ -87,17 +32,11 @@ export class ManageEnrollmentsService {
 
         queryBuilder.leftJoinAndSelect("enrollments.application", "applications")
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
+        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-        queryBuilder.leftJoinAndSelect("enrollments.pricingTier", "pricingTiers")
-
-        queryBuilder.leftJoinAndSelect("children.user", "users")
 
         if (status) {
             queryBuilder.where("enrollments.status = :status", { status })
-        }
-
-        if (paymentStatus) {
-            queryBuilder.andWhere("enrollments.paymentStatus = :paymentStatus", { paymentStatus })
         }
 
         if (dateFrom) {
@@ -142,12 +81,11 @@ export class ManageEnrollmentsService {
         const enrollment = await this.enrollmentRepository.findOne({
             where: { id },
             relations: {
+                subscriptions: true,
                 application: true,
                 lesson: true,
-                pricingTier: true,
-                child: {
-                    user: true,
-                },
+                child: true,
+                user: true,
             },
         })
 
@@ -162,49 +100,30 @@ export class ManageEnrollmentsService {
     }
 
 
-    async findAllAttendancesByEnrollmentId(enrollmentId: number, query: GetAttendanceListQueryDto) {
-        const { limit, page, dateFrom, dateTo, isPresent, sortDirection } = query
+    async activate(enrollmentId: number) {
+        const enrollment = await this.enrollmentRepository.findOne({
+            where: { id: enrollmentId },
+            relations: { application: true },
+        })
 
-        const queryBuilder = this.attendanceRepository.createQueryBuilder("attendances")
+        if (!enrollment) throw new NotFoundException("Enrollment not found")
 
-        queryBuilder.leftJoinAndSelect("attendances.enrollment", "enrollments")
-        queryBuilder.where("enrollments.id = :enrollmentId", { enrollmentId })
-
-        if (isPresent) {
-            queryBuilder.andWhere("attendances.isPresent = :isPresent", { isPresent })
+        if (enrollment.status !== EnrollmentStatus.PENDING) {
+            throw new BadRequestException("Only pending enrollments can be activated")
         }
 
-        if (dateFrom) {
-            queryBuilder.andWhere("attendances.date >= :dateFrom", { dateFrom })
+        // if there is an application - it must be approved.
+        if (enrollment.application && enrollment.application.status !== ApplicationStatus.APPROVED) {
+            throw new BadRequestException("Application must be approved before activating enrollment")
         }
 
-        if (dateTo) {
-            queryBuilder.andWhere("attendances.date <= :dateTo", { dateTo })
-        }
-
-        queryBuilder.orderBy("attendances.date", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [attendances, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
-
-        this.logger.debug("Get attendance list: ", attendances)
-        return {
-            data: attendances,
-            meta: {
-                totalCount: totalCount,
-                totalPagesAmount: totalPagesAmount,
-                currentPage: page,
-            },
-        }
-    }
-
-
-    async update(enrollmentId: number, data: UpdateEnrollmentBodyDto) {
-        const updateResult = await this.enrollmentRepository.update({ id: enrollmentId }, data)
+        const updateResult = await this.enrollmentRepository.update(
+            { id: enrollmentId },
+            { status: EnrollmentStatus.ACTIVE },
+        )
 
         if (updateResult.affected === 0) {
-            this.logger.debug(`Cannot update enrollment with id: ${enrollmentId}`)
+            this.logger.debug(`Cannot activate enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
 
@@ -212,33 +131,24 @@ export class ManageEnrollmentsService {
     }
 
 
-    async payEnrollment(enrollmentId: number, data: UpdateEnrollmentPaymentBodyDto) {
-        const { paidAt } = data
-
+    async suspend(enrollmentId: number) {
         const enrollment = await this.enrollmentRepository.findOne({
             where: { id: enrollmentId },
-            relations: { pricingTier: true },
         })
 
-        if (!enrollment || !enrollment.pricingTier) {
-            throw new NotFoundException(`Enrollment with id ${enrollmentId} not found`)
-        }
+        if (!enrollment) throw new NotFoundException("Enrollment not found")
 
-        if (enrollment.paymentStatus == PaymentStatus.PAID) {
-            throw new ConflictException(`Enrollment weith id ${enrollmentId} has already been paid`)
+        if (enrollment.status !== EnrollmentStatus.ACTIVE) {
+            throw new BadRequestException("Only active enrollments can be suspended")
         }
 
         const updateResult = await this.enrollmentRepository.update(
             { id: enrollmentId },
-            {
-                paymentStatus: PaymentStatus.PAID,
-                paidAmount: enrollment.pricingTier.price,
-                paidAt: paidAt,
-            }
+            { status: EnrollmentStatus.SUSPENDED },
         )
 
         if (updateResult.affected === 0) {
-            this.logger.debug(`Cannot update enrollment payment with id: ${enrollmentId}`)
+            this.logger.debug(`Cannot suspend enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
 
@@ -246,31 +156,24 @@ export class ManageEnrollmentsService {
     }
 
 
-    async refundEnrollment(enrollmentId: number) {
+    async unsuspend(enrollmentId: number) {
         const enrollment = await this.enrollmentRepository.findOne({
             where: { id: enrollmentId },
-            relations: { pricingTier: true },
         })
 
-        if (!enrollment || !enrollment.pricingTier) {
-            throw new NotFoundException(`Enrollment with id ${enrollmentId} not found`)
-        }
+        if (!enrollment) throw new NotFoundException("Enrollment not found")
 
-        if (enrollment.paymentStatus == PaymentStatus.UNPAID) {
-            throw new ConflictException(`Enrollment with id ${enrollmentId} has already been refunded`)
+        if (enrollment.status !== EnrollmentStatus.SUSPENDED) {
+            throw new BadRequestException("Only suspended enrollments can be re-activated")
         }
 
         const updateResult = await this.enrollmentRepository.update(
             { id: enrollmentId },
-            {
-                paymentStatus: PaymentStatus.UNPAID,
-                paidAmount: 0.0,
-                paidAt: null,
-            }
+            { status: EnrollmentStatus.ACTIVE },
         )
 
         if (updateResult.affected === 0) {
-            this.logger.debug(`Cannot update enrollment payment with id: ${enrollmentId}`)
+            this.logger.debug(`Cannot re-activate enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
 

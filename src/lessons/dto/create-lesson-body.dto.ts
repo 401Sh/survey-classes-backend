@@ -73,7 +73,8 @@ export class CreateLessonBodyDto {
     endsAt?: Date
 
     @ApiPropertyOptional({
-        description: "Принцип одобрения записей на занятие. Принятия всех заявок - AUTO, ручное одобрение - MANUAL",
+        description: `Принцип одобрения записей на занятие. Принятия всех заявок - AUTO, ручное одобрение - MANUAL.
+            Автоматическое принятие заявок работает только для занятий, не требующих заполнения опроса для записи`,
         example: EnrollmentMode.AUTO,
         enum: EnrollmentMode,
     })

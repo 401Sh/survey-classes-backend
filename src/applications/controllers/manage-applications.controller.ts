@@ -42,7 +42,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Одобрение ответов на вопросы",
+        summary: "Одобрение ответов на вопросы и записи на занятие",
     })
     @ApiParam({
         name: "applicationId",

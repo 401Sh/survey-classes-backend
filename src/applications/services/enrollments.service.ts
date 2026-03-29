@@ -36,7 +36,7 @@ export class EnrollmentsService {
         await this.validateActiveEnrollmentExisting(lessonId, childId)
 
         // check status by lesson EnrollmentMode
-        const status = lesson.enrollmentMode === EnrollmentMode.AUTO
+        const status = (lesson.enrollmentMode === EnrollmentMode.AUTO && !lesson.requiresSurvey)
             ? EnrollmentStatus.ACTIVE
             : EnrollmentStatus.PENDING
 

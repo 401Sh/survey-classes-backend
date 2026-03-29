@@ -1,35 +1,11 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common"
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
-import { UpdateEnrollmentBodyDto } from "../dto/update-enrollment-body.dto"
 import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
-import { UpdateEnrollmentPaymentBodyDto } from "../dto/update-enrollment-payment-body.dto"
-import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
-import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
+import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {
     constructor(private manageEnrollmentsService: ManageEnrollmentsService) {}
-
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Создание посещения занятия",
-    })
-    @ApiParam({
-        name: "enrollmentId",
-        required: true,
-        description: "ID записи",
-        example: 1,
-    })
-    @Post(":enrollmentId/attendances")
-    async createAttendance(
-        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Body() data: CreateAttendanceBodyDto,
-    ) {
-        const result = await this.manageEnrollmentsService.createAttendance(enrollmentId, data)
-
-        return result
-    }
 
     @ApiBearerAuth()
     @ApiOperation({
@@ -63,7 +39,7 @@ export class ManageEnrollmentsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение всех посещений занятия для данной записи",
+        summary: "Принятие записи на занятие",
     })
     @ApiParam({
         name: "enrollmentId",
@@ -71,48 +47,19 @@ export class ManageEnrollmentsController {
         description: "ID записи",
         example: 1,
     })
-    @Get(":enrollmentId/attendances")
-    async findAllAttendancesByEnrollmentId(
-        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Query() query: GetAttendanceListQueryDto,
-    ) {
-        const result = await this.manageEnrollmentsService.findAllAttendancesByEnrollmentId(enrollmentId, query)
-
-        return result
-    }
-
-
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Обновление данных записи на занятие",
-    })
-    @ApiParam({
-        name: "enrollmentId",
-        required: true,
-        description: "ID записи",
-        example: 1,
-    })
-    @ApiBody({
-        description: "Данные для обновления записи",
-        required: true,
-        type: UpdateEnrollmentBodyDto,
-    })
-    @Patch(":enrollmentId")
-    async update(
-        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Body() data: UpdateEnrollmentBodyDto,
-    ) {
-        await this.manageEnrollmentsService.update(enrollmentId, data)
+    @Patch(":enrollmentId/activate")
+    async activate(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
+        await this.manageEnrollmentsService.activate(enrollmentId)
 
         return {
-            message: "Enrollment updated successfully",
+            message: "Enrollment activated successfully",
         }
     }
 
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Фиксация оплаты записи на занятие",
+        summary: "Приостановление записи на занятие",
     })
     @ApiParam({
         name: "enrollmentId",
@@ -120,27 +67,19 @@ export class ManageEnrollmentsController {
         description: "ID записи",
         example: 1,
     })
-    @ApiBody({
-        description: "Данные для обновления оплаты",
-        required: true,
-        type: UpdateEnrollmentPaymentBodyDto,
-    })
-    @Patch(":enrollmentId/payment")
-    async payEnrollment(
-        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Body() data: UpdateEnrollmentPaymentBodyDto,
-    ) {
-        await this.manageEnrollmentsService.payEnrollment(enrollmentId, data)
+    @Patch(":enrollmentId/suspend")
+    async suspend(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
+        await this.manageEnrollmentsService.suspend(enrollmentId)
 
         return {
-            message: "Enrollment payment applied successfully",
+            message: "Enrollment suspended successfully",
         }
     }
 
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Отмена оплаты записи на занятие",
+        summary: "Возобновление записи на занятие",
     })
     @ApiParam({
         name: "enrollmentId",
@@ -148,12 +87,12 @@ export class ManageEnrollmentsController {
         description: "ID записи",
         example: 1,
     })
-    @Patch(":enrollmentId/payment/refund")
-    async refundEnrollment(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
-        await this.manageEnrollmentsService.refundEnrollment(enrollmentId)
+    @Patch(":enrollmentId/unsuspend")
+    async unsuspend(@Param("enrollmentId", ParseIntPipe) enrollmentId: number) {
+        await this.manageEnrollmentsService.unsuspend(enrollmentId)
 
         return {
-            message: "Enrollment payment refunded successfully",
+            message: "Enrollment unsuspended successfully",
         }
     }
 }
