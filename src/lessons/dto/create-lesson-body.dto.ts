@@ -1,7 +1,9 @@
-import { ArrayUnique, IsArray, IsBoolean, IsDate, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
+import { ArrayUnique, IsArray, IsBoolean, IsDate, IsEnum, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
 import { Type } from "class-transformer"
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { LABEL_MAX_LENGTH, TEXT_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { EnrollmentMode } from "../enums/enrollment-mode.enum"
+import { ApplicationStatus } from "src/applications/enums/application-status.enum"
 
 export class CreateLessonBodyDto {
     @ApiProperty({
@@ -69,6 +71,15 @@ export class CreateLessonBodyDto {
     @IsDate()
     @IsOptional()
     endsAt?: Date
+
+    @ApiPropertyOptional({
+        description: "Принцип одобрения записей на занятие. Принятия всех заявок - AUTO, ручное одобрение - MANUAL",
+        example: EnrollmentMode.AUTO,
+        enum: EnrollmentMode,
+    })
+    @IsEnum(ApplicationStatus)
+    @IsOptional()
+    enrollmentMode: EnrollmentMode = EnrollmentMode.MANUAL
 
     @ApiPropertyOptional({
         description: "Список id категорий, связанных с занятием",
