@@ -74,24 +74,24 @@ export class GetApplicationListQueryDto {
     lessonId?: number
 
     @ApiPropertyOptional({
-        description: "ID пользователя создавшего заявку",
+        description: "ID пользователя создавшего ответы на вопросы",
         example: 1,
         type: Number,
     })
     @Type(() => Number)
     @IsInt()
     @IsOptional()
-    createdBy?: number
+    userId?: number
 
     @ApiPropertyOptional({
-        description: "ID ребенка для которого создали заявку",
+        description: "ID ребенка для которого создали ответы на вопросы",
         example: 1,
         type: Number,
     })
     @Type(() => Number)
     @IsInt()
     @IsOptional()
-    createdFor?: number
+    childId?: number
 
     @ApiPropertyOptional({
         description: "Направление сортировки - ASC для восходящей и DESC для нисходящей",

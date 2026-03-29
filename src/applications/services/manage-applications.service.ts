@@ -14,19 +14,20 @@ export class ManageApplicationsService {
     constructor(
         @InjectRepository(ApplicationEntity)
         private applicationRepository: Repository<ApplicationEntity>,
+        @InjectRepository(EnrollmentEntity)
+        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async findAll(query: GetApplicationListQueryDto) {
-        const { limit, page, dateFrom, dateTo, status, lessonId, createdBy, createdFor, sortDirection } = query
+        const { limit, page, dateFrom, dateTo, status, lessonId, userId, childId, sortDirection } = query
 
         const queryBuilder = this.applicationRepository.createQueryBuilder("applications")
 
-        queryBuilder.leftJoinAndSelect("applications.createdBy", "users")
-        queryBuilder.leftJoinAndSelect("applications.createdFor", "children")
-        queryBuilder.leftJoinAndSelect("applications.answers", "answers")
+        queryBuilder.leftJoinAndSelect("applications.enrollment", "enrollments")
 
-        queryBuilder.leftJoinAndSelect("applications.lesson", "lessons")
-        queryBuilder.leftJoinAndSelect("applications.pricingTier", "pricingTiers")
+        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
+        queryBuilder.leftJoinAndSelect("enrollments.child", "children")
+        queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
 
         if (status) {
             queryBuilder.where("applications.status = :status", { status })
@@ -44,12 +45,12 @@ export class ManageApplicationsService {
             queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
         }
 
-        if (createdBy) {
-            queryBuilder.andWhere("users.id = :createdBy", { createdBy })
+        if (userId) {
+            queryBuilder.andWhere("users.id = :userId", { userId })
         }
 
-        if (createdFor) {
-            queryBuilder.andWhere("children.id = :createdFor", { createdFor })
+        if (childId) {
+            queryBuilder.andWhere("children.id = :childId", { childId })
         }
 
         queryBuilder.orderBy("applications.createdAt", sortDirection)
@@ -74,22 +75,26 @@ export class ManageApplicationsService {
         const application = await this.applicationRepository.findOne({
             where: { id },
             select: {
-                createdBy: {
-                    id: true,
-                    email: true,
-                    firstName: true,
-                    secondName: true,
-                },
-                createdFor: {
-                    id: true,
-                    firstName: true,
-                    secondName: true,
-                    birthDate: true,
+                enrollment: {
+                    user: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        secondName: true,
+                    },
+                    child: {
+                        id: true,
+                        firstName: true,
+                        secondName: true,
+                        birthDate: true,
+                    },
                 },
             },
             relations: {
-                createdBy: true,
-                createdFor: true,
+                enrollment: {
+                    user: true,
+                    child: true,
+                },
                 answers: {
                     question: true,
                     selectedOption: true,
@@ -109,113 +114,50 @@ export class ManageApplicationsService {
 
 
     async approve(applicationId: number) {
+        const application = await this.applicationRepository.findOne({
+            where: { id: applicationId },
+            relations: { enrollment: true },
+        })
+
+        if (!application) throw new NotFoundException("Application not found")
+
+        if (application.status !== ApplicationStatus.PENDING) {
+            throw new BadRequestException("Cannot approve application")
+        }
+
         await this.applicationRepository.manager.transaction(async (manager) => {
-            const application = await manager.findOne(ApplicationEntity,
-                {
-                    where: { id: applicationId },
-                    relations: {
-                        createdFor: true,
-                        lesson: true,
-                        pricingTier: true,
-                    },
-                }
-            )
-
-            if (!application) throw new NotFoundException("Application not found")
-
-            if (application.status !== ApplicationStatus.PENDING) {
-                throw new BadRequestException("Cannot approve application")
-            }
-
-            await manager.update(ApplicationEntity,
+            const updateResult = await manager.update(ApplicationEntity,
                 { id: applicationId },
                 { status: ApplicationStatus.APPROVED },
             )
 
-            const saveResult = await manager.save(EnrollmentEntity,
-                {
-                    application: { id: applicationId },
-                    lesson: { id: application.lesson?.id },
-                    child: { id: application.createdFor.id },
-                    pricingTier: { id: application.pricingTier.id },
-                    sessionsTotal: application.pricingTier.sessionsCount,
-                    sessionsLeft: application.pricingTier.sessionsCount,
-                    enrolledAt: new Date(),
-                    status: EnrollmentStatus.ACTIVE,
-                },
-            )
+            // activate pending enrollment
+            if (application.enrollment?.status === EnrollmentStatus.PENDING) {
+                await manager.update(EnrollmentEntity,
+                    { id: application.enrollment.id },
+                    { status: EnrollmentStatus.ACTIVE },
+                )
+            }
 
-            this.logger.log(`Application with id ${applicationId} approved, enrollment created`)
-            return saveResult
+            this.logger.log(`Application with id ${applicationId} approved`)
+            return updateResult
         })
     }
 
 
     async reject(applicationId: number) {
-        const updateResult = await this.changeStatus(
-            applicationId,
-            ApplicationStatus.REJECTED,
-            ApplicationStatus.PENDING,
-        )
-
-        return updateResult
-    }
-
-
-    async block(applicationId: number) {
-        const updateResult = await this.changeStatus(
-            applicationId,
-            ApplicationStatus.BLOCKED,
-            ApplicationStatus.APPROVED,
-        )
-        
-        return updateResult
-    }
-
-
-    async unblock(applicationId: number) {
-        const updateResult = await this.changeStatus(
-            applicationId,
-            ApplicationStatus.APPROVED,
-            ApplicationStatus.BLOCKED,
-        )
-        
-        return updateResult
-    }
-
-
-    async revoke(applicationId: number) {
-        const updateResult = await this.changeStatus(
-            applicationId,
-            ApplicationStatus.REJECTED,
-            ApplicationStatus.APPROVED,
-        )
-        
-        return updateResult
-    }
-
-
-    private async changeStatus(
-        applicationId: number,
-        newStatus: ApplicationStatus,
-        allowedStatus: ApplicationStatus,
-    ) {
         const application = await this.applicationRepository.findOne({
-            where: { id: applicationId },
+            where: {
+                id: applicationId,
+                status: ApplicationStatus.PENDING,
+            },
         })
 
-        if (!application) throw new NotFoundException("Application not found")
-
-        if (application.status !== allowedStatus) {
-            throw new BadRequestException(
-                `Cannot change status to "${newStatus}": application is 
-                "${application.status}" but expected "${allowedStatus}"`
-            )
-        }
+        if (!application) throw new NotFoundException("Application not found or already processed")
 
         const updateResult = await this.applicationRepository.update(
             { id: applicationId },
-            { status: newStatus },
+            { status: ApplicationStatus.REJECTED },
         )
 
         if (updateResult.affected === 0) {
@@ -223,7 +165,7 @@ export class ManageApplicationsService {
             throw new NotFoundException(`Application with id ${applicationId} not found`)
         }
 
-        this.logger.log(`Application with id ${applicationId} status changed to ${newStatus}`)
+        this.logger.log(`Application with id ${applicationId} rejected`)
         return updateResult
     }
 }

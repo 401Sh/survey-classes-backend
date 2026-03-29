@@ -12,7 +12,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение всех существующих заявок на занятия",
+        summary: "Получение всех существующих ответов на вопросы",
     })
     @Get()
     async findAll(@Query() query: GetApplicationListQueryDto) {
@@ -24,7 +24,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение заявки на занятие со всеми ответами на вопросы",
+        summary: "Получение ответа на вопросы по ID",
     })
     @ApiParam({
         name: "applicationId",
@@ -42,7 +42,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Подтверждение записи на занятие",
+        summary: "Одобрение ответов на вопросы",
     })
     @ApiParam({
         name: "applicationId",
@@ -62,7 +62,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Отклонение заявки на занятие",
+        summary: "Отклонение ответов на вопросы",
     })
     @ApiParam({
         name: "applicationId",
@@ -76,66 +76,6 @@ export class ManageApplicationsController {
 
         return {
             message: "Application rejected successfully",
-        }
-    }
-
-
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Блокирование принятой заявки на занятие - пользователь не сможет подавать новые заявки",
-    })
-    @ApiParam({
-        name: "applicationId",
-        required: true,
-        description: "ID заявки",
-        example: 1,
-    })
-    @Patch(":applicationId/block")
-    async block(@Param("applicationId", ParseIntPipe) applicationId: number) {
-        await this.manageApplicationsService.block(applicationId)
-
-        return {
-            message: "Application blocked successfully",
-        }
-    }
-
-
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Разблокирование принятой заявки на занятие",
-    })
-    @ApiParam({
-        name: "applicationId",
-        required: true,
-        description: "ID заявки",
-        example: 1,
-    })
-    @Patch(":applicationId/unblock")
-    async unblock(@Param("applicationId", ParseIntPipe) applicationId: number) {
-        await this.manageApplicationsService.unblock(applicationId)
-
-        return {
-            message: "Application unblocked successfully",
-        }
-    }
-
-
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Окончательное отклонение принятой заявки на занятие",
-    })
-    @ApiParam({
-        name: "applicationId",
-        required: true,
-        description: "ID заявки",
-        example: 1,
-    })
-    @Patch(":applicationId/revoke")
-    async revoke(@Param("applicationId", ParseIntPipe) applicationId: number) {
-        await this.manageApplicationsService.revoke(applicationId)
-
-        return {
-            message: "Application revoked successfully",
         }
     }
 }
