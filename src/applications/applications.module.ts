@@ -18,6 +18,8 @@ import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { EnrollmentsController } from "./controllers/enrollments.controller"
 import { EnrollmentsService } from "./services/enrollments.service"
 import { SubscriptionEntity } from "./entities/subscription.entity"
+import { ManageSubscriptionsController } from "./controllers/manage-subscriptions.controller"
+import { ManageSubscriptionsService } from "./services/manage-subscriptions.service"
 
 @Module({
     imports: [
@@ -38,6 +40,7 @@ import { SubscriptionEntity } from "./entities/subscription.entity"
         ManageApplicationsController,
         ManageEnrollmentsController,
         ManageAttendancesController,
+        ManageSubscriptionsController,
     ],
     providers: [
         ApplicationsService,
@@ -45,6 +48,7 @@ import { SubscriptionEntity } from "./entities/subscription.entity"
         ManageApplicationsService,
         ManageEnrollmentsService,
         ManageAttendancesService,
+        ManageSubscriptionsService,
     ],
 })
 export class ApplicationsModule {}

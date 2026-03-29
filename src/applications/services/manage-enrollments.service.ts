@@ -25,7 +25,7 @@ export class ManageEnrollmentsService {
             lessonId,
             parentId,
             childId,
-            sortDirection
+            sortDirection,
         } = query
 
         const queryBuilder = this.enrollmentRepository.createQueryBuilder("enrollments")

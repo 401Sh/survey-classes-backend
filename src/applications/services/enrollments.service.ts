@@ -75,6 +75,10 @@ export class EnrollmentsService {
         // check and get enrollment with
         const enrollment = await this.getEnrollmentOrThrow(userId, enrollmentId)
 
+        if (enrollment.status !== EnrollmentStatus.ACTIVE) {
+            throw new BadRequestException("Cannot create subscription for non-active enrollment")
+        }
+
         // check pricingTier existing
         const lessonId = enrollment.lesson.id
         const pricingTier = await this.getPricingTierOrThrow(pricingTierId, lessonId)
@@ -84,6 +88,7 @@ export class EnrollmentsService {
             pricingTier: { id: pricingTierId },
             priceSnapshot: pricingTier.price,
             sessionsTotal: pricingTier.sessionsCount,
+            sessionsLeft: pricingTier.sessionsCount,
         })
 
         this.logger.log(`Created subscription with pricingTier ${pricingTierId} for enrollment ${enrollmentId}`)
@@ -220,6 +225,11 @@ export class EnrollmentsService {
                 paidAmount: true,
                 sessionsTotal: true,
                 sessionsLeft: true,
+                pricingTier: {
+                    id: true,
+                    label: true,
+                    sessionsCount: true,
+                },
             },
             relations: {
                 pricingTier: true,
