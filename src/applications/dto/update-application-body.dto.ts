@@ -1,27 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsArray, IsInt, ValidateNested } from "class-validator"
+import { IsInt, IsArray, ValidateNested } from "class-validator"
 import { CreateAnswerBodyDto } from "./create-answer-body.dto"
 
-export class CreateApplicationBodyDto {
-    @ApiProperty({
-        description: "ID опроса",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    surveyId: number
-
-    @ApiProperty({
-        description: "ID записи на занятие",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    enrollmentId: number
-
+export class UpdateApplicationBodyDto {
     @ApiProperty({
         description: "Ответы на вопросы",
         example: [

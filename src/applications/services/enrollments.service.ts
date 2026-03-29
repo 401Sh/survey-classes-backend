@@ -176,6 +176,23 @@ export class EnrollmentsService {
     }
 
 
+    async remove(userId: number, enrollmentId: number) {
+        this.logger.log(`Deleting pending enrollment with id: ${enrollmentId}`)
+        const deleteResult = await this.enrollmentRepository.delete({
+            id: enrollmentId,
+            user: { id: userId },
+            status: EnrollmentStatus.PENDING,
+        })
+
+        if (deleteResult.affected === 0) {
+            this.logger.log(`Cannot delete enrollment. No  pending enrollment with id: ${enrollmentId}`)
+            throw new NotFoundException(`Pending enrollment with id ${enrollmentId} not found`)
+        }
+
+        return deleteResult
+    }
+
+
     private async validateChildOwnership(childId: number, userId: number) {
         const exists = await this.childRepository.exists({
             where: {

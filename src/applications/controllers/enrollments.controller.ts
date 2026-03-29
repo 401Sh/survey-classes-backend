@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request } from "@nestjs/common"
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Request } from "@nestjs/common"
 import { EnrollmentsService } from "../services/enrollments.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
@@ -67,5 +67,30 @@ export class EnrollmentsController {
         const result = await this.enrollmentsService.findById(userId, enrollmentId)
 
         return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Отмена записи на занятие",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи на занятие",
+        example: 1,
+    })
+    @Delete(":enrollmentId")
+    async remove(
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+        @Request() req,
+    ) {
+        const userId = req.user.sub
+
+        await this.enrollmentsService.remove(userId, enrollmentId)
+
+        return {
+            message: "Enrollment deleted successfully",
+        }
     }
 }

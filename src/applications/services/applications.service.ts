@@ -4,12 +4,12 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { ApplicationEntity } from "../entities/application.entity"
 import { DeepPartial, EntityManager, In, Not, Repository } from "typeorm"
 import { AnswerEntity } from "../entities/answer.entity"
-import { ApplicationStatus, FINAL_STATUSES, REAPPLICABLE_STATUSES } from "../enums/application-status.enum"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
-import { UserChildEntity } from "src/users/entities/user-child.entity"
+import { ApplicationStatus } from "../enums/application-status.enum"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { CreateAnswerBodyDto } from "../dto/create-answer-body.dto"
+import { EnrollmentEntity } from "../entities/enrollment.entity"
+import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
 
 @Injectable()
 export class ApplicationsService {
@@ -18,47 +18,36 @@ export class ApplicationsService {
     constructor(
         @InjectRepository(ApplicationEntity)
         private applicationRepository: Repository<ApplicationEntity>,
-        @InjectRepository(LessonPricingTierEntity)
-        private pricingTierRepository: Repository<LessonPricingTierEntity>,
-        @InjectRepository(UserChildEntity)
-        private childRepository: Repository<UserChildEntity>,
+        @InjectRepository(EnrollmentEntity)
+        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async create(userId: number, data: CreateApplicationBodyDto) {
-        const { lessonId, childId, consentedAt, pricingTierId, answers } = data
+        const { surveyId, enrollmentId, answers } = data
 
-        // check blocked application
-        await this.validateNotBlocked(lessonId, childId)
-        // check re-application
-        const answersLength = answers.length
-        await this.validateReapplication(lessonId, childId, answersLength)
-        // check that the pricing tier belongs to the activity and is active
-        await this.validatePricingTier(lessonId, pricingTierId)
-        // check that the child belongs to the user
-        await this.validateChildOwnership(childId, userId)
-        // check application duplication for this lesson for this child
-        await this.validateDuplicateApplication(lessonId, childId)
+        // check that the enrollment belongs to the user
+        await this.validateEnrollmentExists(userId, enrollmentId)
+
+        // check cancelled application
+        await this.validateApplicationNotExists(enrollmentId)
+
+        // check that survey exists and belongs to this lesson
+        await this.validateSurvey(enrollmentId, surveyId)
 
         const application = await this.applicationRepository.manager.transaction(async (manager) => {
             const application = await manager.save(ApplicationEntity,
                 {
-                    consentedAt: consentedAt,
-                    createdBy: { id: userId },
-                    createdFor: { id: childId },
-                    lesson: { id: lessonId },
-                    pricingTier: { id: pricingTierId },
-                    survey: {
-                        lesson: { id: lessonId },
-                    },
+                    survey: { id: surveyId },
+                    enrollment: { id: enrollmentId },
                 }
             )
 
-            await this.saveAnswers(manager, application, answers, lessonId)
+            await this.saveAnswers(manager, application, answers, surveyId)
 
             return application
         })
 
-        this.logger.log(`Created child ${childId} application for lesson id: ${lessonId}`)
+        this.logger.log(`Created survey ${surveyId} application for enrollment id: ${enrollmentId}`)
         this.logger.debug("Created application", application)
         return application
     }
@@ -68,34 +57,32 @@ export class ApplicationsService {
     async findAll(userId: number) {
         const applications = await this.applicationRepository.find({
             where: {
-                createdBy: { id: userId },
+                enrollment: {
+                    user: { id: userId },
+                },
             },
             select: {
                 id: true,
                 status: true,
-                consentedAt: true,
                 createdAt: true,
-                createdFor: {
-                    id: true,
-                    firstName: true,
-                    secondName: true,
-                    birthDate: true,
-                },
-                lesson: {
-                    id: true,
-                    name: true,
-                },
-                pricingTier: {
-                    id: true,
-                    label: true,
-                    price: true,
-                    sessionsCount: true,
+                enrollment: {
+                    child: {
+                        id: true,
+                        firstName: true,
+                        secondName: true,
+                        birthDate: true,
+                    },
+                    lesson: {
+                        id: true,
+                        name: true,
+                    },
                 },
             },
             relations: {
-                createdFor: true,
-                lesson: true,
-                pricingTier: true,
+                enrollment: {
+                    child: true,
+                    lesson: true,
+                },
             },
             order: {
                 createdAt: SortDirection.DESC,
@@ -111,28 +98,25 @@ export class ApplicationsService {
         const application = await this.applicationRepository.findOne({
             where: {
                 id: applicationId,
-                createdBy: { id: userId },
+                enrollment: {
+                    user: { id: userId },
+                },
             },
             select: {
                 id: true,
                 status: true,
-                consentedAt: true,
                 createdAt: true,
-                createdFor: {
-                    id: true,
-                    firstName: true,
-                    secondName: true,
-                    birthDate: true,
-                },
-                lesson: {
-                    id: true,
-                    name: true,
-                },
-                pricingTier: {
-                    id: true,
-                    label: true,
-                    price: true,
-                    sessionsCount: true,
+                enrollment: {
+                    child: {
+                        id: true,
+                        firstName: true,
+                        secondName: true,
+                        birthDate: true,
+                    },
+                    lesson: {
+                        id: true,
+                        name: true,
+                    },
                 },
                 answers: {
                     id: true,
@@ -149,9 +133,10 @@ export class ApplicationsService {
                 },
             },
             relations: {
-                createdFor: true,
-                lesson: true,
-                pricingTier: true,
+                enrollment: {
+                    child: true,
+                    lesson: true,
+                },
                 answers: {
                     question: true,
                     selectedOption: true,
@@ -167,100 +152,87 @@ export class ApplicationsService {
     }
 
 
-    async cancel(userId: number, applicationId: number) {
+    async update(userId: number, applicationId: number, data: UpdateApplicationBodyDto) {
+        const { answers } = data
+
         const application = await this.applicationRepository.findOne({
             where: {
                 id: applicationId,
-                createdBy: { id: userId },
+                enrollment: {
+                    user: { id: userId },
+                },
+                status: ApplicationStatus.PENDING,
             },
-        })
-
-        if (!application) throw new NotFoundException("Application not found")
-
-        if (application.status !== ApplicationStatus.PENDING) {
-            throw new BadRequestException("Only pending applications can be cancelled")
-        }
-
-        const updateResult = await this.applicationRepository.update(
-            { id: applicationId },
-            { status: ApplicationStatus.CANCELLED },
-        )
-
-        if (updateResult.affected === 0) {
-            this.logger.debug(`Cannot update application with id: ${applicationId}`)
-            throw new NotFoundException(`Application with id ${applicationId} not found`)
-        }
-
-        this.logger.log(`Application with id ${application.id} status changed successfully`)
-        return updateResult
-    }
-
-
-    private async validateNotBlocked(lessonId: number, childId: number) {
-        const isBlocked = await this.applicationRepository.exists({
-            where: {
-                createdFor: { id: childId },
-                lesson: { id: lessonId },
-                status: ApplicationStatus.BLOCKED,
-            },
+            relations: { answers: true },
         })
     
-        if (isBlocked) {
-            throw new BadRequestException("Application is blocked. You cannot apply again")
-        }
-    }
+        if (!application) throw new NotFoundException("Application not found or already approved")
 
+        await this.applicationRepository.manager.transaction(async (manager) => {
+            await manager.delete(AnswerEntity,
+                {
+                    response: { id: applicationId },
+                },
+            )
 
-    private async validateReapplication(lessonId: number, childId: number, answersLength: number) {
-        const isCompletedSurveyBefore = await this.applicationRepository.exists({
-            where: {
-                createdFor: { id: childId },
-                lesson: { id: lessonId },
-                status: In(REAPPLICABLE_STATUSES),
-            },
+            const surveyId = application.survey.id
+            await this.saveAnswers(manager, application, answers, surveyId)
+
+            this.logger.log(`Updated answers for application with id: ${applicationId}`)
         })
-
-        if (!isCompletedSurveyBefore && answersLength === 0) {
-            throw new BadRequestException("Survey answers are required for first application")
-        }
     }
 
 
-    private async validatePricingTier(lessonId: number, tierId: number) {
-        const tier = await this.pricingTierRepository.findOne({
+    private async validateEnrollmentExists(userId: number, enrollmentId: number) {
+        const isEnrollmentExists = await this.enrollmentRepository.exists({
             where: {
-                id: tierId,
-                lesson: { id: lessonId },
-                isActive: true,
-            },
-        })
-
-        if (!tier) throw new NotFoundException("Pricing tier not found")
-    }
-
-
-    private async validateChildOwnership(childId: number, userId: number) {
-        const child = await this.childRepository.findOne({
-            where: {
-                id: childId,
+                id: enrollmentId,
                 user: { id: userId },
             },
         })
 
-        if (!child) throw new NotFoundException("Child not found")
+        if (!isEnrollmentExists) throw new NotFoundException("Enrollment not found")
     }
 
 
-    private async validateDuplicateApplication(lessonId: number, childId: number) {
-        const isApplicationExists = await this.applicationRepository.exists({
+    private async validateApplicationNotExists(enrollmentId: number) {
+        const isBlocked = await this.applicationRepository.exists({
             where: {
-                createdFor: { id: childId },
-                lesson: { id: lessonId },
-                status: Not(In(FINAL_STATUSES)),
+                enrollment: { id: enrollmentId },
             },
         })
 
-        if (isApplicationExists) throw new BadRequestException("Application for this child and lesson already exists")
+        if (isBlocked) {
+            throw new BadRequestException(
+                "Application already exists for this enrollment. Create a new enrollment to resubmit"
+            )
+        }
+    }
+
+
+    private async validateSurvey(enrollmentId: number, surveyId: number) {
+        const enrollment = await this.enrollmentRepository.findOne({
+            where: { id: enrollmentId },
+            relations: {
+                lesson: { survey: true },
+            },
+        })
+    
+        // check that lesson requires survey
+        if (!enrollment!.lesson.requiresSurvey) {
+            throw new BadRequestException("This lesson does not require a survey")
+        }
+    
+        // check that survey is active
+        const survey = enrollment!.lesson.survey
+        if (!survey || !survey.isActive) {
+            throw new BadRequestException("No active survey found for this lesson")
+        }
+    
+        // check that surveyId exists belongs to survey in lesson
+        if (survey.id !== surveyId) {
+            throw new BadRequestException("Survey does not belong to this lesson")
+        }
     }
 
 
@@ -268,16 +240,14 @@ export class ApplicationsService {
         manager: EntityManager,
         application: ApplicationEntity,
         answers: CreateAnswerBodyDto[],
-        lessonId: number,
+        surveyId: number,
     ) {
         const questionIds = answers.map(a => a.questionId)
     
         const questions = await manager.find(QuestionEntity, {
             where: {
                 id: In(questionIds),
-                survey: {
-                    lesson: { id: lessonId },
-                },
+                survey: { id: surveyId },
             },
             relations: { options: true },
         })

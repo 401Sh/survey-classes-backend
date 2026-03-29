@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Request } from
 import { ApplicationsService } from "../services/applications.service"
 import { CreateApplicationBodyDto } from "../dto/create-application-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
 
 @Controller("applications/me")
 export class ApplicationsController {
@@ -9,7 +10,7 @@ export class ApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Создание заявки для записи на занятие",
+        summary: "Создание ответов на опрос для записи на занятие",
     })
     @ApiBody({
         description: "Данные для создания заявки",
@@ -31,7 +32,7 @@ export class ApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получения всех созданных заявок",
+        summary: "Получения всех созданных ответов на опросы",
     })
     @Get()
     async findAll(@Request() req) {
@@ -45,7 +46,7 @@ export class ApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение созданной заявки",
+        summary: "Получение созданных ответов на опрос",
     })
     @ApiParam({
         name: "applicationId",
@@ -68,25 +69,31 @@ export class ApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Отмена заявки на занятие",
+        summary: "Обновление данных ответов на опрос",
     })
     @ApiParam({
         name: "applicationId",
         required: true,
-        description: "ID заявки",
+        description: "ID опроса",
         example: 1,
     })
-    @Patch(":applicationId/cancel")
-    async cancelApplication(
+    @ApiBody({
+        description: "Данные для обновления ответов",
+        required: true,
+        type: UpdateApplicationBodyDto,
+    })
+    @Patch(":applicationId")
+    async update(
         @Request() req,
         @Param("applicationId", ParseIntPipe) applicationId: number,
+        @Body() data: UpdateApplicationBodyDto,
     ) {
         const userId = req.user.sub
 
-        await this.applicationsService.cancel(userId, applicationId)
+        await this.applicationsService.update(userId, applicationId, data)
 
         return {
-            message: "Application canceled successfully",
+            message: "Application updated successfully",
         }
     }
 }
