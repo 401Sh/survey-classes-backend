@@ -4,8 +4,7 @@ import { AttendanceEntity } from "../entities/attendance.entity"
 import { Repository } from "typeorm"
 import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { GetAttendanceBodyDto } from "../dto/get-attendance-body.dto"
-import { EnrollmentEntity } from "../entities/enrollment.entity"
-import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { SubscriptionEntity } from "../entities/subscription.entity"
 
 @Injectable()
 export class ManageAttendancesService {
@@ -14,8 +13,6 @@ export class ManageAttendancesService {
     constructor(
         @InjectRepository(AttendanceEntity)
         private attendanceRepository: Repository<AttendanceEntity>,
-        @InjectRepository(EnrollmentEntity)
-        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async findAll(query: GetAttendanceBodyDto) {
@@ -33,9 +30,10 @@ export class ManageAttendancesService {
 
         const queryBuilder = this.attendanceRepository.createQueryBuilder("attendances")
 
-        queryBuilder.leftJoinAndSelect("attendances.enrollment", "enrollments")
+        queryBuilder.leftJoinAndSelect("attendances.subscription", "subscriptions")
+        queryBuilder.leftJoinAndSelect("subscriptions.enrollment", "enrollments")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-        queryBuilder.leftJoinAndSelect("children.user", "users")
+        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
         
         if (isPresent !== undefined) {
@@ -83,11 +81,11 @@ export class ManageAttendancesService {
     async update(attendanceId: number, data: UpdateAttendanceBodyDto) {
         const { isPresent } = data
 
-        const attendance = await this.enrollmentRepository.manager.transaction(async (manager) => {
+        const attendance = await this.attendanceRepository.manager.transaction(async (manager) => {
             const attendance = await manager.findOne(AttendanceEntity,
                 {
                     where: { id: attendanceId },
-                    relations: { enrollment: true },
+                    relations: { subscription: true },
                 }
             )
 
@@ -100,19 +98,18 @@ export class ManageAttendancesService {
 
             // change sessionsLeft
             if (isPresent !== undefined && isPresent !== attendance.isPresent) {
-                const enrollment = attendance.enrollment
+                const subscription = attendance.subscription
 
                 const delta = isPresent ? -1 : +1
-                const newSessionsLeft = enrollment.sessionsLeft + delta
-                // if sessionsLeft is equal to zero - change status to FINISHED
-                const newStatus = newSessionsLeft <= 0 ? EnrollmentStatus.FINISHED : EnrollmentStatus.ACTIVE
+                const newSessionsLeft = subscription.sessionsLeft + delta
 
-                await manager.update(EnrollmentEntity,
-                    { id: enrollment.id },
+                // if sessionsLeft is equal to zero - change isActive status to false
+                await manager.update(SubscriptionEntity,
+                    { id: subscription.id },
                     {
                         sessionsLeft: newSessionsLeft,
-                        status: newStatus,
-                    }
+                        isActive: newSessionsLeft > 0,
+                    },
                 )
             }
 
@@ -130,24 +127,22 @@ export class ManageAttendancesService {
         await this.attendanceRepository.manager.transaction(async (manager) => {
             const attendance = await manager.findOne(AttendanceEntity, {
                 where: { id: attendanceId },
-                relations: { enrollment: true },
+                relations: { subscription: true },
             })
 
             if (!attendance) throw new NotFoundException(`Attendance with id ${attendanceId} not found`)
 
-            // return session if it was used
+            // return session number if it was used before
             if (attendance.isPresent) {
-                const enrollment = attendance.enrollment
-
-                const newSessionsLeft = enrollment.sessionsLeft + 1
-                const newStatus = newSessionsLeft > 0 ? EnrollmentStatus.ACTIVE : enrollment.status
+                const subscription = attendance.subscription
+                const newSessionsLeft = subscription.sessionsLeft + 1
     
-                await manager.update(EnrollmentEntity,
-                    { id: attendance.enrollment.id },
+                await manager.update(SubscriptionEntity,
+                    { id: subscription.id },
                     {
                         sessionsLeft: newSessionsLeft,
-                        status: newStatus,
-                    }
+                        isActive: true,
+                    },
                 )
             }
 

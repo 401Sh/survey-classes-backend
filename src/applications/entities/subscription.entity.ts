@@ -18,6 +18,9 @@ export class SubscriptionEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
+    @Column({ type: "bool", default: true })
+    isActive: boolean = true
+
     @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.UNPAID })
     paymentStatus: PaymentStatus
 

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
-import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { ManageAttendancesService } from "../services/manage-attendances.service"
 import { GetAttendanceBodyDto } from "../dto/get-attendance-body.dto"
@@ -29,6 +29,11 @@ export class ManageAttendancesController {
         required: true,
         description: "ID посещения занятия",
         example: 1,
+    })
+    @ApiBody({
+        description: "Данные для обновления посещения",
+        required: true,
+        type: UpdateAttendanceBodyDto,
     })
     @Patch(":attendanceId")
     async update(
