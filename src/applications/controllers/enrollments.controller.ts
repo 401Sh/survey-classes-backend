@@ -3,6 +3,7 @@ import { EnrollmentsService } from "../services/enrollments.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
+import { CreateSubscriptionBodyDto } from "../dto/create-subscription-body.dto"
 
 @Controller("enrollments/me")
 export class EnrollmentsController {
@@ -25,6 +26,35 @@ export class EnrollmentsController {
         const userId = req.user.sub
 
         const result = await this.enrollmentsService.create(userId, data)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Добавление тарифа оплаты к записи на занятие",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи на занятие",
+        example: 1,
+    })
+    @ApiBody({
+        description: "Данные для добавления тарифа оплаты",
+        required: true,
+        type: CreateSubscriptionBodyDto,
+    })
+    @Post(":enrollmentId")
+    async createSubscription(
+        @Request() req,
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+        @Body() data: CreateSubscriptionBodyDto,
+    ) {
+        const userId = req.user.sub
+
+        const result = await this.enrollmentsService.createSubscription(userId, enrollmentId, data)
 
         return result
     }
@@ -65,6 +95,29 @@ export class EnrollmentsController {
         const userId = req.user.sub
 
         const result = await this.enrollmentsService.findById(userId, enrollmentId)
+
+        return result
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Получения всех добавленных тарифов оплаты",
+    })
+    @ApiParam({
+        name: "enrollmentId",
+        required: true,
+        description: "ID записи на занятие",
+        example: 1,
+    })
+    @Get(":enrollmentId")
+    async findAllSubscriptionByEnrollmentId(
+        @Request() req,
+        @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
+    ) {
+        const userId = req.user.sub
+
+        const result = await this.enrollmentsService.findAllSubscriptionByEnrollmentId(userId, enrollmentId)
 
         return result
     }

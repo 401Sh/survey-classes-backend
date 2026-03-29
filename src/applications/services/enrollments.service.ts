@@ -9,6 +9,9 @@ import { ApplicationEntity } from "../entities/application.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
+import { CreateSubscriptionBodyDto } from "../dto/create-subscription-body.dto"
+import { SubscriptionEntity } from "../entities/subscription.entity"
+import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 
 @Injectable()
 export class EnrollmentsService {
@@ -17,10 +20,14 @@ export class EnrollmentsService {
     constructor(
         @InjectRepository(EnrollmentEntity)
         private enrollmentRepository: Repository<EnrollmentEntity>,
+        @InjectRepository(SubscriptionEntity)
+        private subscriptionRepository: Repository<SubscriptionEntity>,
         @InjectRepository(UserChildEntity)
         private childRepository: Repository<UserChildEntity>,
         @InjectRepository(LessonEntity)
         private lessonRepository: Repository<LessonEntity>,
+        @InjectRepository(LessonPricingTierEntity)
+        private pricingTierRepository: Repository<LessonPricingTierEntity>,
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
@@ -59,6 +66,28 @@ export class EnrollmentsService {
             requiresSurvey,
             surveyId: requiresSurvey ? lesson.survey.id : null,
         }
+    }
+
+
+    async createSubscription(userId: number, enrollmentId: number, data: CreateSubscriptionBodyDto) {
+        const { pricingTierId } = data
+
+        // check and get enrollment with
+        const enrollment = await this.getEnrollmentOrThrow(userId, enrollmentId)
+
+        // check pricingTier existing
+        const lessonId = enrollment.lesson.id
+        const pricingTier = await this.getPricingTierOrThrow(pricingTierId, lessonId)
+
+        const subscription = await this.subscriptionRepository.save({
+            enrollment: { id: enrollmentId },
+            pricingTier: { id: pricingTierId },
+            priceSnapshot: pricingTier.price,
+            sessionsTotal: pricingTier.sessionsCount,
+        })
+
+        this.logger.log(`Created subscription with pricingTier ${pricingTierId} for enrollment ${enrollmentId}`)
+        return subscription
     }
 
 
@@ -176,6 +205,32 @@ export class EnrollmentsService {
     }
 
 
+    async findAllSubscriptionByEnrollmentId(userId: number, enrollmentId: number) {
+        const subscriptions = await this.subscriptionRepository.find({
+            where: {
+                enrollment: {
+                    id: enrollmentId,
+                    user: { id: userId },
+                }
+            },
+            select: {
+                id: true,
+                paymentStatus: true,
+                priceSnapshot: true,
+                paidAmount: true,
+                sessionsTotal: true,
+                sessionsLeft: true,
+            },
+            relations: {
+                pricingTier: true,
+            },
+        })
+
+        this.logger.debug("Get subscription list: ", subscriptions)
+        return subscriptions
+    }
+
+
     async remove(userId: number, enrollmentId: number) {
         this.logger.log(`Deleting pending enrollment with id: ${enrollmentId}`)
         const deleteResult = await this.enrollmentRepository.delete({
@@ -236,5 +291,42 @@ export class EnrollmentsService {
         if (isEnrollmentExists) {
             throw new BadRequestException("Child is already enrolled in this lesson")
         }
+    }
+
+
+    private async getEnrollmentOrThrow(userId: number, enrollmentId: number) {
+        const enrollment = await this.enrollmentRepository.findOne({
+            where: {
+                id: enrollmentId,
+                status: EnrollmentStatus.ACTIVE,
+                user: { id: userId },
+            },
+            relations: {
+                lesson: true,
+            },
+        })
+    
+        if (!enrollment) {
+            throw new NotFoundException("Enrollment not found")
+        }
+
+        return enrollment
+    }
+
+
+    private async getPricingTierOrThrow(tierId: number, lessonId: number) {
+        const tier = await this.pricingTierRepository.findOne({
+            where: {
+                id: tierId,
+                lesson: { id: lessonId },
+                isActive: true,
+            },
+        })
+    
+        if (!tier) {
+            throw new NotFoundException("Pricing tier not found")
+        }
+    
+        return tier
     }
 }
