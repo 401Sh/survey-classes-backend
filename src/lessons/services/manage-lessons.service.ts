@@ -56,8 +56,8 @@ export class ManageLessonsService {
 
 
     async createPricingTier(lessonId: number, data: CreatePricingTierBodyDto) {
-        const isLessonExists = await this.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        // check that lesson exists
+        await this.validateLessonExists(lessonId)
 
         const pricingTier = await this.pricingTierRepository.save({
             ...data,
@@ -73,8 +73,8 @@ export class ManageLessonsService {
     async createWeeklySlots(lessonId: number, data: CreateWeeklySlotBodyDto) {
         const { daysOfWeek, ...slotData } = data
 
-        const isLessonExists = await this.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        // check that lesson exists
+        await this.validateLessonExists(lessonId)
 
         // check date + time dublication
         const existingSlots = await this.weeklySlotRepository.find({
@@ -107,8 +107,8 @@ export class ManageLessonsService {
 
 
     async createScheduleOverride(lessonId: number, data: CreateScheduleOverrideBodyDto) {
-        const isLessonExists = await this.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        // check that lesson exists
+        await this.validateLessonExists(lessonId)
 
         const scheduleOverride = await this.scheduleOverrideRepository.save({
             ...data,
@@ -214,16 +214,11 @@ export class ManageLessonsService {
     }
 
 
-    async existsById(id: number): Promise<boolean> {
-        return this.lessonRepository.existsBy({ id })
-    }
-
-
     async findAllPricingTiersByLessonId(lessonId: number, query: GetPricingTierQueryDto) {
         const { isActive } = query
 
-        const isLessonExists = await this.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        // check that lesson exists
+        await this.validateLessonExists(lessonId)
 
         const pricingTiers = await this.pricingTierRepository.find({
             where: {
@@ -241,8 +236,8 @@ export class ManageLessonsService {
     async findAllWeeklySlotsByLessonId(lessonId: number, query: GetWeeklySlotQueryDto) {
         const { isActive, daysOfWeek } = query
 
-        const isLessonExists = await this.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        // check that lesson exists
+        await this.validateLessonExists(lessonId)
 
         const weeklySlots = await this.weeklySlotRepository.find({
             where: {
@@ -264,8 +259,8 @@ export class ManageLessonsService {
     async findAllScheduleOverridesByLessonId(lessonId: number, query: GetScheduleOverrideQueryDto) {
         const { status } = query
 
-        const isLessonExists = await this.existsById(lessonId)
-        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
+        // check that lesson exists
+        await this.validateLessonExists(lessonId)
 
         const scheduleOverrides = await this.scheduleOverrideRepository.find({
             where: {
@@ -317,5 +312,14 @@ export class ManageLessonsService {
         }
 
         return deleteResult
+    }
+
+
+    private async validateLessonExists(lessonId: number) {
+        const isLessonExists = await this.lessonRepository.exists({
+            where: { id: lessonId }
+        })
+
+        if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
     }
 }

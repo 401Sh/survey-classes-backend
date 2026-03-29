@@ -70,8 +70,8 @@ export class ManageQuestionsService {
 
 
     async findAllOptionsByQuestionid(questionId: number) {
-        const isQuestionExists = await this.existsById(questionId)
-        if (!isQuestionExists) throw new NotFoundException(`Question with id ${isQuestionExists} not found`)
+        // check that question exists
+        await this.validateQuestionExists(questionId)
 
         const options = await this.questionRepository.find({
             where: {
@@ -87,11 +87,6 @@ export class ManageQuestionsService {
         this.logger.log(`Finded question options for question with id: ${questionId}`)
         this.logger.debug("Get question options list: ", options)
         return options
-    }
-
-
-    async existsById(id: number): Promise<boolean> {
-        return this.questionRepository.existsBy({ id })
     }
 
 
@@ -179,5 +174,14 @@ export class ManageQuestionsService {
         }
 
         return deleteResult
+    }
+
+
+    private async validateQuestionExists(questionId: number) {
+        const isQuestionExists = await this.questionRepository.exists({
+            where: { id: questionId }
+        })
+
+        if (!isQuestionExists) throw new NotFoundException(`Question with id ${questionId} not found`)
     }
 }

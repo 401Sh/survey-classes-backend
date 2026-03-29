@@ -5,7 +5,6 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 import { SurveyEntity } from "./entities/survey.entity"
 import { QuestionEntity } from "./entities/question.entity"
 import { QuestionOptionEntity } from "./entities/question-option.entity"
-import { LessonsModule } from "src/lessons/lessons.module"
 import { ManageSurveysController } from "./controllers/manage-surveys.controller"
 import { ManageQuestionsController } from "./controllers/manage-questions.controller"
 import { ManageQuestionOptionsController } from "./controllers/manage-question-options.controller"
@@ -20,7 +19,6 @@ import { ManageQuestionOptionsService } from "./services/manage-question-options
             QuestionEntity,
             QuestionOptionEntity,
         ]),
-        LessonsModule,
     ],
     controllers: [
         SurveysController,

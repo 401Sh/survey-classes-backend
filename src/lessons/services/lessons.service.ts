@@ -24,11 +24,6 @@ export class LessonsService {
         private scheduleOverrideRepository: Repository<LessonScheduleOverrideEntity>,
     ) {}
 
-    async existsById(id: number): Promise<boolean> {
-        return this.lessonRepository.existsBy({ id })
-    }
-
-
     async findAll(query: GetLessonListQueryDto) {
         const {
             limit,
