@@ -23,16 +23,14 @@ export class ApplicationsService {
     ) {}
 
     async create(userId: number, data: CreateApplicationBodyDto) {
-        const { surveyId, enrollmentId, answers } = data
+        const { enrollmentId, answers } = data
 
         // check that the enrollment belongs to the user
-        await this.validateEnrollmentExists(userId, enrollmentId)
+        const enrollment = await this.getEnrollmentOrThrow(userId, enrollmentId)
+        const surveyId = enrollment.lesson.survey.id
 
         // check cancelled application
         await this.validateApplicationNotExists(enrollmentId)
-
-        // check that survey exists and belongs to this lesson
-        await this.validateSurvey(enrollmentId, surveyId)
 
         const application = await this.applicationRepository.manager.transaction(async (manager) => {
             const application = await manager.save(ApplicationEntity,
@@ -183,15 +181,29 @@ export class ApplicationsService {
     }
 
 
-    private async validateEnrollmentExists(userId: number, enrollmentId: number) {
-        const isEnrollmentExists = await this.enrollmentRepository.exists({
+    private async getEnrollmentOrThrow(userId: number, enrollmentId: number) {
+        const enrollment = await this.enrollmentRepository.findOne({
             where: {
                 id: enrollmentId,
                 user: { id: userId },
             },
+            relations: {
+                lesson: { survey: true },
+            },
         })
 
-        if (!isEnrollmentExists) throw new NotFoundException("Enrollment not found")
+        if (!enrollment) throw new NotFoundException("Enrollment not found")
+
+        if (!enrollment.lesson.requiresSurvey) {
+            throw new BadRequestException("This lesson does not require a survey")
+        }
+
+        const survey = enrollment.lesson.survey
+        if (!survey?.isActive) {
+            throw new BadRequestException("No active survey found for this lesson")
+        }
+
+        return enrollment
     }
 
 
@@ -206,32 +218,6 @@ export class ApplicationsService {
             throw new BadRequestException(
                 "Application already exists for this enrollment. Create a new enrollment to resubmit"
             )
-        }
-    }
-
-
-    private async validateSurvey(enrollmentId: number, surveyId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: { id: enrollmentId },
-            relations: {
-                lesson: { survey: true },
-            },
-        })
-    
-        // check that lesson requires survey
-        if (!enrollment!.lesson.requiresSurvey) {
-            throw new BadRequestException("This lesson does not require a survey")
-        }
-    
-        // check that survey is active
-        const survey = enrollment!.lesson.survey
-        if (!survey || !survey.isActive) {
-            throw new BadRequestException("No active survey found for this lesson")
-        }
-    
-        // check that surveyId exists belongs to survey in lesson
-        if (survey.id !== surveyId) {
-            throw new BadRequestException("Survey does not belong to this lesson")
         }
     }
 

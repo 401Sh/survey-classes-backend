@@ -5,15 +5,6 @@ import { CreateAnswerBodyDto } from "./create-answer-body.dto"
 
 export class CreateApplicationBodyDto {
     @ApiProperty({
-        description: "ID опроса",
-        example: 1,
-        type: Number,
-    })
-    @Type(() => Number)
-    @IsInt()
-    surveyId: number
-
-    @ApiProperty({
         description: "ID записи на занятие",
         example: 1,
         type: Number,
