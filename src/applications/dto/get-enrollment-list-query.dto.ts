@@ -57,21 +57,12 @@ export class GetEnrollmentListQueryDto {
 
     @ApiPropertyOptional({
         description: "Статус записи",
-        example: EnrollmentStatus.LEFT,
+        example: EnrollmentStatus.PENDING,
         enum: EnrollmentStatus,
     })
     @IsEnum(EnrollmentStatus)
     @IsOptional()
     status?: EnrollmentStatus
-
-    @ApiPropertyOptional({
-        description: "Статус оплаты",
-        example: PaymentStatus.UNPAID,
-        enum: PaymentStatus,
-    })
-    @IsEnum(PaymentStatus)
-    @IsOptional()
-    paymentStatus?: PaymentStatus
 
     @ApiPropertyOptional({
         description: "ID занятия",

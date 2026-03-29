@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsInt } from "class-validator"
+import { IsBoolean, IsDate, IsInt } from "class-validator"
 
 export class CreateEnrollmentBodyDto {
     @ApiProperty({
@@ -22,11 +22,20 @@ export class CreateEnrollmentBodyDto {
     childId: number
 
     @ApiProperty({
-        description: "ID тарифа оплаты",
-        example: 1,
-        type: Number,
+        description: "Дата согласия на обработку данных",
+        example: "2026-01-2T21:10:42Z",
+        type: Date,
     })
-    @Type(() => Number)
-    @IsInt()
-    pricingTierId: number
+    @Type(() => Date)
+    @IsDate()
+    consentedAt: number
+
+    @ApiProperty({
+        description: "Согласие на обработку данных",
+        example: true,
+        type: Boolean,
+    })
+    @Type(() => Boolean)
+    @IsBoolean()
+    isConsented: boolean
 }

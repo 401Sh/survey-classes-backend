@@ -1,15 +1,14 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
-import { Repository } from "typeorm"
+import { Not, Repository } from "typeorm"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
-import { ApplicationStatus } from "../enums/application-status.enum"
 import { ApplicationEntity } from "../entities/application.entity"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { LessonEntity } from "src/lessons/entities/lesson.entity"
+import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 
 @Injectable()
 export class EnrollmentsService {
@@ -18,52 +17,59 @@ export class EnrollmentsService {
     constructor(
         @InjectRepository(EnrollmentEntity)
         private enrollmentRepository: Repository<EnrollmentEntity>,
-        @InjectRepository(ApplicationEntity)
-        private applicationRepository: Repository<ApplicationEntity>,
-        @InjectRepository(LessonPricingTierEntity)
-        private pricingTierRepository: Repository<LessonPricingTierEntity>,
         @InjectRepository(UserChildEntity)
         private childRepository: Repository<UserChildEntity>,
+        @InjectRepository(LessonEntity)
+        private lessonRepository: Repository<LessonEntity>,
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
-        const { lessonId, childId, pricingTierId } = data
+        const { lessonId, childId, consentedAt, isConsented } = data
 
         // check that the child belongs to the user
         await this.validateChildOwnership(childId, userId)
 
-        // check and get approved application
-        const application = await this.getApprovedApplicationOrThrow(childId, lessonId)
+        // check and get lesson with survey
+        const lesson = await this.getLessonWithSurveyOrThrow(lessonId)
 
-        // check and get pricingTier
-        const pricingTier = await this.getValidPricingTierOrThrow(pricingTierId, lessonId)
+        // check that there's no active enrollment
+        await this.validateActiveEnrollmentExisting(lessonId, childId)
+
+        // check status by lesson EnrollmentMode
+        const status = lesson.enrollmentMode === EnrollmentMode.AUTO
+            ? EnrollmentStatus.ACTIVE
+            : EnrollmentStatus.PENDING
 
         const enrollment = await this.enrollmentRepository.save({
+            user: { id: userId },
             child: { id: childId },
             lesson: { id: lessonId },
-            application: { id: application.id },
-            pricingTier: { id: pricingTierId },
-            sessionsTotal: pricingTier.sessionsCount,
-            sessionsLeft: pricingTier.sessionsCount,
             enrolledAt: new Date(),
-            status: EnrollmentStatus.ACTIVE,
+            consentedAt,
+            isConsented,
+            status,
         })
 
+        // If the lesson requires a survey - return the flag so that the front shows the form
+        const requiresSurvey = lesson.requiresSurvey && !!lesson.survey
+
         this.logger.log(`Created child ${childId} enrollment for lesson ${lessonId}`)
-        return enrollment
+        return {
+            ...enrollment,
+            requiresSurvey,
+            surveyId: requiresSurvey ? lesson.survey.id : null,
+        }
     }
 
 
     async findAll(userId: number, query: GetEnrollmentListQueryDto) {
-        const { limit, page, dateFrom, dateTo, status, paymentStatus, lessonId, childId, sortDirection } = query
+        const { limit, page, dateFrom, dateTo, status, lessonId, childId, sortDirection } = query
 
         const queryBuilder = this.enrollmentRepository.createQueryBuilder("enrollments")
 
-        queryBuilder.leftJoinAndSelect("children.user", "users")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
-        queryBuilder.leftJoinAndSelect("enrollments.pricingTier", "pricingTiers")
+        queryBuilder.leftJoinAndSelect("enrollments.subscriptions", "subscriptions")
 
         queryBuilder.where("users.id = :userId", { userId })
 
@@ -79,10 +85,6 @@ export class EnrollmentsService {
             queryBuilder.andWhere("enrollments.status = :status", { status })
         }
 
-        if (paymentStatus) {
-            queryBuilder.andWhere("enrollments.paymentStatus = :paymentStatus", { paymentStatus })
-        }
-
         if (dateFrom) {
             queryBuilder.andWhere("enrollments.enrolledAt >= :dateFrom", { dateFrom })
         }
@@ -91,7 +93,7 @@ export class EnrollmentsService {
             queryBuilder.andWhere("enrollments.enrolledAt <= :dateTo", { dateTo })
         }
 
-        queryBuilder.orderBy("enrollments.createdAt", sortDirection)
+        queryBuilder.orderBy("enrollments.enrolledAt", sortDirection)
         queryBuilder.skip((page - 1) * limit).take(limit)
 
         const [enrollments, totalCount] = await queryBuilder.getManyAndCount()
@@ -120,18 +122,17 @@ export class EnrollmentsService {
             relations: {
                 child: true,
                 lesson: true,
-                pricingTier: true,
-                attendances: true,
+                subscriptions: {
+                    attendances: true,
+                    pricingTier: true,
+                },
+                application: true,
             },
             select: {
                 id: true,
                 status: true,
                 enrolledAt: true,
-                sessionsTotal: true,
-                sessionsLeft: true,
-                paymentStatus: true,
-                paidAmount: true,
-                paidAt: true,
+                consentedAt: true,
                 child: {
                     id: true,
                     firstName: true,
@@ -142,24 +143,32 @@ export class EnrollmentsService {
                     name: true,
                     description: true,
                 },
-                pricingTier: {
+                subscriptions: {
                     id: true,
-                    label: true,
-                    price: true,
-                    sessionsCount: true,
-                },
-                attendances: {
-                    id: true,
-                    date: true,
-                    isPresent: true,
-                    note: true,
+                    paymentStatus: true,
+                    paidAmount: true,
+                    sessionsTotal: true,
+                    sessionsLeft: true,
+                    createdAt: true,
+                    pricingTier: {
+                        id: true,
+                        label: true,
+                        price: true,
+                        sessionsCount: true,
+                    },
+                    attendances: {
+                        id: true,
+                        date: true,
+                        isPresent: true,
+                        note: true,
+                    },
                 },
             },
         })
 
         if (!enrollment) {
             this.logger.log(`No enrollment with id: ${enrollmentId}`)
-            throw new NotFoundException(`Lesson with id ${enrollmentId} not found`)
+            throw new NotFoundException(`Enrollment with id ${enrollmentId} not found`)
         }
 
         this.logger.log(`Finded enrollment with id: ${enrollmentId}`)
@@ -181,57 +190,34 @@ export class EnrollmentsService {
     }
 
 
-    private async getApprovedApplicationOrThrow(childId: number, lessonId: number) {
-        const approved = await this.applicationRepository.findOne({
+    private async getLessonWithSurveyOrThrow(lessonId: number) {
+        const lesson = await this.lessonRepository.findOne({
             where: {
-                createdFor: { id: childId },
-                lesson: { id: lessonId },
-                status: ApplicationStatus.APPROVED,
+                id: lessonId,
+                isActive: true,
             },
+            relations: { survey: true },
         })
     
-        if (approved) return approved
-    
-        const lastApplication = await this.applicationRepository.findOne({
-            where: {
-                createdFor: { id: childId },
-                lesson: { id: lessonId },
-            },
-            order: { createdAt: SortDirection.DESC },
-        })
-    
-        if (!lastApplication) {
-            throw new BadRequestException(
-                "No application found — please submit an application with survey answers first"
-            )
+        if (!lesson) {
+            throw new NotFoundException("Lesson not found")
         }
-    
-        switch (lastApplication.status) {
-            case ApplicationStatus.PENDING:
-                throw new BadRequestException("Application is pending — wait for admin approval")
-    
-            case ApplicationStatus.BLOCKED:
-                throw new BadRequestException("Enrollment is blocked by administrator — please contact support")
-    
-            default:
-                throw new BadRequestException("Application was rejected or cancelled — please submit a new application")
-        }
+
+        return lesson
     }
 
 
-    private async getValidPricingTierOrThrow(tierId: number, lessonId: number) {
-        const tier = await this.pricingTierRepository.findOne({
+    private async validateActiveEnrollmentExisting(lessonId: number, childId: number) {
+        const isEnrollmentExists = await this.enrollmentRepository.exists({
             where: {
-                id: tierId,
+                child: { id: childId },
                 lesson: { id: lessonId },
-                isActive: true,
+                status: Not(EnrollmentStatus.SUSPENDED),
             },
         })
-    
-        if (!tier) {
-            throw new NotFoundException("Pricing tier not found")
+
+        if (isEnrollmentExists) {
+            throw new BadRequestException("Child is already enrolled in this lesson")
         }
-    
-        return tier
     }
 }
