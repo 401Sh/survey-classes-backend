@@ -3,6 +3,7 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinColumn,
     ManyToOne,
     OneToMany,
     OneToOne,
@@ -10,21 +11,14 @@ import {
     UpdateDateColumn,
 } from "typeorm"
 import { ApplicationStatus } from "../enums/application-status.enum"
-import { UserEntity } from "src/users/entities/user.entity"
-import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { AnswerEntity } from "./answer.entity"
 import { EnrollmentEntity } from "./enrollment.entity"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
-import { LessonEntity } from "src/lessons/entities/lesson.entity"
 
 @Entity("applications")
 export class ApplicationEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
-
-    @Column({ type: "datetime" })
-    consentedAt: Date
 
     @Column({ type: "enum", enum: ApplicationStatus, default: ApplicationStatus.PENDING })
     status: ApplicationStatus
@@ -35,11 +29,12 @@ export class ApplicationEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => UserEntity, (user) => user.applications)
-    createdBy: UserEntity
-
-    @ManyToOne(() => UserChildEntity, (child) => child.applications)
-    createdFor: UserChildEntity
+    @OneToOne(() => EnrollmentEntity, {
+        onDelete: "CASCADE",
+        nullable: true,
+    })
+    @JoinColumn()
+    enrollment: EnrollmentEntity
 
     @ManyToOne(() => SurveyEntity, (survey) => survey.applications, {
         onDelete: "SET NULL",
@@ -47,21 +42,6 @@ export class ApplicationEntity extends BaseEntity {
     })
     survey: SurveyEntity
 
-    @ManyToOne(() => LessonEntity, {
-        onDelete: "SET NULL",
-        nullable: true,
-    })
-    lesson?: LessonEntity
-
-    @ManyToOne(() => LessonPricingTierEntity, (pricingTier) => pricingTier.applications, {
-        nullable: true,
-        onDelete: "SET NULL",
-    })
-    pricingTier: LessonPricingTierEntity
-
     @OneToMany(() => AnswerEntity, (answer) => answer.response)
     answers: AnswerEntity[]
-
-    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.application)
-    enrollments: EnrollmentEntity[]
 }

@@ -9,7 +9,6 @@ import {
     UpdateDateColumn,
 } from "typeorm"
 import { UserEntity } from "./user.entity"
-import { ApplicationEntity } from "src/applications/entities/application.entity"
 import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 
 @Entity("children")
@@ -35,9 +34,6 @@ export class UserChildEntity extends BaseEntity {
     @ManyToOne(() => UserEntity, (user) => user.children)
     user: UserEntity
 
-    @OneToMany(() => ApplicationEntity, (application) => application.createdFor)
-    applications: ApplicationEntity[]
-
-    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.lesson)
+    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.child)
     enrollments: EnrollmentEntity[]
 }

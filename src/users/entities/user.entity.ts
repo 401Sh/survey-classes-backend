@@ -11,10 +11,10 @@ import {
 import { UserChildEntity } from "./user-child.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
-import { ApplicationEntity } from "src/applications/entities/application.entity"
 import { UserRole } from "../enums/user-role.enum"
 import { CodeVerificationEntity } from "src/auth/entities/code-verification.entity"
 import { RefreshSessionEntity } from "src/auth/entities/refresh-session.entity"
+import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {
@@ -60,6 +60,6 @@ export class UserEntity extends BaseEntity {
     @OneToMany(() => SurveyEntity, (survey) => survey.createdBy)
     surveys: SurveyEntity[]
 
-    @OneToMany(() => ApplicationEntity, (application) => application.createdBy)
-    applications: ApplicationEntity[]
+    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.user)
+    enrollments: EnrollmentEntity[]
 }

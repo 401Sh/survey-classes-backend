@@ -5,16 +5,16 @@ import {
     Entity,
     ManyToOne,
     OneToMany,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
-import { ApplicationEntity } from "./application.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
-import { AttendanceEntity } from "./attendance.entity"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
-import { PaymentStatus } from "../enums/payment-status.enum"
+import { ApplicationEntity } from "./application.entity"
+import { SubscriptionEntity } from "./subscription.entity"
+import { UserEntity } from "src/users/entities/user.entity"
 
 @Entity("enrollments")
 export class EnrollmentEntity extends BaseEntity {
@@ -27,21 +27,11 @@ export class EnrollmentEntity extends BaseEntity {
     @Column({ type: "enum", enum: EnrollmentStatus })
     status: EnrollmentStatus
 
-    @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.UNPAID })
-    paymentStatus: PaymentStatus
+    @Column({ type: "datetime" })
+    consentedAt: Date
 
-    @Column({ type: "decimal", precision: 10, scale: 2, default: 0.0 })
-    paidAmount: number = 0.0
-
-    @Column({ type: "datetime", nullable: true })
-    paidAt?: Date | null
-
-    // copying pricingTier.sessionsCount via enrollment creation
-    @Column({ type: "smallint" })
-    sessionsTotal: number
-
-    @Column({ type: "smallint" })
-    sessionsLeft: number
+    @Column({ type: "bool", default: false })
+    isConsented: boolean = false
 
     @CreateDateColumn()
     createdAt: Date
@@ -49,24 +39,21 @@ export class EnrollmentEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => LessonEntity, (lesson) => lesson.enrollments)
+    @OneToOne(() => ApplicationEntity, (application) => application.enrollment)
+    application?: ApplicationEntity
+
+    @ManyToOne(() => LessonEntity, (lesson) => lesson.enrollments, { onDelete: "CASCADE" })
     lesson: LessonEntity
 
-    @OneToMany(() => AttendanceEntity, (attendance) => attendance.enrollment)
-    attendances: AttendanceEntity[]
+    @ManyToOne(() => UserEntity, (child) => child.enrollments)
+    user: UserEntity
 
-    @ManyToOne(() => UserChildEntity, (child) => child.enrollments)
+    @ManyToOne(() => UserChildEntity, (child) => child.enrollments, {
+        onDelete: "SET NULL",
+        nullable: true,
+    })
     child: UserChildEntity
 
-    @ManyToOne(() => LessonPricingTierEntity, (tier) => tier.enrollments, {
-        nullable: true,
-        onDelete: "SET NULL",
-    })
-    pricingTier?: LessonPricingTierEntity
-
-    @ManyToOne(() => ApplicationEntity, (application) => application.enrollments, {
-        nullable: true,
-        onDelete: "SET NULL",
-    })
-    application?: ApplicationEntity
+    @OneToMany(() => SubscriptionEntity, (subscription) => subscription.enrollment)
+    subscriptions: SubscriptionEntity[]
 }

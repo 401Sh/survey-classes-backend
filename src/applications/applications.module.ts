@@ -17,6 +17,7 @@ import { ManageAttendancesService } from "./services/manage-attendances.service"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { EnrollmentsController } from "./controllers/enrollments.controller"
 import { EnrollmentsService } from "./services/enrollments.service"
+import { SubscriptionEntity } from "./entities/subscription.entity"
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { EnrollmentsService } from "./services/enrollments.service"
             AnswerEntity,
             QuestionEntity,
             EnrollmentEntity,
+            SubscriptionEntity,
             AttendanceEntity,
             LessonPricingTierEntity,
             UserChildEntity,

@@ -8,8 +8,7 @@ import { BaseEntity,
     UpdateDateColumn,
 } from "typeorm"
 import { LessonEntity } from "./lesson.entity"
-import { ApplicationEntity } from "src/applications/entities/application.entity"
-import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
+import { SubscriptionEntity } from "src/applications/entities/subscription.entity"
 
 @Entity("lesson-pricing-tiers")
 export class LessonPricingTierEntity  extends BaseEntity {
@@ -18,7 +17,7 @@ export class LessonPricingTierEntity  extends BaseEntity {
 
     @Column({ type: "varchar", length: 100 })
     label: string
- 
+
     @Column({ type: "decimal", precision: 10, scale: 2, default: 0.0 })
     price: number = 0.0
 
@@ -36,10 +35,7 @@ export class LessonPricingTierEntity  extends BaseEntity {
 
     @ManyToOne(() => LessonEntity, (lesson) => lesson.pricingTiers, { onDelete: "CASCADE" })
     lesson: LessonEntity
- 
-    @OneToMany(() => ApplicationEntity, (application) => application.pricingTier)
-    applications: ApplicationEntity[]
- 
-    @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.pricingTier)
-    enrollments: EnrollmentEntity[]
+
+    @OneToMany(() => SubscriptionEntity, (subscription) => subscription.pricingTier)
+    subscriptions: SubscriptionEntity[]
 }

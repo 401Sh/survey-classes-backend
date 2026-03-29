@@ -1,4 +1,3 @@
-import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
 import { BaseEntity,
     Column,
     CreateDateColumn,
@@ -7,6 +6,7 @@ import { BaseEntity,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm"
+import { SubscriptionEntity } from "./subscription.entity"
 
 @Entity("attendances")
 export class AttendanceEntity extends BaseEntity {
@@ -28,6 +28,6 @@ export class AttendanceEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
 
-    @ManyToOne(() => EnrollmentEntity, (enrollment) => enrollment.attendances, { onDelete: "CASCADE" })
-    enrollment: EnrollmentEntity
+    @ManyToOne(() => SubscriptionEntity, (subscription) => subscription.attendances, { onDelete: "CASCADE" })
+    subscription: SubscriptionEntity
 }

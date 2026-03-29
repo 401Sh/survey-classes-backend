@@ -19,6 +19,7 @@ import { LessonImageEntity } from "./lesson-image.entity"
 import { UserEntity } from "src/users/entities/user.entity"
 import { LessonWeeklySlotEntity } from "./lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "./lesson-schedule-override.entity"
+import { EnrollmentMode } from "../enums/enrollment-mode.enum"
 
 @Entity("lessons")
 export class LessonEntity extends BaseEntity {
@@ -42,6 +43,12 @@ export class LessonEntity extends BaseEntity {
 
     @Column({ type: "date", nullable: true })
     endsAt?: Date
+
+    @Column({ type: "enum", enum: EnrollmentMode, default: EnrollmentMode.MANUAL })
+    enrollmentMode: EnrollmentMode
+
+    @Column({ type: "bool", default: false })
+    requiresSurvey: boolean = false
 
     @CreateDateColumn()
     createdAt: Date
