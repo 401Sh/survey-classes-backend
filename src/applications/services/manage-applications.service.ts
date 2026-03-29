@@ -14,8 +14,6 @@ export class ManageApplicationsService {
     constructor(
         @InjectRepository(ApplicationEntity)
         private applicationRepository: Repository<ApplicationEntity>,
-        @InjectRepository(EnrollmentEntity)
-        private enrollmentRepository: Repository<EnrollmentEntity>,
     ) {}
 
     async findAll(query: GetApplicationListQueryDto) {

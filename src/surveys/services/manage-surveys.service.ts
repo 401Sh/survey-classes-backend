@@ -25,15 +25,21 @@ export class ManageSurveysService {
     ) {}
 
     async create(userId: number, data: CreateSurveyBodyDto) {
-        const { lessonId, ...otherData } = data
+        const { lessonId } = data
 
         // check that lesson exists
-        if (lessonId) await this.validateLessonExists(lessonId)
+        if (lessonId) {
+            await this.validateLessonExists(lessonId)
+
+            await this.lessonRepository.update(
+                { id: lessonId },
+                { requiresSurvey: true },
+            )
+        }
 
         const survey = await this.surveyRepository.save({
-            ...otherData,
+            ...data,
             createdBy: { id: userId },
-            lesson: lessonId ? { id: lessonId } : undefined,
         })
 
         this.logger.log(`Created new survey for user: ${userId}`)
@@ -87,7 +93,17 @@ export class ManageSurveysService {
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
 
         // check that lesson exists
-        if (lessonId) await this.validateLessonExists(lessonId)
+        if (lessonId) {
+            await this.validateLessonExists(lessonId)
+
+            // tying survey to lesson
+            if (data.lessonId) {
+                await this.lessonRepository.update(
+                    { id: lessonId },
+                    { requiresSurvey: true },
+                )
+            }
+        }
 
         const newSurvey = await this.surveyRepository.save({
             title: survey.title,
@@ -193,39 +209,33 @@ export class ManageSurveysService {
 
 
     async update(surveyId: number, data: UpdateSurveyBodyDto) {
+        const { lessonId } = data
+
         const survey = await this.surveyRepository.findOne({
-            where: { id: surveyId }
+            where: { id: surveyId },
+            relations: { lesson: true },
         })
+
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
 
-        const { lessonId, ...otherData } = data
-
-        if (lessonId) {
-            // check that lesson exists
-            await this.validateLessonExists(lessonId)
-
-            // untying current survey from lesson
-            await this.surveyRepository.update(
-                {
-                    lesson: {
-                        id: lessonId,
-                    },
-                },
-                {
-                    lesson: undefined,
-                },
+        // untying current survey from lesson
+        if (survey.lesson && lessonId !== survey.lesson.id) {
+            await this.lessonRepository.update(
+                { id: survey.lesson.id },
+                { requiresSurvey: false },
             )
         }
 
-        const updateResult = await this.surveyRepository.update(
-            {
-                id: surveyId,
-            },
-            {
-                ...otherData,
-                lesson: lessonId ? { id: lessonId } : undefined,
-            },
-        )
+        // tying survey to new lesson
+        if (lessonId && lessonId !== survey.lesson?.id) {
+            await this.validateLessonExists(lessonId)
+            await this.lessonRepository.update(
+                { id: lessonId },
+                { requiresSurvey: true },
+            )
+        }
+
+        const updateResult = await this.surveyRepository.update({ id: surveyId }, data)
 
         if (updateResult.affected === 0) {
             this.logger.debug(`Cannot update survey with id: ${surveyId}`)
@@ -238,6 +248,20 @@ export class ManageSurveysService {
 
 
     async delete(surveyId: number) {
+        const survey = await this.surveyRepository.findOne({
+            where: { id: surveyId },
+            relations: { lesson: true },
+        })
+
+        if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
+
+        if (survey.lesson) {
+            await this.lessonRepository.update(
+                { id: survey.lesson.id },
+                { requiresSurvey: false },
+            )
+        }
+
         this.logger.log(`Deleting survey with id: ${surveyId}`)
         const deleteResult = await this.surveyRepository.delete({ id: surveyId })
 

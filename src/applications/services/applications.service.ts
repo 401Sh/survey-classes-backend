@@ -161,7 +161,10 @@ export class ApplicationsService {
                 },
                 status: ApplicationStatus.PENDING,
             },
-            relations: { answers: true },
+            relations: {
+                answers: true,
+                survey: true,
+            },
         })
     
         if (!application) throw new NotFoundException("Application not found or already approved")
