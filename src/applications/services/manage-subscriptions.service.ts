@@ -1,10 +1,11 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 import { Repository } from "typeorm"
-import { UpdateSubscriptionPaymentBodyDto } from "../dto/update-subscription-body.dto"
 import { GetManageSubscriptionListQueryDto } from "../dto/get-manage-subscription-list-query.dto"
 import { PaymentStatus } from "../enums/payment-status.enum"
+import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-subscription-payment-body.dto"
+import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
 
 @Injectable()
 export class ManageSubscriptionsService {
@@ -93,7 +94,7 @@ export class ManageSubscriptionsService {
     }
 
 
-    async payFullPrice(subscriptionId: number, data: UpdateSubscriptionPaymentBodyDto) {
+    async payFullPrice(subscriptionId: number, data: PayFullPriceSubscriptionPaymentBodyDto) {
         const { paidAt } = data
 
         const subscription = await this.subscriptionRepository.findOne({
@@ -101,12 +102,20 @@ export class ManageSubscriptionsService {
             relations: { pricingTier: true },
         })
 
-        if (!subscription || !subscription.pricingTier) {
+        if (!subscription) {
             throw new NotFoundException(`Subscription with id ${subscriptionId} not found`)
         }
 
         if (subscription.paymentStatus == PaymentStatus.PAID) {
             throw new ConflictException(`Subscription weith id ${subscriptionId} has already been paid`)
+        }
+
+        if (subscription.paymentStatus === PaymentStatus.REFUNDED) {
+            throw new ConflictException("Cannot pay refunded subscription")
+        }
+
+        if (!subscription.isActive) {
+            throw new BadRequestException("Cannot pay inactive subscription")
         }
 
         const updateResult = await this.subscriptionRepository.update(
@@ -124,5 +133,27 @@ export class ManageSubscriptionsService {
         }
 
         return updateResult
+    }
+
+
+    async refund(subscriptionId: number, data: RefundSubscriptionPaymentBodyDto) {
+        const { refundedAt } = data
+
+        const subscription = await this.subscriptionRepository.findOne({
+            where: { id: subscriptionId },
+        })
+
+        if (!subscription) throw new NotFoundException(`Subscription with id ${subscriptionId} not found`)
+
+        if (subscription.paymentStatus !== PaymentStatus.PAID) {
+            throw new BadRequestException("Only paid subscriptions can be refunded")
+        }
+
+        await this.subscriptionRepository.update({ id: subscriptionId }, {
+            paymentStatus: PaymentStatus.REFUNDED,
+            refundedAmount: subscription.paidAmount,
+            refundedAt: refundedAt,
+            isActive: false,
+        })
     }
 }

@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
 import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
-import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
-import { UpdateSubscriptionPaymentBodyDto } from "../dto/update-subscription-body.dto"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-subscription-payment-body.dto"
 import { GetManageSubscriptionListQueryDto } from "../dto/get-manage-subscription-list-query.dto"
+import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
 
 @Controller("manage/subscriptions")
 export class ManageSubscriptionsController {
@@ -48,15 +49,48 @@ export class ManageSubscriptionsController {
         description: "ID выбора тарифа",
         example: 1,
     })
+    @ApiBody({
+        description: "Данные для оплаты тарифа",
+        required: true,
+        type: PayFullPriceSubscriptionPaymentBodyDto,
+    })
     @Patch(":subscriptionId/payment")
     async payFullPrice(
         @Param("subscriptionId", ParseIntPipe) subscriptionId: number,
-        @Body() data: UpdateSubscriptionPaymentBodyDto,
+        @Body() data: PayFullPriceSubscriptionPaymentBodyDto,
     ) {
         await this.manageSubscriptionsSerivice.payFullPrice(subscriptionId, data)
 
         return {
             message: "Subscription paid successfully",
+        }
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Выполнить возврат тарифа",
+    })
+    @ApiParam({
+        name: "subscriptionId",
+        required: true,
+        description: "ID выбора тарифа",
+        example: 1,
+    })
+    @ApiBody({
+        description: "Данные для возврата тарифа",
+        required: true,
+        type: RefundSubscriptionPaymentBodyDto,
+    })
+    @Patch(":subscriptionId/refund")
+    async refund(
+        @Param("subscriptionId", ParseIntPipe) subscriptionId: number,
+        @Body() data: RefundSubscriptionPaymentBodyDto,
+    ) {
+        await this.manageSubscriptionsSerivice.refund(subscriptionId, data)
+
+        return {
+            message: "Subscription refunded successfully",
         }
     }
 }

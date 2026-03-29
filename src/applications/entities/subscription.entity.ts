@@ -40,6 +40,13 @@ export class SubscriptionEntity extends BaseEntity {
     @Column({ type: "smallint" })
     sessionsLeft: number
 
+    // only for refund logic
+    @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+    refundedAmount?: number
+
+    @Column({ type: "datetime", nullable: true })
+    refundedAt?: Date
+
     @CreateDateColumn()
     createdAt: Date
 
