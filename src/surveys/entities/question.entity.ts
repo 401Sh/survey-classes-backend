@@ -39,7 +39,7 @@ export class QuestionEntity extends BaseEntity {
     @ManyToOne(() => SurveyEntity, (survey) => survey.questions, { onDelete: "CASCADE" })
     survey: SurveyEntity
 
-    @OneToMany(() => QuestionOptionEntity, (option) => option.question)
+    @OneToMany(() => QuestionOptionEntity, (option) => option.question, { cascade: true })
     options: QuestionOptionEntity[]
 
     @OneToMany(() => AnswerEntity, (answer) => answer.question)

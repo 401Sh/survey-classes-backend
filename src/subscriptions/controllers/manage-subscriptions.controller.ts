@@ -63,7 +63,7 @@ export class ManageSubscriptionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Полностью оплатить тариф",
+        summary: "Зафиксировать полную оплату тарифа",
     })
     @ApiParam({
         name: "subscriptionId",
@@ -91,7 +91,7 @@ export class ManageSubscriptionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Выполнить возврат тарифа",
+        summary: "Выполнить возврат оплаты тарифа",
     })
     @ApiParam({
         name: "subscriptionId",

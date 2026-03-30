@@ -39,7 +39,7 @@ export class SurveyEntity extends BaseEntity {
     @ManyToOne(() => UserEntity, (user) => user.surveys)
     createdBy: UserEntity
 
-    @OneToMany(() => QuestionEntity, (question) => question.survey)
+    @OneToMany(() => QuestionEntity, (question) => question.survey, { cascade: true })
     questions: QuestionEntity[]
 
     @OneToMany(() => ApplicationEntity, (application) => application.survey)

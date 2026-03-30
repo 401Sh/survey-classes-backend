@@ -64,7 +64,7 @@ export class GetManageSubscriptionListQueryDto {
     paymentStatus?: PaymentStatus
 
     @ApiPropertyOptional({
-        description: "ID тира оплаты",
+        description: "ID тарифа оплаты",
         example: 1,
         type: Number,
     })

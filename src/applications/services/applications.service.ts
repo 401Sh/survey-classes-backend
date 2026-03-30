@@ -61,8 +61,11 @@ export class ApplicationsService {
             select: {
                 id: true,
                 status: true,
-                createdAt: true,
                 enrollment: {
+                    id: true,
+                    enrolledAt: true,
+                    status: true,
+                    consentedAt: true,
                     child: {
                         id: true,
                         firstName: true,
@@ -74,15 +77,32 @@ export class ApplicationsService {
                         name: true,
                     },
                 },
+                answers: {
+                    id: true,
+                    textValue: true,
+                    question: {
+                        id: true,
+                        label: true,
+                        type: true,
+                    },
+                    selectedOption: {
+                        id: true,
+                        label: true,
+                    },
+                },
             },
             relations: {
                 enrollment: {
                     child: true,
                     lesson: true,
                 },
+                answers: {
+                    question: true,
+                    selectedOption: true,
+                },
             },
             order: {
-                createdAt: SortDirection.DESC,
+                enrollment: { enrolledAt: SortDirection.DESC },
             },
         })
 
@@ -104,6 +124,7 @@ export class ApplicationsService {
                 status: true,
                 createdAt: true,
                 enrollment: {
+                    id: true,
                     child: {
                         id: true,
                         firstName: true,

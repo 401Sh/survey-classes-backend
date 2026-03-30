@@ -12,7 +12,7 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение всех существующих ответов на вопросы",
+        summary: "Получение всех существующих ответов на опросы",
     })
     @Get()
     async findAll(@Query() query: GetApplicationListQueryDto) {
@@ -24,12 +24,12 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение ответа на вопросы по ID",
+        summary: "Получение ответа на опрос по ID",
     })
     @ApiParam({
         name: "applicationId",
         required: true,
-        description: "ID заявки",
+        description: "ID ответа",
         example: 1,
     })
     @Get(":applicationId")
@@ -42,12 +42,12 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Одобрение ответов на вопросы и записи на занятие",
+        summary: "Одобрение ответа на опрос и записи на занятие",
     })
     @ApiParam({
         name: "applicationId",
         required: true,
-        description: "ID заявки",
+        description: "ID ответа",
         example: 1,
     })
     @Patch(":applicationId/approve")
@@ -62,12 +62,12 @@ export class ManageApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Отклонение ответов на вопросы",
+        summary: "Отклонение ответа на опрос",
     })
     @ApiParam({
         name: "applicationId",
         required: true,
-        description: "ID заявки",
+        description: "ID ответа",
         example: 1,
     })
     @Patch(":applicationId/reject")

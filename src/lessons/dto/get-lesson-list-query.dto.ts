@@ -81,7 +81,7 @@ export class GetLessonListQueryDto {
     search?: string
 
     @ApiPropertyOptional({
-        description: "Минимальная цена (по любому активному тиру занятия)",
+        description: "Минимальная цена (по любому активному тарифу оплаты занятия)",
         example: 500,
         type: Number,
     })
@@ -94,7 +94,7 @@ export class GetLessonListQueryDto {
     priceFrom?: number
 
     @ApiPropertyOptional({
-        description: "Максимальная цена (по любому активному тиру занятия)",
+        description: "Максимальная цена (по любому активному тарифу оплаты занятия)",
         example: 5000,
         type: Number,
     })

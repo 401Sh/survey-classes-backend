@@ -77,7 +77,7 @@ export class ManageQuestionsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Удаление вопроса у опроса",
+        summary: "Удаление вопроса",
     })
     @ApiParam({
         name: "questionId",

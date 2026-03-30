@@ -59,7 +59,7 @@ export class EnrollmentsService {
 
         this.logger.log(`Created child ${childId} enrollment for lesson ${lessonId}`)
         return {
-            ...enrollment,
+            enrollment: enrollment,
             requiresSurvey,
             surveyId: requiresSurvey ? lesson.survey.id : null,
         }
@@ -99,6 +99,7 @@ export class EnrollmentsService {
         const queryBuilder = this.enrollmentRepository.createQueryBuilder("enrollments")
 
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
+        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
         queryBuilder.leftJoinAndSelect("enrollments.subscriptions", "subscriptions")
 

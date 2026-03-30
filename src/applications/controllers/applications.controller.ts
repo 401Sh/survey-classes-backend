@@ -46,12 +46,12 @@ export class ApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Получение созданных ответов на опрос",
+        summary: "Получение созданного ответа на опрос",
     })
     @ApiParam({
         name: "applicationId",
         required: true,
-        description: "ID заявки",
+        description: "ID ответа",
         example: 1,
     })
     @Get(":applicationId")
@@ -69,12 +69,12 @@ export class ApplicationsController {
 
     @ApiBearerAuth()
     @ApiOperation({
-        summary: "Обновление данных ответов на опрос",
+        summary: "Обновление данных ответа на опрос",
     })
     @ApiParam({
         name: "applicationId",
         required: true,
-        description: "ID опроса",
+        description: "ID ответа",
         example: 1,
     })
     @ApiBody({

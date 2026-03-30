@@ -23,7 +23,7 @@ export class CreateEnrollmentBodyDto {
 
     @ApiProperty({
         description: "Дата согласия на обработку данных",
-        example: "2026-01-2T21:10:42Z",
+        example: "2026-01-02T21:10:42Z",
         type: Date,
     })
     @Type(() => Date)

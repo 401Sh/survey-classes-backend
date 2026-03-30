@@ -124,6 +124,7 @@ export class ManageSurveysService {
 
         const queryBuilder = this.surveyRepository.createQueryBuilder("surveys")
 
+        queryBuilder.leftJoinAndSelect("surveys.lesson", "lessons")
         queryBuilder.leftJoinAndSelect("surveys.questions", "questions")
         queryBuilder.leftJoinAndSelect("questions.options", "options")
 
@@ -160,6 +161,7 @@ export class ManageSurveysService {
                 questions: {
                     options: true,
                 },
+                lesson: true,
             },
         })
 
