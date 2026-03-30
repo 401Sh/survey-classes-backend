@@ -20,6 +20,7 @@ import { EnrollmentsService } from "./services/enrollments.service"
 import { SubscriptionEntity } from "./entities/subscription.entity"
 import { ManageSubscriptionsController } from "./controllers/manage-subscriptions.controller"
 import { ManageSubscriptionsService } from "./services/manage-subscriptions.service"
+import { LessonEntity } from "src/lessons/entities/lesson.entity"
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { ManageSubscriptionsService } from "./services/manage-subscriptions.serv
             AttendanceEntity,
             LessonPricingTierEntity,
             UserChildEntity,
+            LessonEntity,
         ]),
     ],
     controllers: [
