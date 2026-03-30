@@ -6,6 +6,7 @@ import { ManageSubscriptionsController } from "./controllers/manage-subscription
 import { ManageAttendancesController } from "./controllers/manage-attendances.controller"
 import { ManageSubscriptionsService } from "./services/manage-subscriptions.service"
 import { ManageAttendancesService } from "./services/manage-attendances.service"
+import { SubscriptionsInternalService } from "./services/subscriptions-internal.service"
 
 @Module({
     imports: [
@@ -21,6 +22,8 @@ import { ManageAttendancesService } from "./services/manage-attendances.service"
     providers: [
         ManageSubscriptionsService,
         ManageAttendancesService,
+        SubscriptionsInternalService,
     ],
+    exports: [SubscriptionsInternalService],
 })
 export class SubscriptionsModule {}

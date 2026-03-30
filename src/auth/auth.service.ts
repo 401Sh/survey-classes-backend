@@ -30,7 +30,7 @@ export class AuthService {
     ) { }
 
     async signUp(data: SignUpDto) {
-        const user = await this.usersService.findByEmail(data.email)
+        const user = await this.usersService.findByEmailWithPass(data.email)
 
         if (!user) return await this.signUpNewUser(data)
 
@@ -148,7 +148,7 @@ export class AuthService {
     
     
     async signIn(signInDto: SignInDto, userAgent: string, ip: string, fingerprint: string) {
-        const user = await this.usersService.findByEmail(signInDto.email)
+        const user = await this.usersService.findByEmailWithPass(signInDto.email)
 
         if (!user) throw new BadRequestException("User does not exist")
 
@@ -188,7 +188,7 @@ export class AuthService {
 
 
     async forgotPassword(data: ForgotPasswordBodyDto) {
-        const user = await this.usersService.findByEmail(data.email)
+        const user = await this.usersService.findByEmailWithPass(data.email)
 
         // do not disclose whether the user exists
         if (!user || !user.isEmailVerified) return
@@ -233,7 +233,7 @@ export class AuthService {
 
 
     async confirmForgotPassword(data: ForgotPasswordConfirmBodyDto) {
-        const user = await this.usersService.findByEmail(data.email)
+        const user = await this.usersService.findByEmailWithPass(data.email)
     
         if (!user) throw new NotFoundException("User does not exist")
     

@@ -110,7 +110,7 @@ export class EnrollmentsController {
         description: "ID записи на занятие",
         example: 1,
     })
-    @Get(":enrollmentId")
+    @Get(":enrollmentId/subscriptions")
     async findAllSubscriptionByEnrollmentId(
         @Request() req,
         @Param("enrollmentId", ParseIntPipe) enrollmentId: number,

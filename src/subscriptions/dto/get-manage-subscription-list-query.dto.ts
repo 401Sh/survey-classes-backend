@@ -56,7 +56,7 @@ export class GetManageSubscriptionListQueryDto {
 
     @ApiPropertyOptional({
         description: "Было ли тариф оплачен",
-        example: true,
+        example: PaymentStatus.PAID,
         enum: PaymentStatus,
     })
     @IsEnum(PaymentStatus)

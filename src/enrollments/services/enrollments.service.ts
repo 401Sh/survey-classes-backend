@@ -7,10 +7,10 @@ import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
-import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
 import { LessonsPricingTiersInternalService } from "src/lessons/services/lessons-pricing-tiers-internal.service"
+import { SubscriptionsInternalService } from "src/subscriptions/services/subscriptions-internal.service"
 
 @Injectable()
 export class EnrollmentsService {
@@ -19,12 +19,11 @@ export class EnrollmentsService {
     constructor(
         @InjectRepository(EnrollmentEntity)
         private enrollmentRepository: Repository<EnrollmentEntity>,
-        @InjectRepository(SubscriptionEntity)
-        private subscriptionRepository: Repository<SubscriptionEntity>,
 
         private readonly childrenService: ChildrenInternalService,
         private readonly lessonsService: LessonsInternalService,
-        private readonly pricingTierService: LessonsPricingTiersInternalService,
+        private readonly pricingTiersService: LessonsPricingTiersInternalService,
+        private readonly subscriptionsService: SubscriptionsInternalService,
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
@@ -78,15 +77,14 @@ export class EnrollmentsService {
 
         // check and get pricingTier
         const lessonId = enrollment.lesson.id
-        const pricingTier = await this.pricingTierService.findActiveAndLinked(pricingTierId, lessonId)
+        const pricingTier = await this.pricingTiersService.findActiveAndLinked(pricingTierId, lessonId)
 
-        const subscription = await this.subscriptionRepository.save({
-            enrollment: { id: enrollmentId },
-            pricingTier: { id: pricingTierId },
-            priceSnapshot: pricingTier.price,
-            sessionsTotal: pricingTier.sessionsCount,
-            sessionsLeft: pricingTier.sessionsCount,
-        })
+        const subscription = await this.subscriptionsService.bareCreate(
+            enrollment.id,
+            pricingTierId,
+            pricingTier.price,
+            pricingTier.sessionsCount,
+        )
 
         this.logger.log(`Created subscription with pricingTier ${pricingTierId} for enrollment ${enrollmentId}`)
         return subscription
@@ -209,32 +207,8 @@ export class EnrollmentsService {
 
 
     async findAllSubscriptionByEnrollmentId(userId: number, enrollmentId: number) {
-        const subscriptions = await this.subscriptionRepository.find({
-            where: {
-                enrollment: {
-                    id: enrollmentId,
-                    user: { id: userId },
-                }
-            },
-            select: {
-                id: true,
-                paymentStatus: true,
-                priceSnapshot: true,
-                paidAmount: true,
-                sessionsTotal: true,
-                sessionsLeft: true,
-                pricingTier: {
-                    id: true,
-                    label: true,
-                    sessionsCount: true,
-                },
-            },
-            relations: {
-                pricingTier: true,
-            },
-        })
+        const subscriptions = await this.subscriptionsService.findAllOwnedByEnrollmentId(userId, enrollmentId)
 
-        this.logger.debug("Get subscription list: ", subscriptions)
         return subscriptions
     }
 

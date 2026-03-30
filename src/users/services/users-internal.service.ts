@@ -52,9 +52,16 @@ export class UsersInternalService {
     }
 
 
-    async findByEmail(email: string) {
+    async findByEmailWithPass(email: string) {
         const user = await this.userRepository.findOne({
             where: { email },
+            select: {
+                id: true,
+                firstName: true,
+                secondName: true,
+                password: true,
+                isEmailVerified: true,
+            },
         })
 
         this.logger.log(`Finded user with email: ${email}`)

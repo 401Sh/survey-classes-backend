@@ -35,7 +35,6 @@ export class ManageAttendancesService {
         queryBuilder.leftJoinAndSelect("subscriptions.enrollment", "enrollments")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
         queryBuilder.leftJoinAndSelect("enrollments.user", "users")
-        queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
         
         if (isPresent !== undefined) {
             queryBuilder.andWhere("attendances.isPresent = :isPresent", { isPresent })

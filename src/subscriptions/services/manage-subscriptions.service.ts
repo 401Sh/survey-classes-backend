@@ -128,6 +128,7 @@ export class ManageSubscriptionsService {
                     child: true,
                 },
                 pricingTier: true,
+                attendances: true,
             },
         })
 

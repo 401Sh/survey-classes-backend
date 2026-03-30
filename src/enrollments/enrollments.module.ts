@@ -5,19 +5,19 @@ import { EnrollmentEntity } from "./entities/enrollment.entity"
 import { ManageEnrollmentsController } from "./controllers/manage-enrollments.controller"
 import { EnrollmentsService } from "./services/enrollments.service"
 import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
-import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 import { UsersModule } from "src/users/users.module"
 import { LessonsModule } from "src/lessons/lessons.module"
 import { EnrollmentsInternalService } from "./services/enrollments-internal.service"
+import { SubscriptionsModule } from "src/subscriptions/subscriptions.module"
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             EnrollmentEntity,
-            SubscriptionEntity,
         ]),
         UsersModule,
         LessonsModule,
+        SubscriptionsModule,
     ],
     controllers: [
         EnrollmentsController,
