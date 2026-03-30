@@ -6,7 +6,7 @@ import { ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL, RESET_TOKEN_TTL } from "src/common
 import { InjectRepository } from "@nestjs/typeorm"
 import { RefreshSessionEntity } from "../entities/refresh-session.entity"
 import { Repository } from "typeorm"
-import { UserEntity } from "src/users/entities/user.entity"
+import { type UserEntity } from "src/users/entities/user.entity"
 import * as argon2 from "argon2"
 import { UserRole } from "src/users/enums/user-role.enum"
 

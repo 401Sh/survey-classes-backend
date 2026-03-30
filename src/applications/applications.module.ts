@@ -7,7 +7,6 @@ import { AnswerEntity } from "./entities/answer.entity"
 import { ManageApplicationsService } from "./services/manage-applications.service"
 import { ManageApplicationsController } from "./controllers/manage-applications.controller"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
-import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
@@ -19,7 +18,6 @@ import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
             AnswerEntity,
             QuestionEntity,
             LessonPricingTierEntity,
-            UserChildEntity,
             LessonEntity,
             EnrollmentEntity,
         ]),

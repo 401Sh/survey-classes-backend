@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import * as nodemailer from "nodemailer"
 import * as handlebars from "handlebars"
-import { UserEntity } from "src/users/entities/user.entity"
+import { type UserEntity } from "src/users/entities/user.entity"
 import { join } from "path"
 import { readFileSync } from "fs"
 import {

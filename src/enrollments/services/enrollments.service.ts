@@ -4,13 +4,13 @@ import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Not, Repository } from "typeorm"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
-import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
+import { ChildrenInternalService } from "src/users/services/children-internal.service"
 
 @Injectable()
 export class EnrollmentsService {
@@ -21,12 +21,12 @@ export class EnrollmentsService {
         private enrollmentRepository: Repository<EnrollmentEntity>,
         @InjectRepository(SubscriptionEntity)
         private subscriptionRepository: Repository<SubscriptionEntity>,
-        @InjectRepository(UserChildEntity)
-        private childRepository: Repository<UserChildEntity>,
         @InjectRepository(LessonEntity)
         private lessonRepository: Repository<LessonEntity>,
         @InjectRepository(LessonPricingTierEntity)
         private pricingTierRepository: Repository<LessonPricingTierEntity>,
+
+        private readonly childrenService: ChildrenInternalService,
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
@@ -258,13 +258,8 @@ export class EnrollmentsService {
 
 
     private async validateChildOwnership(childId: number, userId: number) {
-        const exists = await this.childRepository.exists({
-            where: {
-                id: childId,
-                user: { id: userId },
-            },
-        })
-    
+        const exists = await this.childrenService.existsAndOwnedBy(childId, userId)
+
         if (!exists) {
             throw new NotFoundException("Child not found")
         }

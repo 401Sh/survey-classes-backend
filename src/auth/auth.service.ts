@@ -2,7 +2,6 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { SignInDto } from "./dto/signin.dto"
-import { UsersService } from "src/users/services/users.service"
 import { MAIL_CONFIRMATION_CODE_LENGTH, MAIL_CONFIRMATION_CODE_TTL } from "src/common/constants/mail.constant"
 import { type UserEntity } from "src/users/entities/user.entity"
 import { InjectRepository } from "@nestjs/typeorm"
@@ -15,6 +14,7 @@ import { VerificationType } from "./enums/verification-type.enum"
 import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
 import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
+import { UsersInternalService } from "src/users/services/users-internal.service"
 
 @Injectable()
 export class AuthService {
@@ -24,7 +24,7 @@ export class AuthService {
         @InjectRepository(CodeVerificationEntity)
         private emailVerificationRepository: Repository<CodeVerificationEntity>,
 
-        private usersService: UsersService,
+        private usersService: UsersInternalService,
         private mailService: MailService,
         private tokensService: TokensService,
     ) { }
