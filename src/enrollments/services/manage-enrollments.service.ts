@@ -4,7 +4,7 @@ import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Repository } from "typeorm"
 import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
-import { ApplicationStatus } from "../enums/application-status.enum"
+import { ApplicationStatus } from "src/applications/enums/application-status.enum"
 
 @Injectable()
 export class ManageEnrollmentsService {

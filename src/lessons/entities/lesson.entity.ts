@@ -1,4 +1,4 @@
-import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
+import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import {
     BaseEntity,

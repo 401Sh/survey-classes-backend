@@ -4,7 +4,7 @@ import { IsInt, IsOptional, Min, IsDate, IsBoolean, IsEnum } from "class-validat
 import { AMOUNT_MIN_VALUE, PAGE_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 
-export class GetAttendanceBodyDto {
+export class GetAttendanceListQueryDto {
     @ApiPropertyOptional({
         description: "Количество заявок на страницу",
         example: 5,

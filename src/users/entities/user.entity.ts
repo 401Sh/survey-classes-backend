@@ -14,7 +14,7 @@ import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserRole } from "../enums/user-role.enum"
 import { CodeVerificationEntity } from "src/auth/entities/code-verification.entity"
 import { RefreshSessionEntity } from "src/auth/entities/refresh-session.entity"
-import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
+import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 
 @Entity("users")
 export class UserEntity extends BaseEntity {

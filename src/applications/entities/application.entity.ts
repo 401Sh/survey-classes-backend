@@ -13,7 +13,7 @@ import {
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { AnswerEntity } from "./answer.entity"
-import { EnrollmentEntity } from "./enrollment.entity"
+import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 
 @Entity("applications")
 export class ApplicationEntity extends BaseEntity {

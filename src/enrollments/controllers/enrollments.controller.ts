@@ -3,7 +3,7 @@ import { EnrollmentsService } from "../services/enrollments.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
-import { CreateSubscriptionBodyDto } from "../dto/create-subscription-body.dto"
+import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
 
 @Controller("enrollments/me")
 export class EnrollmentsController {
@@ -44,13 +44,13 @@ export class EnrollmentsController {
     @ApiBody({
         description: "Данные для добавления тарифа оплаты",
         required: true,
-        type: CreateSubscriptionBodyDto,
+        type: CreateEnrollmentSubscriptionBodyDto,
     })
     @Post(":enrollmentId")
     async createSubscription(
         @Request() req,
         @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
-        @Body() data: CreateSubscriptionBodyDto,
+        @Body() data: CreateEnrollmentSubscriptionBodyDto,
     ) {
         const userId = req.user.sub
 

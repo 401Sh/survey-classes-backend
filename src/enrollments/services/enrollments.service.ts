@@ -5,13 +5,12 @@ import { Not, Repository } from "typeorm"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
-import { ApplicationEntity } from "../entities/application.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
-import { CreateSubscriptionBodyDto } from "../dto/create-subscription-body.dto"
-import { SubscriptionEntity } from "../entities/subscription.entity"
+import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
+import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 
 @Injectable()
 export class EnrollmentsService {
@@ -69,7 +68,7 @@ export class EnrollmentsService {
     }
 
 
-    async createSubscription(userId: number, enrollmentId: number, data: CreateSubscriptionBodyDto) {
+    async createSubscription(userId: number, enrollmentId: number, data: CreateEnrollmentSubscriptionBodyDto) {
         const { pricingTierId } = data
 
         // check and get enrollment with

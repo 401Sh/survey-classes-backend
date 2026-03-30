@@ -10,8 +10,8 @@ import {
 } from "typeorm"
 import { PaymentStatus } from "../enums/payment-status.enum"
 import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
-import { EnrollmentEntity } from "./enrollment.entity"
 import { AttendanceEntity } from "./attendance.entity"
+import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 
 @Entity("subscriptions")
 export class SubscriptionEntity extends BaseEntity {

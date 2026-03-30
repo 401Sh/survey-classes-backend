@@ -5,7 +5,6 @@ import { AuthModule } from "./auth/auth.module"
 import { UsersModule } from "./users/users.module"
 import { LessonsModule } from "./lessons/lessons.module"
 import { SurveysModule } from "./surveys/surveys.module"
-import { ApplicationsModule } from "./applications/applications.module"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { dataSourceOptions } from "./common/configs/typeorm.config"
 import { MailModule } from "./mail/mail.module"
@@ -14,6 +13,9 @@ import { APP_GUARD } from "@nestjs/core"
 import { AccessTokenGuard } from "./common/guards/access-token.guard"
 import { RolesGuard } from "./common/guards/role.guard"
 import { DictionariesModule } from "./dictionaries/dictionaries.module"
+import { EnrollmentsModule } from "./enrollments/enrollments.module"
+import { ApplicationsModule } from "./applications/applications.module"
+import { SubscriptionsModule } from "./subscriptions/subscriptions.module"
 
 @Module({
     imports: [
@@ -23,9 +25,11 @@ import { DictionariesModule } from "./dictionaries/dictionaries.module"
         UsersModule,
         LessonsModule,
         SurveysModule,
-        ApplicationsModule,
         MailModule,
         DictionariesModule,
+        EnrollmentsModule,
+        ApplicationsModule,
+        SubscriptionsModule,
     ],
     controllers: [AppController],
     providers: [

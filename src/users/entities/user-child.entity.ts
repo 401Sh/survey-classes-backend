@@ -9,7 +9,7 @@ import {
     UpdateDateColumn,
 } from "typeorm"
 import { UserEntity } from "./user.entity"
-import { EnrollmentEntity } from "src/applications/entities/enrollment.entity"
+import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 
 @Entity("children")
 export class UserChildEntity extends BaseEntity {

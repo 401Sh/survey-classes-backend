@@ -12,9 +12,9 @@ import {
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
-import { ApplicationEntity } from "./application.entity"
-import { SubscriptionEntity } from "./subscription.entity"
 import { UserEntity } from "src/users/entities/user.entity"
+import { ApplicationEntity } from "src/applications/entities/application.entity"
+import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 
 @Entity("enrollments")
 export class EnrollmentEntity extends BaseEntity {

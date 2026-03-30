@@ -2,14 +2,14 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { CreateApplicationBodyDto } from "../dto/create-application-body.dto"
 import { InjectRepository } from "@nestjs/typeorm"
 import { ApplicationEntity } from "../entities/application.entity"
-import { DeepPartial, EntityManager, In, Not, Repository } from "typeorm"
+import { DeepPartial, EntityManager, In, Repository } from "typeorm"
 import { AnswerEntity } from "../entities/answer.entity"
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { CreateAnswerBodyDto } from "../dto/create-answer-body.dto"
-import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
+import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 
 @Injectable()
 export class ApplicationsService {

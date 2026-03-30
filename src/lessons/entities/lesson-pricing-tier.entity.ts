@@ -8,7 +8,7 @@ import { BaseEntity,
     UpdateDateColumn,
 } from "typeorm"
 import { LessonEntity } from "./lesson.entity"
-import { SubscriptionEntity } from "src/applications/entities/subscription.entity"
+import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 
 @Entity("lesson-pricing-tiers")
 export class LessonPricingTierEntity  extends BaseEntity {

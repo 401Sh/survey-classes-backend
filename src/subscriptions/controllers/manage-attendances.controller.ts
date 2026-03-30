@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Query } from
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { ManageAttendancesService } from "../services/manage-attendances.service"
-import { GetAttendanceBodyDto } from "../dto/get-attendance-body.dto"
+import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
 
 @Controller("manage/attendances")
 export class ManageAttendancesController {
@@ -13,7 +13,7 @@ export class ManageAttendancesController {
         summary: "Получение всех посещений занятий",
     })
     @Get()
-    async findAll(@Query() query: GetAttendanceBodyDto) {
+    async findAll(@Query() query: GetAttendanceListQueryDto) {
         const result = await this.attendancesService.findAll(query)
 
         return result

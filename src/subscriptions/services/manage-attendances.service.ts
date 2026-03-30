@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { AttendanceEntity } from "../entities/attendance.entity"
 import { Repository } from "typeorm"
 import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
-import { GetAttendanceBodyDto } from "../dto/get-attendance-body.dto"
+import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 
 @Injectable()
@@ -15,7 +15,7 @@ export class ManageAttendancesService {
         private attendanceRepository: Repository<AttendanceEntity>,
     ) {}
 
-    async findAll(query: GetAttendanceBodyDto) {
+    async findAll(query: GetAttendanceListQueryDto) {
         const {
             limit,
             page,
