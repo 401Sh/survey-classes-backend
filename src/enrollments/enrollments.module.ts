@@ -8,6 +8,7 @@ import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
 import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 import { UsersModule } from "src/users/users.module"
 import { LessonsModule } from "src/lessons/lessons.module"
+import { EnrollmentsInternalService } from "./services/enrollments-internal.service"
 
 @Module({
     imports: [
@@ -25,6 +26,8 @@ import { LessonsModule } from "src/lessons/lessons.module"
     providers: [
         EnrollmentsService,
         ManageEnrollmentsService,
+        EnrollmentsInternalService,
     ],
+    exports: [EnrollmentsInternalService],
 })
 export class EnrollmentsModule {}

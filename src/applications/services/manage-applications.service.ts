@@ -6,6 +6,7 @@ import { GetApplicationListQueryDto } from "../dto/get-application-list-query.dt
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
+import { EnrollmentsInternalService } from "src/enrollments/services/enrollments-internal.service"
 
 @Injectable()
 export class ManageApplicationsService {
@@ -14,6 +15,8 @@ export class ManageApplicationsService {
     constructor(
         @InjectRepository(ApplicationEntity)
         private applicationRepository: Repository<ApplicationEntity>,
+
+        private readonly enrollmentsService: EnrollmentsInternalService,
     ) {}
 
     async findAll(query: GetApplicationListQueryDto) {
@@ -131,10 +134,8 @@ export class ManageApplicationsService {
 
             // activate pending enrollment
             if (application.enrollment?.status === EnrollmentStatus.PENDING) {
-                await manager.update(EnrollmentEntity,
-                    { id: application.enrollment.id },
-                    { status: EnrollmentStatus.ACTIVE },
-                )
+                const enrollmentId = application.enrollment.id
+                await this.enrollmentsService.activateWithManager(enrollmentId, manager)
             }
 
             this.logger.log(`Application with id ${applicationId} approved`)

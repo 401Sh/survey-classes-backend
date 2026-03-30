@@ -9,7 +9,7 @@ import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { CreateAnswerBodyDto } from "../dto/create-answer-body.dto"
 import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
-import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
+import { EnrollmentsInternalService } from "src/enrollments/services/enrollments-internal.service"
 
 @Injectable()
 export class ApplicationsService {
@@ -18,16 +18,15 @@ export class ApplicationsService {
     constructor(
         @InjectRepository(ApplicationEntity)
         private applicationRepository: Repository<ApplicationEntity>,
-        @InjectRepository(EnrollmentEntity)
-        private enrollmentRepository: Repository<EnrollmentEntity>,
+
+        private readonly enrollmentsService: EnrollmentsInternalService,
     ) {}
 
     async create(userId: number, data: CreateApplicationBodyDto) {
         const { enrollmentId, answers } = data
 
         // check that the enrollment belongs to the user
-        const enrollment = await this.getEnrollmentOrThrow(userId, enrollmentId)
-        const surveyId = enrollment.lesson.survey.id
+        const surveyId = await this.getSurveyIdOrThrow(userId, enrollmentId)
 
         // check cancelled application
         await this.validateApplicationNotExists(enrollmentId)
@@ -184,29 +183,21 @@ export class ApplicationsService {
     }
 
 
-    private async getEnrollmentOrThrow(userId: number, enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: {
-                id: enrollmentId,
-                user: { id: userId },
-            },
-            relations: {
-                lesson: { survey: true },
-            },
-        })
+    private async getSurveyIdOrThrow(userId: number, enrollmentId: number) {
+        const enrollment = await this.enrollmentsService.findOwnedWithLessonAndSurvey(enrollmentId, userId)
 
-        if (!enrollment) throw new NotFoundException("Enrollment not found")
+        const lesson = enrollment.lesson
 
-        if (!enrollment.lesson.requiresSurvey) {
+        if (!lesson.requiresSurvey) {
             throw new BadRequestException("This lesson does not require a survey")
         }
 
-        const survey = enrollment.lesson.survey
-        if (!survey?.isActive) {
+        if (!lesson.survey) {
             throw new BadRequestException("No active survey found for this lesson")
         }
 
-        return enrollment
+        const surveyId = lesson.survey.id
+        return surveyId
     }
 
 
