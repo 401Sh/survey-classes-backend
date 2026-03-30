@@ -37,7 +37,7 @@ export class UserEntity extends BaseEntity {
     role: UserRole
 
     @Column({ type: "boolean", default: false, nullable: false })
-    isEmailVerified: boolean = false
+    isEmailVerified: boolean
 
     @CreateDateColumn()
     createdAt: Date

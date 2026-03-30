@@ -19,7 +19,7 @@ export class SubscriptionEntity extends BaseEntity {
     id: number
 
     @Column({ type: "bool", default: true })
-    isActive: boolean = true
+    isActive: boolean
 
     @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.UNPAID })
     paymentStatus: PaymentStatus
@@ -28,7 +28,7 @@ export class SubscriptionEntity extends BaseEntity {
     priceSnapshot: number
 
     @Column({ type: "decimal", precision: 10, scale: 2, default: 0.0 })
-    paidAmount: number = 0.0
+    paidAmount: number
 
     @Column({ type: "datetime", nullable: true })
     paidAt?: Date | null

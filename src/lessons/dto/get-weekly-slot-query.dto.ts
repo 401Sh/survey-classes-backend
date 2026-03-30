@@ -9,7 +9,11 @@ export class GetWeeklySlotQueryDto {
         example: false,
         type: Boolean,
     })
-    @Type(() => Boolean)
+    @Transform(({ value }) => {
+        if (value === "true") return true
+        if (value === "false") return false
+        return value
+    })
     @IsBoolean()
     @IsOptional()
     isActive?: boolean
@@ -27,7 +31,6 @@ export class GetWeeklySlotQueryDto {
     @IsArray()
     @ArrayUnique()
     @IsInt({ each: true })
-    @Type(() => Number)
     @IsOptional()
     daysOfWeek?: number[]
 }

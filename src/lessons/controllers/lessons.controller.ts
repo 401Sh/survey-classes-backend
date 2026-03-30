@@ -3,6 +3,7 @@ import { LessonsService } from "../services/lessons.service"
 import { Public } from "src/common/decorators/public.decorator"
 import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
 import { ApiOperation, ApiParam } from "@nestjs/swagger"
+import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
 
 @Controller("lessons")
 export class LessonsController {
@@ -49,8 +50,11 @@ export class LessonsController {
     })
     @Public()
     @Get(":lessonId/schedules")
-    async findSchedulesByLessonId(@Param("lessonId", ParseIntPipe) lessonId: number) {
-        const result = await this.lessonService.findSchedulesByLessonId(lessonId)
+    async findSchedulesByLessonId(
+        @Param("lessonId", ParseIntPipe) lessonId: number,
+        @Query() query: GetScheduleOverrideQueryDto,
+    ) {
+        const result = await this.lessonService.findSchedulesByLessonId(lessonId, query)
 
         return result
     }

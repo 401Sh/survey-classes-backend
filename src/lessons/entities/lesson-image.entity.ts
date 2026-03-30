@@ -21,7 +21,7 @@ export class LessonImageEntity extends BaseEntity {
     position: number
 
     @Column({ type: "bool", default: false })
-    isCover: boolean = false
+    isCover: boolean
 
     @CreateDateColumn()
     createdAt: Date

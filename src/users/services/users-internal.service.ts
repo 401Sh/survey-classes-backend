@@ -36,7 +36,7 @@ export class UsersInternalService {
     }
 
 
-    async findUser(id: number): Promise<UserEntity | null> {
+    async findUser(id: number) {
         const user = this.userRepository.findOne({
             where: { id },
             select: {

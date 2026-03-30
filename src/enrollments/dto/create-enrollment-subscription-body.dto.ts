@@ -4,7 +4,7 @@ import { IsInt } from "class-validator"
 
 export class CreateEnrollmentSubscriptionBodyDto {
     @ApiProperty({
-        description: "ID тира оплаты",
+        description: "ID тарифа оплаты",
         example: 1,
         type: Number,
     })

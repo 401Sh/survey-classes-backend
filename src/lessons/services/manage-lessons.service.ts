@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonEntity } from "../entities/lesson.entity"
-import { In, Repository } from "typeorm"
+import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
 import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
 import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
@@ -13,9 +13,9 @@ import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
-import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
+import { GetManageScheduleOverrideQueryDto } from "../dto/get-manage-schedule-override-query.dto"
 import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
-import { GetPricingTierQueryDto } from "../dto/get-pricing-tier-query.dto"
+import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 
 @Injectable()
@@ -136,7 +136,8 @@ export class ManageLessonsService {
         } = query
 
         const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
-
+        console.warn(isActive)
+        console.warn(typeof isActive)
         queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers")
         queryBuilder.leftJoinAndSelect("lessons.images", "images")
         queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
@@ -147,22 +148,27 @@ export class ManageLessonsService {
 
         if (search) {
             queryBuilder.andWhere(
-                "(lessons.name ILIKE :search OR lessons.description ILIKE :search)",
+                "(lessons.name LIKE :search OR lessons.description LIKE :search)",
                 { search: `%${search}%` },
             )
         }
 
         if (categoryId) {
             // TODO: add array query search
-            queryBuilder.andWhere("categories.id = :categoryId", { categoryId })
+            queryBuilder
+                .innerJoin("lessons.categories", "categoryFilter") 
+                .andWhere("categoryFilter.id = :categoryId", { categoryId })
         }
 
-        if (priceFrom) {
-            queryBuilder.andWhere("pricingTiers.price >= :priceFrom", { priceFrom })
-        }
-
-        if (priceTo) {
-            queryBuilder.andWhere("pricingTiers.price <= :priceTo", { priceTo })
+        if (priceFrom || priceTo) {
+            queryBuilder.innerJoin("lessons.pricingTiers", "priceFilter")
+        
+            if (priceFrom) {
+                queryBuilder.andWhere("priceFilter.price >= :priceFrom", { priceFrom })
+            }
+            if (priceTo) {
+                queryBuilder.andWhere("priceFilter.price <= :priceTo", { priceTo })
+            }
         }
 
         if (dateFrom) {
@@ -214,7 +220,7 @@ export class ManageLessonsService {
     }
 
 
-    async findAllPricingTiersByLessonId(lessonId: number, query: GetPricingTierQueryDto) {
+    async findAllPricingTiersByLessonId(lessonId: number, query: GetManagePricingTierQueryDto) {
         const { isActive } = query
 
         // check that lesson exists
@@ -256,15 +262,24 @@ export class ManageLessonsService {
     }
 
 
-    async findAllScheduleOverridesByLessonId(lessonId: number, query: GetScheduleOverrideQueryDto) {
-        const { status } = query
+    async findAllScheduleOverridesByLessonId(lessonId: number, query: GetManageScheduleOverrideQueryDto) {
+        const { dateFrom, dateTo, status } = query
 
         // check that lesson exists
         await this.validateLessonExists(lessonId)
 
+        const dateFilter = dateFrom && dateTo
+            ? Between(dateFrom, dateTo)
+            : dateFrom
+            ? MoreThanOrEqual(dateFrom)
+            : dateTo
+            ? LessThanOrEqual(dateTo)
+            : undefined
+
         const scheduleOverrides = await this.scheduleOverrideRepository.find({
             where: {
                 lesson: { id: lessonId },
+                date: dateFilter,
                 status,
             },
             order: {

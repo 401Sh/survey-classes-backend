@@ -1,13 +1,14 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { LessonEntity } from "../entities/lesson.entity"
 import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
+import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
 import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
 
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
+import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
 
 @Injectable()
 export class LessonsService {
@@ -47,7 +48,7 @@ export class LessonsService {
 
         if (search) {
             queryBuilder.andWhere(
-                "(lessons.name ILIKE :search OR lessons.description ILIKE :search)",
+                "(lessons.name LIKE :search OR lessons.description LIKE :search)",
                 { search: `%${search}%` },
             )
         }
@@ -99,6 +100,7 @@ export class LessonsService {
             relations: {
                 images: true,
                 categories: true,
+                pricingTiers: true,
             },
             select: {
                 id: true,
@@ -116,6 +118,13 @@ export class LessonsService {
                     id: true,
                     name: true,
                 },
+                pricingTiers: {
+                    id: true,
+                    label: true,
+                    price: true,
+                    sessionsCount: true,
+                    isActive: true,
+                }
             },
         })
     
@@ -123,13 +132,25 @@ export class LessonsService {
             this.logger.log(`No lesson with id: ${id}`)
             throw new NotFoundException(`Lesson with id ${id} not found`)
         }
+
+        lesson.pricingTiers = lesson.pricingTiers.filter(tier => tier.isActive)
     
         this.logger.log(`Finded lesson with id: ${id}`)
         return lesson
     }
 
 
-    async findSchedulesByLessonId(lessonId: number) {
+    async findSchedulesByLessonId(lessonId: number, query: GetScheduleOverrideQueryDto) {
+        const { dateFrom, dateTo } = query
+
+        const dateFilter = dateFrom && dateTo
+            ? Between(dateFrom, dateTo)
+            : dateFrom
+            ? MoreThanOrEqual(dateFrom)
+            : dateTo
+            ? LessThanOrEqual(dateTo)
+            : undefined
+
         const [weeklySlots, overrides] = await Promise.all([
             this.weeklySlotRepository.find({
                 where: {
@@ -154,6 +175,7 @@ export class LessonsService {
                     lesson: {
                         id: lessonId,
                     },
+                    date: dateFilter,
                 },
                 select: {
                     id: true,

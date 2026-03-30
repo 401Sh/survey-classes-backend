@@ -15,7 +15,7 @@ export class ChildrenService {
     ) {}
 
     async create(userId: number, data: CreateChildBodyDto) {
-        const child = this.childRepository.save({
+        const child = await this.childRepository.save({
             user: { id: userId },
             ...data,
         })
@@ -30,6 +30,12 @@ export class ChildrenService {
         const children = await this.childRepository.find({
             where: {
                 user: { id: userId },
+            },
+            select: {
+                id: true,
+                firstName: true,
+                secondName: true,
+                birthDate: true,
             },
         })
 

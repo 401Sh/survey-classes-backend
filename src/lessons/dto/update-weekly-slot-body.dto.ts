@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
-import { Type } from "class-transformer"
+import { Transform, Type } from "class-transformer"
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString } from "class-validator"
 import { DayOfWeek } from "../enums/day-of-week.enum"
 
@@ -38,7 +38,11 @@ export class UpdateWeeklySlotBodyDto {
         type: Boolean,
         default: true,
     })
-    @Type(() => Boolean)
+    @Transform(({ value }) => {
+        if (value === "true") return true
+        if (value === "false") return false
+        return value
+    })
     @IsBoolean()
     @IsOptional()
     isActive?: boolean

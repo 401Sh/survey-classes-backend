@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
-import { Type } from "class-transformer"
+import { Transform, Type } from "class-transformer"
 import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min } from "class-validator"
 import { NOT_ZERO_INT_MIN_VALUE, PRICE_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
 
@@ -45,7 +45,11 @@ export class CreatePricingTierBodyDto {
         type: Boolean,
         default: true,
     })
-    @Type(() => Boolean)
+    @Transform(({ value }) => {
+        if (value === "true") return true
+        if (value === "false") return false
+        return value
+    })
     @IsBoolean()
     @IsOptional()
     isActive: boolean = true

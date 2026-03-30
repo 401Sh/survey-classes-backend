@@ -1,4 +1,4 @@
-import { Body, Controller, Ip, Post, Headers, Res, Request, HttpStatus, UseGuards } from "@nestjs/common"
+import { Body, Controller, Ip, Post, Headers, Res, Request, HttpStatus, UseGuards, Delete } from "@nestjs/common"
 import { AuthService } from "./auth.service"
 import { SignUpDto } from "./dto/signup.dto"
 import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
@@ -204,36 +204,6 @@ export class AuthController {
     }
 
 
-    @ApiBearerAuth()
-    @ApiOperation({
-        summary: "Удаление пользовательской сессии",
-    })
-    @ApiHeader({
-        name: "x-fingerprint",
-        description: "Уникальный отпечаток устройства",
-        required: true,
-        example: "123456789abcdef",
-    })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        description: "Успешный выход",
-    })
-    @Post("logout")
-    async logout(
-        @Request() req,
-        @Headers("x-fingerprint") fingerprint: string,
-        @Res() res: Response,
-    ) {
-        const userId = req.user.sub
-
-        await this.authService.deleteSession(userId, fingerprint)
-
-        return res.status(HttpStatus.OK).send({
-            message: "Succesfully logout",
-        })
-    }
-
-
     @ApiOperation({
         summary: "Обновление токенов",
     })
@@ -283,6 +253,36 @@ export class AuthController {
         return res.json({
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
+        })
+    }
+
+
+    @ApiBearerAuth()
+    @ApiOperation({
+        summary: "Удаление пользовательской сессии",
+    })
+    @ApiHeader({
+        name: "x-fingerprint",
+        description: "Уникальный отпечаток устройства",
+        required: true,
+        example: "123456789abcdef",
+    })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: "Успешный выход",
+    })
+    @Delete("logout")
+    async logout(
+        @Request() req,
+        @Headers("x-fingerprint") fingerprint: string,
+        @Res() res: Response,
+    ) {
+        const userId = req.user.sub
+
+        await this.authService.deleteSession(userId, fingerprint)
+
+        return res.status(HttpStatus.OK).send({
+            message: "Succesfully logout",
         })
     }
 }

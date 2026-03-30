@@ -9,9 +9,9 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
 import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
 import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
-import { GetPricingTierQueryDto } from "../dto/get-pricing-tier-query.dto"
+import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
 import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
-import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
+import { GetManageScheduleOverrideQueryDto } from "../dto/get-manage-schedule-override-query.dto"
 import { ScheduleOverrideStatus } from "../enums/schedule-override-status.enum"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
@@ -161,7 +161,7 @@ export class ManageLessonsController {
     @Get(":lessonId/pricing-tiers")
     async findAllPricingTiersByLessonId(
         @Param("lessonId", ParseIntPipe) lessonId: number,
-        @Query() query: GetPricingTierQueryDto,
+        @Query() query: GetManagePricingTierQueryDto,
     ) {
         const result = await this.manageLessonsService.findAllPricingTiersByLessonId(lessonId, query)
 
@@ -203,7 +203,7 @@ export class ManageLessonsController {
     @Get(":lessonId/schedule-overrides")
     async findAllScheduleOverridesByLessonId(
         @Param("lessonId", ParseIntPipe) lessonId: number,
-        @Query() query: GetScheduleOverrideQueryDto,
+        @Query() query: GetManageScheduleOverrideQueryDto,
     ) {
         const result = await this.manageLessonsService.findAllScheduleOverridesByLessonId(lessonId, query)
 

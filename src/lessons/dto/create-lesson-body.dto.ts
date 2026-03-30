@@ -1,9 +1,8 @@
 import { ArrayUnique, IsArray, IsBoolean, IsDate, IsEnum, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
-import { Type } from "class-transformer"
+import { Transform, Type } from "class-transformer"
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { LABEL_MAX_LENGTH, TEXT_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 import { EnrollmentMode } from "../enums/enrollment-mode.enum"
-import { ApplicationStatus } from "src/applications/enums/application-status.enum"
 
 export class CreateLessonBodyDto {
     @ApiProperty({
@@ -23,7 +22,11 @@ export class CreateLessonBodyDto {
         type: Boolean,
         default: false,
     })
-    @Type(() => Boolean)
+    @Transform(({ value }) => {
+        if (value === "true") return true
+        if (value === "false") return false
+        return value
+    })
     @IsBoolean()
     @IsOptional()
     isActive: boolean = false
@@ -78,7 +81,7 @@ export class CreateLessonBodyDto {
         example: EnrollmentMode.AUTO,
         enum: EnrollmentMode,
     })
-    @IsEnum(ApplicationStatus)
+    @IsEnum(EnrollmentMode)
     @IsOptional()
     enrollmentMode: EnrollmentMode = EnrollmentMode.MANUAL
 

@@ -1,14 +1,18 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
-import { Type } from "class-transformer"
+import { Transform } from "class-transformer"
 import { IsBoolean, IsOptional } from "class-validator"
 
-export class GetPricingTierQueryDto {
+export class GetManagePricingTierQueryDto {
     @ApiPropertyOptional({
         description: "Доступен ли тариф пользователям",
         example: false,
         type: Boolean,
     })
-    @Type(() => Boolean)
+    @Transform(({ value }) => {
+        if (value === "true") return true
+        if (value === "false") return false
+        return value
+    })
     @IsBoolean()
     @IsOptional()
     isActive?: boolean

@@ -31,7 +31,7 @@ export class EnrollmentEntity extends BaseEntity {
     consentedAt: Date
 
     @Column({ type: "bool", default: false })
-    isConsented: boolean = false
+    isConsented: boolean
 
     @CreateDateColumn()
     createdAt: Date

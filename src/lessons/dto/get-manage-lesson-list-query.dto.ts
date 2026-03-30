@@ -1,6 +1,6 @@
 import { IsBoolean, IsOptional } from "class-validator"
-import { Type } from "class-transformer"
-import { ApiPropertyOptional, PartialType } from "@nestjs/swagger"
+import { Transform } from "class-transformer"
+import { ApiPropertyOptional } from "@nestjs/swagger"
 import { GetLessonListQueryDto } from "./get-lesson-list-query.dto"
 
 export class GetManageLessonListQueryDto extends GetLessonListQueryDto {
@@ -9,7 +9,11 @@ export class GetManageLessonListQueryDto extends GetLessonListQueryDto {
         example: true,
         type: Boolean,
     })
-    @Type(() => Boolean)
+    @Transform(({ value }) => {
+        if (value === "true") return true
+        if (value === "false") return false
+        return value
+    })
     @IsBoolean()
     @IsOptional()
     isActive?: boolean

@@ -33,11 +33,11 @@ export class LessonEntity extends BaseEntity {
     description?: string
 
     @Column({ type: "bool", default: false })
-    isActive: boolean = false
+    isActive: boolean
 
     @Column({ type: "varchar", length: 255, nullable: true })
     teacher?: string
-    
+
     @Column({ type: "date", nullable: true })
     startsAt?: Date
 
@@ -48,7 +48,7 @@ export class LessonEntity extends BaseEntity {
     enrollmentMode: EnrollmentMode
 
     @Column({ type: "bool", default: false })
-    requiresSurvey: boolean = false
+    requiresSurvey: boolean
 
     @CreateDateColumn()
     createdAt: Date
