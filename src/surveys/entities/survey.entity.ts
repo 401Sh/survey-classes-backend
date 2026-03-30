@@ -26,9 +26,6 @@ export class SurveyEntity extends BaseEntity {
     @Column({ type: "text", nullable: true })
     description?: string
 
-    @Column({ type: "bool", default: false})
-    isActive: boolean = false
-
     @CreateDateColumn()
     createdAt: Date
 

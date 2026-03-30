@@ -36,15 +36,4 @@ export class CreateSurveyBodyDto {
         message: `Description must be at most ${TEXT_MAX_LENGTH} characters`
     })
     description?: string
-
-    @ApiPropertyOptional({
-        description: "Доступен ли опрос для пользователей",
-        example: true,
-        type: Boolean,
-        default: false,
-    })
-    @Type(() => Boolean)
-    @IsBoolean()
-    @IsOptional()
-    isActive: boolean = false
 }

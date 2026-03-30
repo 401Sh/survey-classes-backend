@@ -54,16 +54,6 @@ export class GetSurveyListQueryDto {
     dateTo?: Date
 
     @ApiPropertyOptional({
-        description: "Доступен ли опрос для пользователей",
-        example: true,
-        type: Boolean,
-    })
-    @Type(() => Boolean)
-    @IsBoolean()
-    @IsOptional()
-    isActive?: boolean
-
-    @ApiPropertyOptional({
         description: "Направление сортировки - ASC для восходящей и DESC для нисходящей",
         example: SortDirection.DESC,
         enum: SortDirection,

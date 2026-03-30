@@ -100,7 +100,6 @@ export class ManageSurveysService {
         const newSurvey = await this.surveyRepository.save({
             title: survey.title,
             description: survey.description,
-            isActive: false,
             lesson: lessonId ? { id: lessonId } : undefined,
             createdBy: survey.createdBy,
             questions: survey.questions.map(question => ({
@@ -121,16 +120,12 @@ export class ManageSurveysService {
 
 
     async findAll(query: GetSurveyListQueryDto) {
-        const { limit, page, dateFrom, dateTo, isActive, sortDirection } = query
+        const { limit, page, dateFrom, dateTo, sortDirection } = query
 
         const queryBuilder = this.surveyRepository.createQueryBuilder("surveys")
 
         queryBuilder.leftJoinAndSelect("surveys.questions", "questions")
         queryBuilder.leftJoinAndSelect("questions.options", "options")
-
-        if (isActive) {
-            queryBuilder.where("surveys.isActive = :isActive", { isActive })
-        }
 
         if (dateFrom) {
             queryBuilder.andWhere("surveys.createdAt >= :dateFrom", { dateFrom })
