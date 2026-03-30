@@ -6,9 +6,7 @@ import { ApplicationEntity } from "./entities/application.entity"
 import { AnswerEntity } from "./entities/answer.entity"
 import { ManageApplicationsService } from "./services/manage-applications.service"
 import { ManageApplicationsController } from "./controllers/manage-applications.controller"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { QuestionEntity } from "src/surveys/entities/question.entity"
-import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 
 @Module({
@@ -17,8 +15,6 @@ import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
             ApplicationEntity,
             AnswerEntity,
             QuestionEntity,
-            LessonPricingTierEntity,
-            LessonEntity,
             EnrollmentEntity,
         ]),
     ],

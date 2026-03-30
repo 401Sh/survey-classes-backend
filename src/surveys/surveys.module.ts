@@ -11,7 +11,7 @@ import { ManageQuestionOptionsController } from "./controllers/manage-question-o
 import { ManageSurveysService } from "./services/manage-surveys.service"
 import { ManageQuestionsService } from "./services/manage-questions.service"
 import { ManageQuestionOptionsService } from "./services/manage-question-options.service"
-import { LessonEntity } from "src/lessons/entities/lesson.entity"
+import { LessonsModule } from "src/lessons/lessons.module"
 
 @Module({
     imports: [
@@ -19,8 +19,8 @@ import { LessonEntity } from "src/lessons/entities/lesson.entity"
             SurveyEntity,
             QuestionEntity,
             QuestionOptionEntity,
-            LessonEntity,
         ]),
+        LessonsModule,
     ],
     controllers: [
         SurveysController,

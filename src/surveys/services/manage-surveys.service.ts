@@ -9,7 +9,7 @@ import { Repository } from "typeorm"
 import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
 import { QuestionEntity } from "../entities/question.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { LessonEntity } from "src/lessons/entities/lesson.entity"
+import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
 
 @Injectable()
 export class ManageSurveysService {
@@ -20,8 +20,8 @@ export class ManageSurveysService {
         private surveyRepository: Repository<SurveyEntity>,
         @InjectRepository(QuestionEntity)
         private questionRepository: Repository<QuestionEntity>,
-        @InjectRepository(LessonEntity)
-        private lessonRepository: Repository<LessonEntity>,
+
+        private readonly lessonsService: LessonsInternalService,
     ) {}
 
     async create(userId: number, data: CreateSurveyBodyDto) {
@@ -31,10 +31,7 @@ export class ManageSurveysService {
         if (lessonId) {
             await this.validateLessonExists(lessonId)
 
-            await this.lessonRepository.update(
-                { id: lessonId },
-                { requiresSurvey: true },
-            )
+            await this.lessonsService.updateSurveyRequirement(lessonId, true)
         }
 
         const survey = await this.surveyRepository.save({
@@ -97,12 +94,7 @@ export class ManageSurveysService {
             await this.validateLessonExists(lessonId)
 
             // tying survey to lesson
-            if (data.lessonId) {
-                await this.lessonRepository.update(
-                    { id: lessonId },
-                    { requiresSurvey: true },
-                )
-            }
+            await this.lessonsService.updateSurveyRequirement(lessonId, true)
         }
 
         const newSurvey = await this.surveyRepository.save({
@@ -209,7 +201,7 @@ export class ManageSurveysService {
 
 
     async update(surveyId: number, data: UpdateSurveyBodyDto) {
-        const { lessonId } = data
+        const { lessonId, ...otherData } = data
 
         const survey = await this.surveyRepository.findOne({
             where: { id: surveyId },
@@ -218,24 +210,29 @@ export class ManageSurveysService {
 
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
 
-        // untying current survey from lesson
-        if (survey.lesson && lessonId !== survey.lesson.id) {
-            await this.lessonRepository.update(
-                { id: survey.lesson.id },
-                { requiresSurvey: false },
-            )
+        if (lessonId !== undefined) {
+            // untying current survey from lesson
+            if (survey.lesson) {
+                await this.lessonsService.updateSurveyRequirement(survey.lesson.id, false)
+            }
+
+            // tying survey to new lesson
+            if (lessonId !== null) {
+                await this.validateLessonExists(lessonId)
+                await this.lessonsService.updateSurveyRequirement(lessonId, true)
+            }
         }
 
-        // tying survey to new lesson
-        if (lessonId && lessonId !== survey.lesson?.id) {
-            await this.validateLessonExists(lessonId)
-            await this.lessonRepository.update(
-                { id: lessonId },
-                { requiresSurvey: true },
-            )
-        }
+        const updateResult = await this.surveyRepository.update({ id: surveyId }, otherData)
 
-        const updateResult = await this.surveyRepository.update({ id: surveyId }, data)
+        // untying survey in DB
+        if (lessonId !== undefined) {
+            await this.surveyRepository
+                .createQueryBuilder()
+                .relation(SurveyEntity, "lesson")
+                .of(surveyId)
+                .set(lessonId ?? null)
+        }        
 
         if (updateResult.affected === 0) {
             this.logger.debug(`Cannot update survey with id: ${surveyId}`)
@@ -256,10 +253,8 @@ export class ManageSurveysService {
         if (!survey) throw new NotFoundException(`Survey with id ${surveyId} not found`)
 
         if (survey.lesson) {
-            await this.lessonRepository.update(
-                { id: survey.lesson.id },
-                { requiresSurvey: false },
-            )
+            const lessonId = survey.lesson.id
+            await this.lessonsService.updateSurveyRequirement(lessonId, false)
         }
 
         this.logger.log(`Deleting survey with id: ${surveyId}`)
@@ -284,9 +279,7 @@ export class ManageSurveysService {
 
 
     private async validateLessonExists(lessonId: number) {
-        const isLessonExists = await this.lessonRepository.exists({
-            where: { id: lessonId }
-        })
+        const isLessonExists = await this.lessonsService.exists(lessonId)
 
         if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
     }

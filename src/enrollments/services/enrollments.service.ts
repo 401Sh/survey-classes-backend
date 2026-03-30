@@ -5,12 +5,12 @@ import { Not, Repository } from "typeorm"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
-import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
+import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
+import { LessonsPricingTiersInternalService } from "src/lessons/services/lessons-pricing-tiers-internal.service"
 
 @Injectable()
 export class EnrollmentsService {
@@ -21,12 +21,10 @@ export class EnrollmentsService {
         private enrollmentRepository: Repository<EnrollmentEntity>,
         @InjectRepository(SubscriptionEntity)
         private subscriptionRepository: Repository<SubscriptionEntity>,
-        @InjectRepository(LessonEntity)
-        private lessonRepository: Repository<LessonEntity>,
-        @InjectRepository(LessonPricingTierEntity)
-        private pricingTierRepository: Repository<LessonPricingTierEntity>,
 
         private readonly childrenService: ChildrenInternalService,
+        private readonly lessonsService: LessonsInternalService,
+        private readonly pricingTierService: LessonsPricingTiersInternalService,
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
@@ -36,7 +34,7 @@ export class EnrollmentsService {
         await this.validateChildOwnership(childId, userId)
 
         // check and get lesson with survey
-        const lesson = await this.getLessonWithSurveyOrThrow(lessonId)
+        const lesson = await this.lessonsService.findSimplefiedWithSurvey(lessonId)
 
         // check that there's no active enrollment
         await this.validateActiveEnrollmentExisting(lessonId, childId)
@@ -78,9 +76,9 @@ export class EnrollmentsService {
             throw new BadRequestException("Cannot create subscription for non-active enrollment")
         }
 
-        // check pricingTier existing
+        // check and get pricingTier
         const lessonId = enrollment.lesson.id
-        const pricingTier = await this.getPricingTierOrThrow(pricingTierId, lessonId)
+        const pricingTier = await this.pricingTierService.findActiveAndLinked(pricingTierId, lessonId)
 
         const subscription = await this.subscriptionRepository.save({
             enrollment: { id: enrollmentId },
@@ -266,23 +264,6 @@ export class EnrollmentsService {
     }
 
 
-    private async getLessonWithSurveyOrThrow(lessonId: number) {
-        const lesson = await this.lessonRepository.findOne({
-            where: {
-                id: lessonId,
-                isActive: true,
-            },
-            relations: { survey: true },
-        })
-    
-        if (!lesson) {
-            throw new NotFoundException("Lesson not found")
-        }
-
-        return lesson
-    }
-
-
     private async validateActiveEnrollmentExisting(lessonId: number, childId: number) {
         const isEnrollmentExists = await this.enrollmentRepository.exists({
             where: {
@@ -315,22 +296,5 @@ export class EnrollmentsService {
         }
 
         return enrollment
-    }
-
-
-    private async getPricingTierOrThrow(tierId: number, lessonId: number) {
-        const tier = await this.pricingTierRepository.findOne({
-            where: {
-                id: tierId,
-                lesson: { id: lessonId },
-                isActive: true,
-            },
-        })
-    
-        if (!tier) {
-            throw new NotFoundException("Pricing tier not found")
-        }
-    
-        return tier
     }
 }

@@ -16,6 +16,13 @@ export class ManagePricingTiersService {
     async findById(id: number) {
         const pricingTier = await this.pricingTierRepository.findOne({
             where: { id },
+            select: {
+                id: true,
+                label: true,
+                price: true,
+                sessionsCount: true,
+                isActive: true,
+            },
         })
 
         if (!pricingTier) {

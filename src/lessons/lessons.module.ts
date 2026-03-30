@@ -15,6 +15,8 @@ import { ManageScheduleOverridesService } from "./services/manage-schedule-overr
 import { ManagePricingTiersController } from "./controllers/manage-pricing-tiers.controller"
 import { ManageWeeklySlotsController } from "./controllers/manage-weekly-slots.controller"
 import { ManageScheduleOverridesController } from "./controllers/manage-schedule-overrides.controller"
+import { LessonsInternalService } from "./services/lessons-internal.service"
+import { LessonsPricingTiersInternalService } from "./services/lessons-pricing-tiers-internal.service"
 
 @Module({
     imports: [
@@ -39,7 +41,12 @@ import { ManageScheduleOverridesController } from "./controllers/manage-schedule
         ManagePricingTiersService,
         ManageWeeklySlotsService,
         ManageScheduleOverridesService,
+        LessonsInternalService,
+        LessonsPricingTiersInternalService,
     ],
-    exports: [LessonsService],
+    exports: [
+        LessonsInternalService,
+        LessonsPricingTiersInternalService,
+    ],
 })
 export class LessonsModule {}

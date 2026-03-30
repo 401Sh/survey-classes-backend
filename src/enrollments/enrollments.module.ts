@@ -6,19 +6,17 @@ import { ManageEnrollmentsController } from "./controllers/manage-enrollments.co
 import { EnrollmentsService } from "./services/enrollments.service"
 import { ManageEnrollmentsService } from "./services/manage-enrollments.service"
 import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
-import { LessonEntity } from "src/lessons/entities/lesson.entity"
-import { LessonPricingTierEntity } from "src/lessons/entities/lesson-pricing-tier.entity"
 import { UsersModule } from "src/users/users.module"
+import { LessonsModule } from "src/lessons/lessons.module"
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
             EnrollmentEntity,
             SubscriptionEntity,
-            LessonEntity,
-            LessonPricingTierEntity,
         ]),
         UsersModule,
+        LessonsModule,
     ],
     controllers: [
         EnrollmentsController,

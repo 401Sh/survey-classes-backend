@@ -1,19 +1,21 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from "class-validator"
+import { IsBoolean, IsInt, IsOptional, IsString, MaxLength, ValidateIf } from "class-validator"
 import { TEXT_MAX_LENGTH, LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class UpdateSurveyBodyDto {
     @ApiPropertyOptional({
-        description: "ID занятия",
+        description: "ID занятия для привязки и перепривязки. Null для отвязки",
         example: 13,
         type: Number,
+        nullable: true,
     })
+    @ValidateIf((o) => o.lessonId !== null)
     @Type(() => Number)
     @IsInt()
     @IsOptional()
-    lessonId?: number
-    
+    lessonId?: number | null
+
     @ApiPropertyOptional({
         description: "Заголовок опроса",
         example: "New test survey",
