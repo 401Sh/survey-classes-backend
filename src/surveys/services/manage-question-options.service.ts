@@ -37,9 +37,17 @@ export class ManageQuestionOptionsService {
             if (!option) throw new NotFoundException(`Question option with id ${questionOptionId} not found`)
     
             if (data.position && data.position !== option.position) {
+                // get question max position in survey
+                const maxPosition = await manager.maximum(QuestionOptionEntity,
+                    "position",
+                    {
+                        question: { id: option.question.id },
+                    },
+                )
+
                 const oldPosition = option.position
-                const newPosition = data.position
-    
+                const newPosition = Math.min(data.position, maxPosition ?? data.position)
+
                 if (newPosition > oldPosition) {
                     // if we move question down - other questions moving up
                     await manager.createQueryBuilder()
@@ -70,7 +78,7 @@ export class ManageQuestionOptionsService {
                         .execute()
                 }
             }
-    
+
             // updating question
             const updateResult =  await manager.update(QuestionOptionEntity,
                 { id: questionOptionId },

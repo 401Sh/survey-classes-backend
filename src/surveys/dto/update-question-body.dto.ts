@@ -1,8 +1,8 @@
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from "class-validator"
 import {
     TEXT_MAX_LENGTH,
-    POSITION_MIN_VALUE,
     LABEL_MAX_LENGTH,
+    NOT_ZERO_INT_MIN_VALUE,
 } from "src/common/constants/dto-request-limits.constant"
 import { QuestionType } from "../enums/question-type.enum"
 import { Type } from "class-transformer"
@@ -50,8 +50,8 @@ export class UpdateQuestionBodyDto {
     @Type(() => Number)
     @IsInt()
     @IsOptional()
-    @Min(POSITION_MIN_VALUE, {
-        message: `Position cannot be less than ${POSITION_MIN_VALUE}`,
+    @Min(NOT_ZERO_INT_MIN_VALUE, {
+        message: `Position cannot be less than ${NOT_ZERO_INT_MIN_VALUE}`,
     })
     position?: number
 }

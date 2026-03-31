@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
 import { IsInt, IsOptional, IsString, MaxLength, Min } from "class-validator"
-import { POSITION_MIN_VALUE, LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
+import { NOT_ZERO_INT_MIN_VALUE, LABEL_MAX_LENGTH } from "src/common/constants/dto-request-limits.constant"
 
 export class UpdateQuestionOptionBodyDto {
     @ApiPropertyOptional({
@@ -24,8 +24,8 @@ export class UpdateQuestionOptionBodyDto {
     @Type(() => Number)
     @IsInt()
     @IsOptional()
-    @Min(POSITION_MIN_VALUE, {
-        message: `Position cannot be less than ${POSITION_MIN_VALUE}`,
+    @Min(NOT_ZERO_INT_MIN_VALUE, {
+        message: `Position cannot be less than ${NOT_ZERO_INT_MIN_VALUE}`,
     })
     position?: number
 }

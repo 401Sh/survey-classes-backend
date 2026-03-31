@@ -99,13 +99,23 @@ export class ManageQuestionsService {
                     relations: { survey: true },
                 },
             )
-    
+
             if (!question) throw new NotFoundException(`Question with id ${questionId} not found`)
-    
+
             if (data.position && data.position !== question.position) {
+                // get question max position in survey
+                const maxPosition = await manager.maximum(QuestionEntity,
+                    "position",
+                    {
+                        survey: { id: question.survey.id },
+                    },
+                )
+
                 const oldPosition = question.position
-                const newPosition = data.position
-    
+                const newPosition =   Math.min(data.position, maxPosition ?? data.position)
+
+                data.position = newPosition
+
                 if (newPosition > oldPosition) {
                     // if we move question down - other questions moving up
                     await manager.createQueryBuilder()
