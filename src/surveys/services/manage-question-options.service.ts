@@ -97,14 +97,26 @@ export class ManageQuestionOptionsService {
 
 
     async delete(questionOptionId: number) {
-        this.logger.log(`Deleting question option with id: ${questionOptionId}`)
-        const deleteResult = await this.questionOptionsRepository.delete({ id: questionOptionId })
+        await this.questionOptionsRepository.manager.transaction(async (manager) => {
+            const option = await manager.findOne(QuestionOptionEntity, {
+                where: { id: questionOptionId },
+                relations: { question: true },
+            })
 
-        if (deleteResult.affected === 0) {
-            this.logger.log(`Cannot delete question option. No question option with id: ${questionOptionId}`)
-            throw new NotFoundException(`Question option with id ${questionOptionId} not found`)
-        }
+            if (!option) throw new NotFoundException(`Question option with id ${questionOptionId} not found`)
 
-        return deleteResult
+            await manager.createQueryBuilder()
+                .update(QuestionOptionEntity)
+                .set({ position: () => "position - 1" })
+                .where(
+                    "questionId = :questionId AND position > :position",
+                    { questionId: option.question.id, position: option.position },
+                )
+                .execute()
+
+            await manager.delete(QuestionOptionEntity, { id: questionOptionId })
+        })
+
+        this.logger.log(`Deleted question option with id: ${questionOptionId}`)
     }
 }

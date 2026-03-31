@@ -175,15 +175,28 @@ export class ManageQuestionsService {
 
 
     async delete(questionId: number) {
-        this.logger.log(`Deleting question with id: ${questionId}`)
-        const deleteResult = await this.questionRepository.delete({ id: questionId })
+        await this.questionRepository.manager.transaction(async (manager) => {
+            const question = await manager.findOne(QuestionEntity, {
+                where: { id: questionId },
+                relations: { survey: true },
+            })
 
-        if (deleteResult.affected === 0) {
-            this.logger.log(`Cannot delete question. No question with id: ${questionId}`)
-            throw new NotFoundException(`Question with id ${questionId} not found`)
-        }
+            if (!question) throw new NotFoundException(`Question with id ${questionId} not found`)
 
-        return deleteResult
+            // сдвигаем все вопросы после удаляемого вверх
+            await manager.createQueryBuilder()
+                .update(QuestionEntity)
+                .set({ position: () => "position - 1" })
+                .where(
+                    "surveyId = :surveyId AND position > :position",
+                    { surveyId: question.survey.id, position: question.position },
+                )
+                .execute()
+
+            await manager.delete(QuestionEntity, { id: questionId })
+        })
+
+        this.logger.log(`Deleted question with id: ${questionId}`)
     }
 
 
