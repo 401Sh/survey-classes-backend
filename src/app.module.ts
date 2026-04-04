@@ -19,6 +19,13 @@ import { SubscriptionsModule } from "./subscriptions/subscriptions.module"
 import { MediaModule } from "./media/media.module"
 import { ServeStaticModule } from "@nestjs/serve-static"
 import { join } from "path"
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
+import {
+    GLOBAL_THROTTLE_LIMIT,
+    GLOBAL_THROTTLE_NAME,
+    GLOBAL_THROTTLE_TTL,
+} from "./common/constants/throttle.constant"
+import { ApiKeyGuard } from "./common/guards/api-key.guard"
 
 @Module({
     imports: [
@@ -44,6 +51,13 @@ import { join } from "path"
                 }]
             },
         }),
+        ThrottlerModule.forRoot([
+            {
+                name: GLOBAL_THROTTLE_NAME,
+                ttl: GLOBAL_THROTTLE_TTL,
+                limit: GLOBAL_THROTTLE_LIMIT,
+            },
+        ]),
     ],
     controllers: [AppController],
     providers: [
@@ -56,6 +70,10 @@ import { join } from "path"
             provide: APP_GUARD,
             useClass: RolesGuard,
         },
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        }
     ],
 })
 export class AppModule {}

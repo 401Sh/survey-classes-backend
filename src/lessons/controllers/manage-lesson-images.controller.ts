@@ -1,4 +1,4 @@
-import { Body,
+import {
     Controller,
     Delete,
     FileTypeValidator,
@@ -19,8 +19,14 @@ import { FileInterceptor } from "@nestjs/platform-express"
 import { imageMulterOptions } from "src/common/configs/multer.config"
 import { MAX_FILE_SIZE } from "src/common/constants/media.constant"
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { Throttle } from "@nestjs/throttler"
+import { MEDIA_THROTTLE_LIMIT, MEDIA_THROTTLE_TTL } from "src/common/constants/throttle.constant"
 
 // TODO: add images position reorder route
+@Throttle({ default: {
+    ttl: MEDIA_THROTTLE_TTL,
+    limit: MEDIA_THROTTLE_LIMIT,
+}})
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("lessons/:lessonId/images")
 export class ManageLessonImagesController {
