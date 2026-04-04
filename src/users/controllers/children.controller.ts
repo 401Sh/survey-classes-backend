@@ -2,13 +2,14 @@ import { ChildrenService } from "../services/children.service"
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Request } from "@nestjs/common"
 import { CreateChildBodyDto } from "../dto/create-child-body.dto"
 import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Controller("users/me/children")
 export class ChildrenController {
     constructor(private childrenService: ChildrenService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание ребенка пользователя",
     })
@@ -31,6 +32,7 @@ export class ChildrenController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех детей пользователя",
     })
@@ -45,6 +47,7 @@ export class ChildrenController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение данных ребенка пользователя",
     })
@@ -68,6 +71,7 @@ export class ChildrenController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление данных ребенка пользователя",
     })
@@ -99,6 +103,7 @@ export class ChildrenController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление ребенка пользователя",
     })

@@ -18,7 +18,7 @@ import { UserRole } from "src/users/enums/user-role.enum"
 import { FileInterceptor } from "@nestjs/platform-express"
 import { imageMulterOptions } from "src/common/configs/multer.config"
 import { MAX_FILE_SIZE } from "src/common/constants/media.constant"
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { Throttle } from "@nestjs/throttler"
 import { MEDIA_THROTTLE_LIMIT, MEDIA_THROTTLE_TTL } from "src/common/constants/throttle.constant"
 
@@ -33,6 +33,7 @@ export class ManageLessonImagesController {
     constructor(private manageLessonImagesService: ManageLessonImagesService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Загрузка изображения для занятия",
     })
@@ -77,6 +78,7 @@ export class ManageLessonImagesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех изображений занятия",
     })
@@ -95,6 +97,7 @@ export class ManageLessonImagesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление обложки занятия",
     })
@@ -124,6 +127,7 @@ export class ManageLessonImagesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление изображения",
     })

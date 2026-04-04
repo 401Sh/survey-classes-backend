@@ -3,7 +3,7 @@ import { ManageQuestionOptionsService } from "../services/manage-question-option
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { UpdateQuestionOptionBodyDto } from "../dto/update-question-option-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/question-options")
@@ -11,6 +11,7 @@ export class ManageQuestionOptionsController {
     constructor(private manageQuestionOptionsService: ManageQuestionOptionsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         description: "Получение варианта ответа",
     })
@@ -29,6 +30,7 @@ export class ManageQuestionOptionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление варианта ответа вопроса",
     })
@@ -57,6 +59,7 @@ export class ManageQuestionOptionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление варианта ответа вопроса",
     })

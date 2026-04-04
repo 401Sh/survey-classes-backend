@@ -1,13 +1,14 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
 import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
-import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {
     constructor(private manageEnrollmentsService: ManageEnrollmentsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех существующих записей на занятия",
     })
@@ -20,6 +21,7 @@ export class ManageEnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение записи на занятие",
     })
@@ -38,6 +40,7 @@ export class ManageEnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Принятие записи на занятие",
     })
@@ -58,6 +61,7 @@ export class ManageEnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Приостановление записи на занятие",
     })
@@ -78,6 +82,7 @@ export class ManageEnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Возобновление записи на занятие",
     })

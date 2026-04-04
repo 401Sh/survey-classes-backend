@@ -3,7 +3,7 @@ import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManageApplicationsService } from "../services/manage-applications.service"
 import { GetApplicationListQueryDto } from "../dto/get-application-list-query.dto"
-import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/applications")
@@ -11,6 +11,7 @@ export class ManageApplicationsController {
     constructor(private manageApplicationsService: ManageApplicationsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех существующих ответов на опросы",
     })
@@ -23,6 +24,7 @@ export class ManageApplicationsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение ответа на опрос по ID",
     })
@@ -41,6 +43,7 @@ export class ManageApplicationsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Одобрение ответа на опрос и записи на занятие",
     })
@@ -61,6 +64,7 @@ export class ManageApplicationsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Отклонение ответа на опрос",
     })

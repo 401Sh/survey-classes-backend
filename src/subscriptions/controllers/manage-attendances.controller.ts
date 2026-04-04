@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { ManageAttendancesService } from "../services/manage-attendances.service"
 import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
@@ -9,6 +9,7 @@ export class ManageAttendancesController {
     constructor(private attendancesService: ManageAttendancesService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех посещений занятий",
     })
@@ -21,6 +22,7 @@ export class ManageAttendancesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление данных посещения занятия",
     })
@@ -49,6 +51,7 @@ export class ManageAttendancesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление посещения занятия",
     })

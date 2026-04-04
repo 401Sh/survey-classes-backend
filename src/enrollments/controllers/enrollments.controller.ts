@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Request } from "@nestjs/common"
 import { EnrollmentsService } from "../services/enrollments.service"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
@@ -10,6 +10,7 @@ export class EnrollmentsController {
     constructor(private enrollmentsService: EnrollmentsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание записи на занятие",
     })
@@ -32,6 +33,7 @@ export class EnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Добавление тарифа оплаты к записи на занятие",
     })
@@ -61,6 +63,7 @@ export class EnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получения всех созданных записей",
     })
@@ -78,6 +81,7 @@ export class EnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение записи на занятие по ID",
     })
@@ -101,6 +105,7 @@ export class EnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получения всех добавленных тарифов оплаты",
     })
@@ -124,6 +129,7 @@ export class EnrollmentsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Отмена записи на занятие",
     })

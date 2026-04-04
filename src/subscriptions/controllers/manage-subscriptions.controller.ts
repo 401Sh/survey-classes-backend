@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common"
 import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-subscription-payment-body.dto"
 import { GetManageSubscriptionListQueryDto } from "../dto/get-manage-subscription-list-query.dto"
 import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
@@ -11,6 +11,7 @@ export class ManageSubscriptionsController {
     constructor(private manageSubscriptionsSerivice: ManageSubscriptionsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание посещения занятия",
     })
@@ -32,6 +33,7 @@ export class ManageSubscriptionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех выбранных пользователями тарифов оплаты",
     })
@@ -44,6 +46,7 @@ export class ManageSubscriptionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение выбранного пользователем тарифа оплаты",
     })
@@ -62,6 +65,7 @@ export class ManageSubscriptionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Зафиксировать полную оплату тарифа",
     })
@@ -90,6 +94,7 @@ export class ManageSubscriptionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Выполнить возврат оплаты тарифа",
     })

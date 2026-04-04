@@ -1,12 +1,13 @@
 import { Controller, Get, Param, ParseIntPipe } from "@nestjs/common"
 import { SurveysService } from "../services/surveys.service"
-import { ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Controller("surveys")
 export class SurveysController {
     constructor(private surveysService: SurveysService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение опроса по ID",
     })

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Request } from "@nestjs/common"
 import { ApplicationsService } from "../services/applications.service"
 import { CreateApplicationBodyDto } from "../dto/create-application-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
 
 @Controller("applications/me")
@@ -9,6 +9,7 @@ export class ApplicationsController {
     constructor(private applicationsService: ApplicationsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание ответов на опрос для записи на занятие",
     })
@@ -31,6 +32,7 @@ export class ApplicationsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получения всех созданных ответов на опросы",
     })
@@ -45,6 +47,7 @@ export class ApplicationsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение созданного ответа на опрос",
     })
@@ -68,6 +71,7 @@ export class ApplicationsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление данных ответа на опрос",
     })

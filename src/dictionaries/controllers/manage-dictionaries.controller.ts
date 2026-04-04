@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Param, ParseIntPipe, Patch, Post } from "@nes
 import { ManageDictionariesService } from "../services/manage-dictionaries.service"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { CreateCategoryBodyDto } from "../dto/create-category-body.dto"
 import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
 
@@ -12,6 +12,7 @@ export class ManageDictionariesController {
     constructor(private manageDictionariesService: ManageDictionariesService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание категории",
     })
@@ -29,6 +30,7 @@ export class ManageDictionariesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление категории",
     })
@@ -57,6 +59,7 @@ export class ManageDictionariesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление категории",
     })

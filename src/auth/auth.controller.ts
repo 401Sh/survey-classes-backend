@@ -5,7 +5,7 @@ import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { Response } from "express"
 import { SignInDto } from "./dto/signin.dto"
 import { RefreshTokenGuard } from "../common/guards/refresh-token.guard"
-import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiResponse } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiResponse, ApiSecurity } from "@nestjs/swagger"
 import { JWTTokensReturnDto } from "./dto/jwt-tokens-return.dto"
 import { Public } from "src/common/decorators/public.decorator"
 import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
@@ -22,6 +22,7 @@ import { AUTH_THROTTLE_TTL } from "src/common/constants/throttle.constant"
 export class AuthController {
     constructor(private authService: AuthService) {}
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Регистрация аккаунта по имени, почте и паролю",
     })
@@ -45,6 +46,7 @@ export class AuthController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Подтверждение регистрации аккаунта",
     })
@@ -93,6 +95,7 @@ export class AuthController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Авторизация пользователя",
     })
@@ -141,6 +144,7 @@ export class AuthController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Запрос на восстановление пароля",
     })
@@ -164,6 +168,7 @@ export class AuthController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Подтверждение кода восстановления пароля",
     })
@@ -187,6 +192,7 @@ export class AuthController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Сброс пароля",
     })
@@ -210,6 +216,7 @@ export class AuthController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление токенов",
     })
@@ -264,6 +271,7 @@ export class AuthController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление пользовательской сессии",
     })

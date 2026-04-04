@@ -1,12 +1,13 @@
 import { Controller, Get } from "@nestjs/common"
 import { DictionariesService } from "../services/dictionaries.service"
-import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiOperation, ApiSecurity } from "@nestjs/swagger"
 
 @Controller("dictionaries")
 export class DictionariesController {
     constructor(private dictionariesService: DictionariesService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение списка категорий",
     })

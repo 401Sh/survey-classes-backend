@@ -1,13 +1,14 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Request } from "@nestjs/common"
+import { Body, Controller, Get, Patch, Request } from "@nestjs/common"
 import { UsersService } from "../services/users.service"
 import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiSecurity } from "@nestjs/swagger"
 
 @Controller("users/me")
 export class UsersController {
     constructor(private usersService: UsersService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение данных профиля",
     })
@@ -22,6 +23,7 @@ export class UsersController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление данных профиля",
     })

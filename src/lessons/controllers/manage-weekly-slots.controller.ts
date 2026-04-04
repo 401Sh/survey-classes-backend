@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch } from "@nest
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManageWeeklySlotsService } from "../services/manage-weekly-slots.service"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { UpdateWeeklySlotBodyDto } from "../dto/update-weekly-slot-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
@@ -11,6 +11,7 @@ export class ManageWeeklySlotsController {
     constructor(private manageWeeklySlotsService: ManageWeeklySlotsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение дня недели занятия по ID",
     })
@@ -29,6 +30,7 @@ export class ManageWeeklySlotsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление дня недели занятия",
     })
@@ -57,6 +59,7 @@ export class ManageWeeklySlotsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление дня недели занятия",
     })

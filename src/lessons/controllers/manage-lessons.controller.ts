@@ -5,7 +5,7 @@ import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
 import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
 import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
@@ -20,6 +20,7 @@ export class ManageLessonsController {
     constructor(private manageLessonsService: ManageLessonsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание занятия",
     })
@@ -41,6 +42,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание тарифа оплаты",
     })
@@ -67,6 +69,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание расписания занятия",
     })
@@ -93,6 +96,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание временного изменения расписания",
     })
@@ -119,6 +123,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех существующих занятий",
     })
@@ -131,6 +136,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение занятия по ID",
     })
@@ -149,6 +155,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех тарифов оплаты для занятия",
     })
@@ -170,6 +177,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех дней недели, в которые проходит занятие",
     })
@@ -191,6 +199,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение измененных дат занятий",
     })
@@ -212,6 +221,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление занятия",
     })
@@ -240,6 +250,7 @@ export class ManageLessonsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление занятия",
     })

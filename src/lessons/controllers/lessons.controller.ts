@@ -2,13 +2,14 @@ import { Controller, Get, Param, ParseIntPipe, Query } from "@nestjs/common"
 import { LessonsService } from "../services/lessons.service"
 import { Public } from "src/common/decorators/public.decorator"
 import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
-import { ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
 
 @Controller("lessons")
 export class LessonsController {
     constructor(private lessonService: LessonsService) {}
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех существующих занятий",
     })
@@ -21,6 +22,7 @@ export class LessonsController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение занятия по ID",
     })
@@ -39,6 +41,7 @@ export class LessonsController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение расписания занятий по дням недели и временных изменений расписания",
     })
@@ -60,6 +63,7 @@ export class LessonsController {
     }
 
 
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех цен занятий",
     })

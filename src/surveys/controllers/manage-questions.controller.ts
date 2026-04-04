@@ -4,7 +4,7 @@ import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { UpdateQuestionBodyDto } from "../dto/update-question-body.dto"
 import { CreateQuestionOptionBodyDto } from "../dto/create-question-option-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/questions")
@@ -12,6 +12,7 @@ export class ManageQuestionsController {
     constructor(private manageQuestionsService: ManageQuestionsService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление вопроса",
     })
@@ -40,6 +41,7 @@ export class ManageQuestionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение вопроса по ID"
     })
@@ -58,6 +60,7 @@ export class ManageQuestionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         description: "Получение всех вариантов ответа у вопроса"
     })
@@ -76,6 +79,7 @@ export class ManageQuestionsController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление вопроса",
     })
@@ -96,6 +100,7 @@ export class ManageQuestionsController {
 
     
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание варианта ответа для вопроса",
     })

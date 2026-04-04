@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch } from "@nest
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManagePricingTiersService } from "../services/manage-pricing-tiers.service"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { UpdatePricingTierBodyDto } from "../dto/update-pricing-tier-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
@@ -11,6 +11,7 @@ export class ManagePricingTiersController {
     constructor(private managePricingTiersService: ManagePricingTiersService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение тарифа оплаты по ID",
     })
@@ -29,6 +30,7 @@ export class ManagePricingTiersController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление тарифа оплаты",
     })
@@ -57,6 +59,7 @@ export class ManagePricingTiersController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление тарифа оплаты",
     })

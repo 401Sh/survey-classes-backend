@@ -7,7 +7,7 @@ import { CreateSurveyBodyDto } from "../dto/create-survey-body.dto"
 import { GetSurveyListQueryDto } from "../dto/get-survey-list-query.dto"
 import { UpdateSurveyBodyDto } from "../dto/update-survey-body.dto"
 import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/surveys")
@@ -15,6 +15,7 @@ export class ManageSurveysController {
     constructor(private manageSurveysService: ManageSurveysService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание опроса",
     })
@@ -36,6 +37,7 @@ export class ManageSurveysController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Копирование опроса по ID",
     })
@@ -62,6 +64,7 @@ export class ManageSurveysController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Создание вопроса для опроса",
     })
@@ -88,6 +91,7 @@ export class ManageSurveysController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех существующих опросов",
     })
@@ -100,6 +104,7 @@ export class ManageSurveysController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение опроса по ID",
     })
@@ -118,6 +123,7 @@ export class ManageSurveysController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение всех вопросов для опроса",
     })
@@ -136,6 +142,7 @@ export class ManageSurveysController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление данных опроса",
     })
@@ -164,6 +171,7 @@ export class ManageSurveysController {
 
     
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление опроса",
     })

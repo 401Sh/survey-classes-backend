@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch } from "@nest
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManageScheduleOverridesService } from "../services/manage-schedule-overrides.service"
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { UpdateScheduleOverrideBodyDto } from "../dto/update-schedule-override-body.dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
@@ -11,6 +11,7 @@ export class ManageScheduleOverridesController {
     constructor(private manageScheduleOverridesService: ManageScheduleOverridesService) {}
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Получение изменения даты занятия по ID",
     })
@@ -29,6 +30,7 @@ export class ManageScheduleOverridesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Обновление изменения даты занятия",
     })
@@ -57,6 +59,7 @@ export class ManageScheduleOverridesController {
 
 
     @ApiBearerAuth()
+    @ApiSecurity("api-key")
     @ApiOperation({
         summary: "Удаление изменения даты занятия",
     })
