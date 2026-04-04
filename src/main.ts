@@ -26,10 +26,14 @@ async function bootstrap() {
     app.useLogger(logLevels)
 
     const swaggerConfig = new DocumentBuilder()
-    .setDescription("API documentation")
-    .setVersion("1.0")
-    .addBearerAuth()
-    .build()
+        .setDescription("API documentation")
+        .setVersion("1.0")
+        .addApiKey(
+            { type: "apiKey", in: "header", name: "x-api-key" },
+            "api-key",
+        )
+        .addBearerAuth()
+        .build()
 
     const document = SwaggerModule.createDocument(app, swaggerConfig)
   
