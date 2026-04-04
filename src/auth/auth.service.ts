@@ -168,12 +168,12 @@ export class AuthService {
             throw new BadRequestException("Password is incorrect")
         }
 
-        const existiingSession = await this.tokensService.findRefreshSession(
+        const existingSession = await this.tokensService.findRefreshSession(
             user.id,
             fingerprint,
         )
 
-        if (existiingSession) {
+        if (existingSession) {
             await this.tokensService.deleteRefreshSession(user.id, fingerprint)
         }
 

@@ -60,6 +60,7 @@ export class UsersInternalService {
                 firstName: true,
                 secondName: true,
                 password: true,
+                role: true,
                 isEmailVerified: true,
             },
         })

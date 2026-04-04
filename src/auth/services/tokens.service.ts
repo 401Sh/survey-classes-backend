@@ -37,7 +37,7 @@ export class TokensService {
       ) {
         const tokens = await this.getTokens(user.id, user.role)
         const hashedRefreshToken = await this.hashData(tokens.refreshToken)
-    
+
         await this.refreshSessionRepository.save({
           user,
           refreshToken: hashedRefreshToken,
@@ -46,7 +46,7 @@ export class TokensService {
           fingerprint,
           expiresAt: this.createFutureDate(REFRESH_TOKEN_TTL),
         })
-    
+
         return tokens
     }
 
@@ -58,7 +58,7 @@ export class TokensService {
                 fingerprint: fingerprint,
             },
         })
-    
+
         this.logger.debug(`Finded session for user id: ${userId}`, session)
         return session
     }
@@ -70,13 +70,13 @@ export class TokensService {
             user: { id: userId },
             fingerprint: fingerprint,
         })
-    
+
         if (deleteResult.affected === 0) {
             this.logger.debug(`Cannot delete session. No session with user 
                 id: ${userId} and fingerprint ${fingerprint}`)
             throw new NotFoundException("Session not found")
         }
-    
+
         return deleteResult
     }
 
@@ -127,6 +127,7 @@ export class TokensService {
 
 
     private async getTokens(userId: number, role: UserRole): Promise<JWTTokensReturnDto> {
+
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
@@ -149,7 +150,7 @@ export class TokensService {
                 },
             ),
         ])
-    
+
         return {
             accessToken,
             refreshToken,
