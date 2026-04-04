@@ -5,23 +5,22 @@ import {
     Entity,
     ManyToOne,
     PrimaryGeneratedColumn,
+    Unique,
     UpdateDateColumn
 } from "typeorm"
 import { LessonEntity } from "./lesson.entity"
 
 @Entity("lesson-images")
+@Unique(["lesson", "position"])
 export class LessonImageEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
     @Column({ type: "varchar", length: 500 })
-    url: string
+    path: string
 
     @Column({ type: "smallint" })
     position: number
-
-    @Column({ type: "bool", default: false })
-    isCover: boolean
 
     @CreateDateColumn()
     createdAt: Date

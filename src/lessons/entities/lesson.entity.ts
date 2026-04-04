@@ -5,6 +5,7 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinColumn,
     JoinTable,
     ManyToMany,
     ManyToOne,
@@ -58,6 +59,13 @@ export class LessonEntity extends BaseEntity {
 
     @OneToOne(() => SurveyEntity, (survey) => survey.lesson)
     survey: SurveyEntity
+
+    @OneToOne(() => LessonImageEntity, {
+        nullable: true,
+        onDelete: "SET NULL",
+    })
+    @JoinColumn()
+    coverImage: LessonImageEntity | null
 
     @ManyToOne(() => UserEntity, (user) => user.lessons)
     createdBy: UserEntity

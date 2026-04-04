@@ -8,7 +8,7 @@ import { SurveysModule } from "./surveys/surveys.module"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { dataSourceOptions } from "./common/configs/typeorm.config"
 import { MailModule } from "./mail/mail.module"
-import { ConfigModule } from "@nestjs/config"
+import { ConfigModule, ConfigService } from "@nestjs/config"
 import { APP_GUARD } from "@nestjs/core"
 import { AccessTokenGuard } from "./common/guards/access-token.guard"
 import { RolesGuard } from "./common/guards/role.guard"
@@ -16,6 +16,9 @@ import { DictionariesModule } from "./dictionaries/dictionaries.module"
 import { EnrollmentsModule } from "./enrollments/enrollments.module"
 import { ApplicationsModule } from "./applications/applications.module"
 import { SubscriptionsModule } from "./subscriptions/subscriptions.module"
+import { MediaModule } from "./media/media.module"
+import { ServeStaticModule } from "@nestjs/serve-static"
+import { join } from "path"
 
 @Module({
     imports: [
@@ -30,6 +33,17 @@ import { SubscriptionsModule } from "./subscriptions/subscriptions.module"
         EnrollmentsModule,
         ApplicationsModule,
         SubscriptionsModule,
+        MediaModule,
+        ServeStaticModule.forRootAsync({
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) => {
+                const mediaRoot = config.getOrThrow<string>('MEDIA_ROOT_PATH')
+                return [{
+                    rootPath: join(process.cwd(), mediaRoot),
+                    serveRoot: '/' + mediaRoot,
+                }]
+            },
+        }),
     ],
     controllers: [AppController],
     providers: [
