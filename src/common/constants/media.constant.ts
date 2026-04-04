@@ -8,3 +8,5 @@ export const MIME_TO_EXT: Record<string, string> = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+
+export const LESSON_MEDIA_PATH = "lessons"

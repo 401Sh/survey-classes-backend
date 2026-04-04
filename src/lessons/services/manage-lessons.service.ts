@@ -136,8 +136,7 @@ export class ManageLessonsService {
         } = query
 
         const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
-        console.warn(isActive)
-        console.warn(typeof isActive)
+
         queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers")
         queryBuilder.leftJoinAndSelect("lessons.images", "images")
         queryBuilder.leftJoinAndSelect("lessons.categories", "categories")

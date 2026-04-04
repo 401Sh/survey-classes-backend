@@ -111,7 +111,7 @@ export class LessonsService {
                 endsAt: true,
                 images: {
                     id: true,
-                    url: true,
+                    path: true,
                     position: true,
                 },
                 categories: {
