@@ -4,7 +4,6 @@ import { ApplicationEntity } from "../entities/application.entity"
 import { Repository } from "typeorm"
 import { GetApplicationListQueryDto } from "../dto/get-application-list-query.dto"
 import { ApplicationStatus } from "../enums/application-status.enum"
-import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
 import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
 import { EnrollmentsInternalService } from "src/enrollments/services/enrollments-internal.service"
 

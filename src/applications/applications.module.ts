@@ -6,7 +6,6 @@ import { ApplicationEntity } from "./entities/application.entity"
 import { AnswerEntity } from "./entities/answer.entity"
 import { ManageApplicationsService } from "./services/manage-applications.service"
 import { ManageApplicationsController } from "./controllers/manage-applications.controller"
-import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { EnrollmentsModule } from "src/enrollments/enrollments.module"
 
 @Module({
@@ -14,7 +13,6 @@ import { EnrollmentsModule } from "src/enrollments/enrollments.module"
         TypeOrmModule.forFeature([
             ApplicationEntity,
             AnswerEntity,
-            QuestionEntity,
         ]),
         EnrollmentsModule,
     ],
