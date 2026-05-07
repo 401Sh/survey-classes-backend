@@ -10,9 +10,10 @@ import {
     MAIL_FROM_NAME, MAIL_RESET_PASSWORD_SUBJECT,
     MAIL_TEMPLATES_PATH
 } from "src/common/constants/mail.constant"
+import { IMailService } from "./interfaces/mail-service.interface"
 
 @Injectable()
-export class MailService {
+export class MailService implements IMailService {
     private readonly mailer: nodemailer.Transporter
     private readonly confirmationTemplate: handlebars.TemplateDelegate
     private readonly resetPasswordTemplate: handlebars.TemplateDelegate
