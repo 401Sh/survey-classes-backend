@@ -3,9 +3,10 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { EntityManager, Repository } from "typeorm"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { IEnrollmentsInternalService } from "../interfaces/enrollments-internal-service.interface"
 
 @Injectable()
-export class EnrollmentsInternalService {
+export class EnrollmentsInternalService implements IEnrollmentsInternalService {
     private readonly logger = new Logger(EnrollmentsInternalService.name)
 
     constructor(

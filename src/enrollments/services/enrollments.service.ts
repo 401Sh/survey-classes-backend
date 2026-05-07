@@ -11,9 +11,10 @@ import { ChildrenInternalService } from "src/users/services/children-internal.se
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
 import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
 import { SubscriptionsInternalService } from "src/subscriptions/services/subscriptions-internal.service"
+import { IEnrollmentsService } from "../interfaces/enrollments-service.interface"
 
 @Injectable()
-export class EnrollmentsService {
+export class EnrollmentsService implements IEnrollmentsService {
     private readonly logger = new Logger(EnrollmentsService.name)
 
     constructor(
@@ -206,14 +207,14 @@ export class EnrollmentsService {
     }
 
 
-    async findAllSubscriptionByEnrollmentId(userId: number, enrollmentId: number) {
+    async findAllSubscriptionsByEnrollmentId(userId: number, enrollmentId: number) {
         const subscriptions = await this.subscriptionsService.findAllByEnrollmentIdAndUserId(userId, enrollmentId)
 
         return subscriptions
     }
 
 
-    async remove(userId: number, enrollmentId: number) {
+    async delete(userId: number, enrollmentId: number) {
         this.logger.log(`Deleting pending enrollment with id: ${enrollmentId}`)
         const deleteResult = await this.enrollmentRepository.delete({
             id: enrollmentId,
@@ -225,8 +226,6 @@ export class EnrollmentsService {
             this.logger.log(`Cannot delete enrollment. No  pending enrollment with id: ${enrollmentId}`)
             throw new NotFoundException(`Pending enrollment with id ${enrollmentId} not found`)
         }
-
-        return deleteResult
     }
 
 

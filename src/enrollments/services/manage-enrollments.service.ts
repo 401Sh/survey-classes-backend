@@ -5,9 +5,10 @@ import { Repository } from "typeorm"
 import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { ApplicationStatus } from "src/applications/enums/application-status.enum"
+import { IManageEnrollmentsService } from "../interfaces/manage-enrollments-service.interface"
 
 @Injectable()
-export class ManageEnrollmentsService {
+export class ManageEnrollmentsService implements IManageEnrollmentsService {
     private readonly logger = new Logger(ManageEnrollmentsService.name)
 
     constructor(
@@ -126,8 +127,6 @@ export class ManageEnrollmentsService {
             this.logger.debug(`Cannot activate enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
-
-        return updateResult
     }
 
 
@@ -151,8 +150,6 @@ export class ManageEnrollmentsService {
             this.logger.debug(`Cannot suspend enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
-
-        return updateResult
     }
 
 
@@ -176,7 +173,5 @@ export class ManageEnrollmentsService {
             this.logger.debug(`Cannot re-activate enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
-
-        return updateResult
     }
 }

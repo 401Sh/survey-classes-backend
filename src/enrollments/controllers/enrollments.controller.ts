@@ -116,13 +116,13 @@ export class EnrollmentsController {
         example: 1,
     })
     @Get(":enrollmentId/subscriptions")
-    async findAllSubscriptionByEnrollmentId(
+    async findAllSubscriptionsByEnrollmentId(
         @Request() req,
         @Param("enrollmentId", ParseIntPipe) enrollmentId: number,
     ) {
         const userId = req.user.sub
 
-        const result = await this.enrollmentsService.findAllSubscriptionByEnrollmentId(userId, enrollmentId)
+        const result = await this.enrollmentsService.findAllSubscriptionsByEnrollmentId(userId, enrollmentId)
 
         return result
     }
@@ -146,7 +146,7 @@ export class EnrollmentsController {
     ) {
         const userId = req.user.sub
 
-        await this.enrollmentsService.remove(userId, enrollmentId)
+        await this.enrollmentsService.delete(userId, enrollmentId)
 
         return {
             message: "Enrollment deleted successfully",
