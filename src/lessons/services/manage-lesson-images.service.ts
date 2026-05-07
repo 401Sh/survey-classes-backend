@@ -103,7 +103,7 @@ export class ManageLessonImagesService implements IManageLessonImagesService {
             relations: { lesson: true },
         })
 
-        if (!image) throw new NotFoundException('Lesson image not found')
+        if (!image) throw new NotFoundException("Lesson image not found")
 
         // remove cover
         const lesson = await this.lessonRepository.findOne({

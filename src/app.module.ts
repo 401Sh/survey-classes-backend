@@ -44,10 +44,10 @@ import { ApiKeyGuard } from "./common/guards/api-key.guard"
         ServeStaticModule.forRootAsync({
             inject: [ConfigService],
             useFactory: (config: ConfigService) => {
-                const mediaRoot = config.getOrThrow<string>('MEDIA_ROOT_PATH')
+                const mediaRoot = config.getOrThrow<string>("MEDIA_ROOT_PATH")
                 return [{
                     rootPath: join(process.cwd(), mediaRoot),
-                    serveRoot: '/' + mediaRoot,
+                    serveRoot: "/" + mediaRoot,
                 }]
             },
         }),
