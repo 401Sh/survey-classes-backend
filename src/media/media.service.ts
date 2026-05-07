@@ -4,9 +4,10 @@ import { randomUUID } from "crypto"
 import { join } from "path"
 import { ConfigService } from "@nestjs/config"
 import { MIME_TO_EXT } from "src/common/constants/media.constant"
+import { IMediaService } from "./interfaces/media-service.interface"
 
 @Injectable()
-export class MediaService {
+export class MediaService implements IMediaService {
     private readonly logger = new Logger(MediaService.name)
 
     private readonly uploadRoot: string
