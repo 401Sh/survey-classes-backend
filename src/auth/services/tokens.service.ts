@@ -7,9 +7,9 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { RefreshSessionEntity } from "../entities/refresh-session.entity"
 import { Repository } from "typeorm"
 import { type UserEntity } from "src/users/entities/user.entity"
-import * as argon2 from "argon2"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ITokensService } from "../interfaces/tokens-service.interface"
+import { CryptoService } from "./crypto.service"
 
 @Injectable()
 export class TokensService implements ITokensService {
@@ -24,6 +24,7 @@ export class TokensService implements ITokensService {
         
         private jwtService: JwtService,
         private configService: ConfigService,
+        private cryptoService: CryptoService,
     ) {
         this.accessSecret = this.configService.getOrThrow("JWT_ACCESS_SECRET")
         this.refreshSecret = this.configService.getOrThrow("JWT_REFRESH_SECRET")
@@ -37,7 +38,7 @@ export class TokensService implements ITokensService {
         fingerprint: string,
       ) {
         const tokens = await this.getTokens(user.id, user.role)
-        const hashedRefreshToken = await this.hashData(tokens.refreshToken)
+        const hashedRefreshToken = await this.cryptoService.hashData(tokens.refreshToken)
 
         await this.refreshSessionRepository.save({
           user,
@@ -112,16 +113,6 @@ export class TokensService implements ITokensService {
         const futureDate = new Date(now.getTime() + milliseconds)
     
         return futureDate
-    }
-
-
-    hashData(data: string): Promise<string> {
-        return argon2.hash(data)
-    }
-    
-    
-    verifyData(data: string, hashedData: string): Promise<boolean> {
-        return argon2.verify(hashedData, data)
     }
 
 

@@ -13,6 +13,4 @@ export interface ITokensService {
     deleteRefreshSession(userId: number, fingerprint: string): Promise<void>
     signResetToken(userId: number): string
     verifyResetToken(token: string): number | null
-    hashData(data: string): Promise<string>
-    verifyData(data: string, hashedData: string): Promise<boolean>
 }

@@ -16,6 +16,7 @@ import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body
 import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { UsersInternalService } from "src/users/services/users-internal.service"
 import { IAuthService } from "./interfaces/auth-service.interface"
+import { CryptoService } from "./services/crypto.service"
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -28,6 +29,7 @@ export class AuthService implements IAuthService {
         private usersService: UsersInternalService,
         private mailService: MailService,
         private tokensService: TokensService,
+        private cryptoService: CryptoService,
     ) { }
 
     async signUp(data: SignUpDto) {
@@ -45,7 +47,7 @@ export class AuthService implements IAuthService {
 
     private async signUpNewUser(data: SignUpDto) {
         const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
-        const hashedCode = await this.tokensService.hashData(code)
+        const hashedCode = await this.cryptoService.hashData(code)
         const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
     
         const newUser = await this.usersService.create(data)
@@ -65,7 +67,7 @@ export class AuthService implements IAuthService {
 
     private async resendSignUpCode(user: UserEntity) {
         const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
-        const hashedCode = await this.tokensService.hashData(code)
+        const hashedCode = await this.cryptoService.hashData(code)
         const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
     
         const updateResult = await this.emailVerificationRepository.update({
@@ -111,7 +113,7 @@ export class AuthService implements IAuthService {
             throw new BadRequestException("No confirmation code, sing up your account")
         }
 
-        const isCodeValid = await this.tokensService.verifyData(
+        const isCodeValid = await this.cryptoService.verifyData(
             signUpConfirmDto.code,
             user.emailVerification.code,
         )
@@ -161,7 +163,7 @@ export class AuthService implements IAuthService {
             throw new BadRequestException("Fingerprint header is required")
         }
 
-        const isPasswordValid = await this.tokensService.verifyData(
+        const isPasswordValid = await this.cryptoService.verifyData(
             signInDto.password,
             user.password,
         )
@@ -195,7 +197,7 @@ export class AuthService implements IAuthService {
         if (!user || !user.isEmailVerified) return
     
         const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
-        const hashedCode = await this.tokensService.hashData(code)
+        const hashedCode = await this.cryptoService.hashData(code)
         const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
     
         const emailVerification = await this.emailVerificationRepository.findOne({
@@ -255,7 +257,7 @@ export class AuthService implements IAuthService {
             throw new BadRequestException("Reset code has expired")
         }
     
-        const isCodeValid = await this.tokensService.verifyData(
+        const isCodeValid = await this.cryptoService.verifyData(
             data.code,
             passwordReset.code,
         )
@@ -282,7 +284,7 @@ export class AuthService implements IAuthService {
     
         if (!userId) throw new ForbiddenException("Invalid or expired reset token")
     
-        const hashedPassword = await this.tokensService.hashData(data.password)
+        const hashedPassword = await this.cryptoService.hashData(data.password)
     
         await this.usersService.update(
             userId,
@@ -322,7 +324,7 @@ export class AuthService implements IAuthService {
             throw new ForbiddenException("Refresh token expired")
         }
 
-        const isTokenValid = await this.tokensService.verifyData(
+        const isTokenValid = await this.cryptoService.verifyData(
             refreshToken,
             session.refreshToken,
         )
