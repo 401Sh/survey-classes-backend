@@ -186,9 +186,7 @@ export class AuthController {
     async forgotPasswordConfirm(@Body() data: ForgotPasswordConfirmBodyDto) {
         const resetToken = await this.authService.confirmForgotPassword(data)
 
-        return {
-            resetToken,
-        }
+        return resetToken
     }
 
 

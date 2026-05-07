@@ -15,9 +15,10 @@ import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
 import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { UsersInternalService } from "src/users/services/users-internal.service"
+import { IAuthService } from "./interfaces/auth-service.interface"
 
 @Injectable()
-export class AuthService {
+export class AuthService implements IAuthService {
     private readonly logger = new Logger(AuthService.name)
 
     constructor(
@@ -272,7 +273,7 @@ export class AuthService {
             type: VerificationType.PASSWORD_RESET,
         })
     
-        return resetToken
+        return { resetToken }
     }
 
 

@@ -9,9 +9,10 @@ import { Repository } from "typeorm"
 import { type UserEntity } from "src/users/entities/user.entity"
 import * as argon2 from "argon2"
 import { UserRole } from "src/users/enums/user-role.enum"
+import { ITokensService } from "../interfaces/tokens-service.interface"
 
 @Injectable()
-export class TokensService {
+export class TokensService implements ITokensService {
     private readonly logger = new Logger(TokensService.name)
 
     private readonly accessSecret: string
@@ -76,8 +77,6 @@ export class TokensService {
                 id: ${userId} and fingerprint ${fingerprint}`)
             throw new NotFoundException("Session not found")
         }
-
-        return deleteResult
     }
 
 
