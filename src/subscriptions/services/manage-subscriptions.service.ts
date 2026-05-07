@@ -8,9 +8,10 @@ import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-su
 import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
 import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
 import { AttendanceEntity } from "../entities/attendance.entity"
+import { IManageSubscriptionsService } from "../interfaces/manage-subscriptions-service.interface"
 
 @Injectable()
-export class ManageSubscriptionsService {
+export class ManageSubscriptionsService implements IManageSubscriptionsService {
     private readonly logger = new Logger(ManageSubscriptionsService.name)
 
     constructor(
@@ -180,8 +181,6 @@ export class ManageSubscriptionsService {
             this.logger.debug(`Cannot update subscription payment with id: ${subscriptionId}`)
             throw new NotFoundException("Subscription not found")
         }
-
-        return updateResult
     }
 
 

@@ -2,9 +2,10 @@ import { Injectable, Logger } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 import { Repository } from "typeorm"
+import { ISubscriptionsInternalService } from "../interfaces/subscriptions-internal-service.interface"
 
 @Injectable()
-export class SubscriptionsInternalService {
+export class SubscriptionsInternalService implements ISubscriptionsInternalService {
     private readonly logger = new Logger(SubscriptionsInternalService.name)
 
     constructor(
@@ -12,7 +13,7 @@ export class SubscriptionsInternalService {
         private subscriptionRepository: Repository<SubscriptionEntity>,
     ) {}
 
-    async findAllOwnedByEnrollmentId(userId: number, enrollmentId: number) {
+    async findAllByEnrollmentIdAndUserId(userId: number, enrollmentId: number) {
         const subscriptions = await this.subscriptionRepository.find({
             where: {
                 enrollment: {

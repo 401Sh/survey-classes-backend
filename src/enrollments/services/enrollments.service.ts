@@ -207,7 +207,7 @@ export class EnrollmentsService {
 
 
     async findAllSubscriptionByEnrollmentId(userId: number, enrollmentId: number) {
-        const subscriptions = await this.subscriptionsService.findAllOwnedByEnrollmentId(userId, enrollmentId)
+        const subscriptions = await this.subscriptionsService.findAllByEnrollmentIdAndUserId(userId, enrollmentId)
 
         return subscriptions
     }

@@ -5,9 +5,10 @@ import { Repository } from "typeorm"
 import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
 import { SubscriptionEntity } from "../entities/subscription.entity"
+import { IManageAttendancesService } from "../interfaces/manage-attendances-service.interface"
 
 @Injectable()
-export class ManageAttendancesService {
+export class ManageAttendancesService implements IManageAttendancesService {
     private readonly logger = new Logger(ManageAttendancesService.name)
 
     constructor(
@@ -85,7 +86,7 @@ export class ManageAttendancesService {
     async update(attendanceId: number, data: UpdateAttendanceBodyDto) {
         const { isPresent } = data
 
-        const attendance = await this.attendanceRepository.manager.transaction(async (manager) => {
+        await this.attendanceRepository.manager.transaction(async (manager) => {
             const attendance = await manager.findOne(AttendanceEntity,
                 {
                     where: { id: attendanceId },
@@ -121,7 +122,6 @@ export class ManageAttendancesService {
         })
 
         this.logger.log(`Attendance with id ${attendanceId} updated successfully`)
-        return attendance
     }
 
 
@@ -156,8 +156,6 @@ export class ManageAttendancesService {
                 this.logger.log(`Cannot delete attendance. No attendance with id: ${attendanceId}`)
                 throw new NotFoundException(`Attendance with id ${attendanceId} not found`)
             }
-
-            return deleteResult
         })
     }
 }
