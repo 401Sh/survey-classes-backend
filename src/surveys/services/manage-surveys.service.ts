@@ -10,9 +10,10 @@ import { CreateQuestionBodyDto } from "../dto/create-question-body.dto"
 import { QuestionEntity } from "../entities/question.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
+import { IManageSurveysService } from "../interfaces/manage-surveys-service.interface"
 
 @Injectable()
-export class ManageSurveysService {
+export class ManageSurveysService implements IManageSurveysService {
     private readonly logger = new Logger(ManageSurveysService.name)
 
     constructor(
@@ -237,7 +238,6 @@ export class ManageSurveysService {
         }
 
         this.logger.log(`Survey with id ${surveyId} updated successfully`)
-        return updateResult
     }
 
 
@@ -261,8 +261,6 @@ export class ManageSurveysService {
             this.logger.log(`Cannot delete survey. No survey with id: ${surveyId}`)
             throw new NotFoundException(`Survey with id ${surveyId} not found`)
         }
-
-        return deleteResult
     }
 
 

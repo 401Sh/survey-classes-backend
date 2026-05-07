@@ -3,9 +3,10 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { QuestionOptionEntity } from "../entities/question-option.entity"
 import { Repository } from "typeorm"
 import { UpdateQuestionOptionBodyDto } from "../dto/update-question-option-body.dto"
+import { IManageQuestionOptionsService } from "../interfaces/manage-question-options-service.interface"
 
 @Injectable()
-export class ManageQuestionOptionsService {
+export class ManageQuestionOptionsService implements IManageQuestionOptionsService {
     private readonly logger = new Logger(ManageQuestionOptionsService.name)
 
     constructor(
@@ -91,7 +92,6 @@ export class ManageQuestionOptionsService {
             }
 
             this.logger.log(`Updated question option with id: ${questionOptionId}`)
-            return updateResult
         })
     }
 

@@ -2,9 +2,10 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { SurveyEntity } from "../entities/survey.entity"
 import { Repository } from "typeorm"
+import { ISurveysService } from "../interfaces/surveys-service.interface"
 
 @Injectable()
-export class SurveysService {
+export class SurveysService implements ISurveysService {
     private readonly logger = new Logger(SurveysService.name)
 
     constructor(

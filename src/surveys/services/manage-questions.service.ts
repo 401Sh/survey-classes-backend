@@ -7,9 +7,10 @@ import { CreateQuestionOptionBodyDto } from "../dto/create-question-option-body.
 import { QuestionOptionEntity } from "../entities/question-option.entity"
 import { QuestionType } from "../enums/question-type.enum"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { IManageQuestionsService } from "../interfaces/manage-questions-service.interface"
 
 @Injectable()
-export class ManageQuestionsService {
+export class ManageQuestionsService implements IManageQuestionsService {
     private readonly logger = new Logger(ManageQuestionsService.name)
 
     constructor(
@@ -69,18 +70,18 @@ export class ManageQuestionsService {
     }
 
 
-    async findAllOptionsByQuestionid(questionId: number) {
+    async findAllOptionsByQuestionId(questionId: number) {
         // check that question exists
         await this.validateQuestionExists(questionId)
 
-        const options = await this.questionRepository.find({
+        const options = await this.questionOptionRepository.find({
             where: {
-                survey: {
+                question: {
                     id: questionId,
                 },
             },
             relations: {
-                options: true,
+                question: true,
             },
         })
 
@@ -169,7 +170,6 @@ export class ManageQuestionsService {
             }
 
             this.logger.log(`Updated question with id: ${questionId}`)
-            return updateResult
         })
     }
 

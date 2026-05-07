@@ -71,8 +71,8 @@ export class ManageQuestionsController {
         example: 1,
     })
     @Get(":questionId/question-options")
-    async findAllOptionsByQuestionid(@Param("questionId", ParseIntPipe) questionId: number) {
-        const result = await this.manageQuestionsService.findAllOptionsByQuestionid(questionId)
+    async findAllOptionsByQuestionId(@Param("questionId", ParseIntPipe) questionId: number) {
+        const result = await this.manageQuestionsService.findAllOptionsByQuestionId(questionId)
 
         return result
     }
