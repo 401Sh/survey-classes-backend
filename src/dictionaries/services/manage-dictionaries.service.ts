@@ -4,9 +4,10 @@ import { CategoryEntity } from "../entities/category.entity"
 import { In, Repository } from "typeorm"
 import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
 import { CreateCategoryBodyDto } from "../dto/create-category-body.dto"
+import { IManageDictionariesService } from "../interfaces/manage-dictionaries-service.interface"
 
 @Injectable()
-export class ManageDictionariesService {
+export class ManageDictionariesService implements IManageDictionariesService {
     private readonly logger = new Logger(ManageDictionariesService.name)
  
     constructor(
@@ -33,7 +34,7 @@ export class ManageDictionariesService {
 
 
     async findCategoriesByIds(categoryIds: number[]): Promise<CategoryEntity[]> {
-        return this.categoryRepository.find({
+        return await this.categoryRepository.find({
             where: { id: In(categoryIds) },
         })
     }
@@ -68,7 +69,6 @@ export class ManageDictionariesService {
         }
  
         this.logger.log(`Updated category ${categoryId}`)
-        return updateResult
     }
 
 
@@ -80,7 +80,5 @@ export class ManageDictionariesService {
             this.logger.log(`Cannot delete category. No category with id: ${categoryId}`)
             throw new NotFoundException(`Category with id ${categoryId} not found`)
         }
-
-        return deleteResult
     }
 }

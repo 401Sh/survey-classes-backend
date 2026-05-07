@@ -2,9 +2,10 @@ import { Injectable, Logger } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { CategoryEntity } from "../entities/category.entity"
 import { Repository } from "typeorm"
+import { IDictionariesService } from "../interfaces/dictionaries-service.interface"
 
 @Injectable()
-export class DictionariesService {
+export class DictionariesService implements IDictionariesService {
     private readonly logger = new Logger(DictionariesService.name)
 
     constructor(
