@@ -39,7 +39,7 @@ export class EnrollmentsInternalService implements IEnrollmentsInternalService {
     }
 
 
-    async activateWithManager(enrollmentId: number, manager: EntityManager) {
+    async activateInTransaction(enrollmentId: number, manager: EntityManager) {
         await manager.update(EnrollmentEntity,
             { id: enrollmentId },
             { status: EnrollmentStatus.ACTIVE },

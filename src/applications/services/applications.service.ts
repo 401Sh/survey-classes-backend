@@ -6,11 +6,11 @@ import { DeepPartial, EntityManager, In, Repository } from "typeorm"
 import { AnswerEntity } from "../entities/answer.entity"
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { CreateAnswerBodyDto } from "../dto/create-answer-body.dto"
 import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
 import { EnrollmentsInternalService } from "src/enrollments/services/enrollments-internal.service"
 import { IApplicationsService } from "../interfaces/applications-service.interface"
+import { QuestionsInternalService } from "src/surveys/services/questions-internal.service"
 
 @Injectable()
 export class ApplicationsService implements IApplicationsService {
@@ -21,6 +21,7 @@ export class ApplicationsService implements IApplicationsService {
         private applicationRepository: Repository<ApplicationEntity>,
 
         private readonly enrollmentsService: EnrollmentsInternalService,
+        private readonly questionsInternalService: QuestionsInternalService,
     ) {}
 
     async create(userId: number, data: CreateApplicationBodyDto) {
@@ -246,13 +247,11 @@ export class ApplicationsService implements IApplicationsService {
     ) {
         const questionIds = answers.map(a => a.questionId)
     
-        const questions = await manager.find(QuestionEntity, {
-            where: {
-                id: In(questionIds),
-                survey: { id: surveyId },
-            },
-            relations: { options: true },
-        })
+        const questions = await this.questionsInternalService.findByIdsAndSurveyIdInTransaction(
+            surveyId,
+            questionIds,
+            manager,
+        )
 
         if (questions.length !== questionIds.length) {
             throw new BadRequestException("Invalid questions for this survey")
@@ -281,7 +280,6 @@ export class ApplicationsService implements IApplicationsService {
                 }))
             }
 
-            // для text — одна Answer с textValue
             return [{
                 question,
                 textValue: answer.textValue,

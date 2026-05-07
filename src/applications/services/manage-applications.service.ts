@@ -135,7 +135,7 @@ export class ManageApplicationsService implements IManageApplicationsService {
             // activate pending enrollment
             if (application.enrollment?.status === EnrollmentStatus.PENDING) {
                 const enrollmentId = application.enrollment.id
-                await this.enrollmentsService.activateWithManager(enrollmentId, manager)
+                await this.enrollmentsService.activateInTransaction(enrollmentId, manager)
             }
 
             this.logger.log(`Application with id ${applicationId} approved`)

@@ -12,6 +12,7 @@ import { ManageSurveysService } from "./services/manage-surveys.service"
 import { ManageQuestionsService } from "./services/manage-questions.service"
 import { ManageQuestionOptionsService } from "./services/manage-question-options.service"
 import { LessonsModule } from "src/lessons/lessons.module"
+import { QuestionsInternalService } from "./services/questions-internal.service"
 
 @Module({
     imports: [
@@ -33,6 +34,8 @@ import { LessonsModule } from "src/lessons/lessons.module"
         ManageSurveysService,
         ManageQuestionsService,
         ManageQuestionOptionsService,
+        QuestionsInternalService,
     ],
+    exports: [QuestionsInternalService],
 })
 export class SurveysModule {}

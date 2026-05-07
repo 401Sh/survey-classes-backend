@@ -3,5 +3,5 @@ import { EnrollmentEntity } from "../entities/enrollment.entity"
 
 export interface IEnrollmentsInternalService {
     findOwnedWithLessonAndSurvey(id: number, userId: number): Promise<EnrollmentEntity>
-    activateWithManager(enrollmentId: number, manager: EntityManager): Promise<void>
+    activateInTransaction(enrollmentId: number, manager: EntityManager): Promise<void>
 }

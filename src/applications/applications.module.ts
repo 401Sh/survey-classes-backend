@@ -7,6 +7,7 @@ import { AnswerEntity } from "./entities/answer.entity"
 import { ManageApplicationsService } from "./services/manage-applications.service"
 import { ManageApplicationsController } from "./controllers/manage-applications.controller"
 import { EnrollmentsModule } from "src/enrollments/enrollments.module"
+import { SurveysModule } from "src/surveys/surveys.module"
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { EnrollmentsModule } from "src/enrollments/enrollments.module"
             AnswerEntity,
         ]),
         EnrollmentsModule,
+        SurveysModule,
     ],
     controllers: [
         ApplicationsController,
