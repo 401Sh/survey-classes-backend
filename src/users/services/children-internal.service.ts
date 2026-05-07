@@ -2,9 +2,10 @@ import { Injectable, Logger } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { UserChildEntity } from "../entities/user-child.entity"
 import { Repository } from "typeorm"
+import { IChildrenInternalService } from "../interfaces/children-internal-service.interface"
 
 @Injectable()
-export class ChildrenInternalService {
+export class ChildrenInternalService implements IChildrenInternalService {
     private readonly logger = new Logger(ChildrenInternalService.name)
 
     constructor(

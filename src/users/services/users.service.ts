@@ -4,9 +4,10 @@ import { UserEntity } from "../entities/user.entity"
 import { Repository } from "typeorm"
 import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
 import { UsersInternalService } from "./users-internal.service"
+import { IUsersService } from "../interfaces/users-service.interface"
 
 @Injectable()
-export class UsersService {
+export class UsersService implements IUsersService {
     private readonly logger = new Logger(UsersService.name)
 
     constructor(
@@ -27,8 +28,6 @@ export class UsersService {
             this.logger.debug(`Cannot update user with id: ${userId}`)
             throw new NotFoundException("User not found")
         }
-    
-        return updateResult
     }
 
 

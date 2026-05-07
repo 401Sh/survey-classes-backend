@@ -4,9 +4,10 @@ import { UserChildEntity } from "../entities/user-child.entity"
 import { Repository } from "typeorm"
 import { CreateChildBodyDto } from "../dto/create-child-body.dto"
 import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
+import { IChildrenService } from "../interfaces/children-service.interface"
 
 @Injectable()
-export class ChildrenService {
+export class ChildrenService implements IChildrenService {
     private readonly logger = new Logger(ChildrenService.name)
 
     constructor(
@@ -79,8 +80,6 @@ export class ChildrenService {
             this.logger.debug(`Cannot update child with id: ${childId}`)
             throw new NotFoundException("Child not found")
         }
-    
-        return updateResult
     }
 
 
@@ -95,7 +94,5 @@ export class ChildrenService {
             this.logger.log(`Cannot delete child. No child with id: ${childId}`)
             throw new NotFoundException(`Child with id ${childId} not found`)
         }
-
-        return deleteResult
     }
 }

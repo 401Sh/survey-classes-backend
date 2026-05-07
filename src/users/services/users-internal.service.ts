@@ -4,9 +4,10 @@ import { UserEntity } from "../entities/user.entity"
 import { Repository } from "typeorm"
 import { SignUpDto } from "src/auth/dto/signup.dto"
 import * as argon2 from "argon2"
+import { IUsersInternalService } from "../interfaces/users-internal-service.interface"
 
 @Injectable()
-export class UsersInternalService {
+export class UsersInternalService implements IUsersInternalService {
     private readonly logger = new Logger(UsersInternalService.name)
 
     constructor(
@@ -99,8 +100,6 @@ export class UsersInternalService {
             this.logger.debug(`Cannot update user with id: ${userId}`)
             throw new NotFoundException("User not found")
         }
-    
-        return updateResult
     }
 
 
