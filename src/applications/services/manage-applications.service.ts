@@ -6,9 +6,10 @@ import { GetApplicationListQueryDto } from "../dto/get-application-list-query.dt
 import { ApplicationStatus } from "../enums/application-status.enum"
 import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
 import { EnrollmentsInternalService } from "src/enrollments/services/enrollments-internal.service"
+import { IManageApplicationsService } from "../interfaces/manage-applications-service.interface"
 
 @Injectable()
-export class ManageApplicationsService {
+export class ManageApplicationsService implements IManageApplicationsService {
     private readonly logger = new Logger(ManageApplicationsService.name)
 
     constructor(
@@ -126,7 +127,7 @@ export class ManageApplicationsService {
         }
 
         await this.applicationRepository.manager.transaction(async (manager) => {
-            const updateResult = await manager.update(ApplicationEntity,
+            await manager.update(ApplicationEntity,
                 { id: applicationId },
                 { status: ApplicationStatus.APPROVED },
             )
@@ -138,7 +139,6 @@ export class ManageApplicationsService {
             }
 
             this.logger.log(`Application with id ${applicationId} approved`)
-            return updateResult
         })
     }
 
@@ -164,6 +164,5 @@ export class ManageApplicationsService {
         }
 
         this.logger.log(`Application with id ${applicationId} rejected`)
-        return updateResult
     }
 }

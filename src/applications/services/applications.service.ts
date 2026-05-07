@@ -10,9 +10,10 @@ import { QuestionEntity } from "src/surveys/entities/question.entity"
 import { CreateAnswerBodyDto } from "../dto/create-answer-body.dto"
 import { UpdateApplicationBodyDto } from "../dto/update-application-body.dto"
 import { EnrollmentsInternalService } from "src/enrollments/services/enrollments-internal.service"
+import { IApplicationsService } from "../interfaces/applications-service.interface"
 
 @Injectable()
-export class ApplicationsService {
+export class ApplicationsService implements IApplicationsService {
     private readonly logger = new Logger(ApplicationsService.name)
 
     constructor(
