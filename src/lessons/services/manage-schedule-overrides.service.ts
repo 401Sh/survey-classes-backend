@@ -3,9 +3,10 @@ import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-overri
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 import { UpdateScheduleOverrideBodyDto } from "../dto/update-schedule-override-body.dto"
+import { IManageScheduleOverridesService } from "../interfaces/manage-schedule-overrides-service.interface"
 
 @Injectable()
-export class ManageScheduleOverridesService {
+export class ManageScheduleOverridesService implements IManageScheduleOverridesService {
     private readonly logger = new Logger(ManageScheduleOverridesService.name)
 
     constructor(
@@ -41,7 +42,6 @@ export class ManageScheduleOverridesService {
         }
     
         this.logger.log(`Schedule override with id ${overrideId} updated successfully`)
-        return updateResult
     }
 
 
@@ -53,7 +53,5 @@ export class ManageScheduleOverridesService {
             this.logger.log(`Cannot delete schedule override. No schedule override with id: ${overrideId}`)
             throw new NotFoundException(`Schedule override with id ${overrideId} not found`)
         }
-
-        return deleteResult
     }
 }

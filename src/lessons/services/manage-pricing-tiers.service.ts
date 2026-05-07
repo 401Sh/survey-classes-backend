@@ -3,9 +3,10 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { Repository } from "typeorm"
 import { UpdatePricingTierBodyDto } from "../dto/update-pricing-tier-body.dto"
+import { IManagePricingTiersService } from "../interfaces/manage-pricing-tiers-service.interface"
 
 @Injectable()
-export class ManagePricingTiersService {
+export class ManagePricingTiersService implements IManagePricingTiersService {
     private readonly logger = new Logger(ManagePricingTiersService.name)
 
     constructor(
@@ -48,7 +49,6 @@ export class ManagePricingTiersService {
         }
     
         this.logger.log(`Pricing tier with id ${tierId} updated successfully`)
-        return updateResult
     }
 
 
@@ -60,7 +60,5 @@ export class ManagePricingTiersService {
             this.logger.log(`Cannot delete pricing tier. No pricing tier with id: ${tierId}`)
             throw new NotFoundException(`Pricing tier with id ${tierId} not found`)
         }
-
-        return deleteResult
     }
 }

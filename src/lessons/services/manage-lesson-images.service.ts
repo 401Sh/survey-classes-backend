@@ -6,9 +6,10 @@ import { LessonImageEntity } from "../entities/lesson-image.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { LESSON_MEDIA_PATH } from "src/common/constants/media.constant"
 import { LessonEntity } from "../entities/lesson.entity"
+import { IManageLessonImagesService } from "../interfaces/manage-lesson-images-service.interface"
 
 @Injectable()
-export class ManageLessonImagesService {
+export class ManageLessonImagesService implements IManageLessonImagesService {
     private readonly logger = new Logger(ManageLessonImagesService.name)
 
     constructor(
@@ -82,7 +83,7 @@ export class ManageLessonImagesService {
 
         if (!image) throw new NotFoundException("Image not found")
 
-        const updateResult = this.lessonRepository.update(
+        await this.lessonRepository.update(
             { id: lessonId },
             {
                 coverImage: { id: imageId },
@@ -90,7 +91,6 @@ export class ManageLessonImagesService {
         )
 
         this.logger.log(`Lesson with id ${lessonId} covere image updated successfully`)
-        return updateResult
     }
 
 

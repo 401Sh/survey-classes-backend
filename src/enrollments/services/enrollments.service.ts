@@ -9,7 +9,7 @@ import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
-import { LessonsPricingTiersInternalService } from "src/lessons/services/lessons-pricing-tiers-internal.service"
+import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
 import { SubscriptionsInternalService } from "src/subscriptions/services/subscriptions-internal.service"
 
 @Injectable()
@@ -22,7 +22,7 @@ export class EnrollmentsService {
 
         private readonly childrenService: ChildrenInternalService,
         private readonly lessonsService: LessonsInternalService,
-        private readonly pricingTiersService: LessonsPricingTiersInternalService,
+        private readonly pricingTiersService: LessonPricingTiersInternalService,
         private readonly subscriptionsService: SubscriptionsInternalService,
     ) {}
 
@@ -33,7 +33,7 @@ export class EnrollmentsService {
         await this.validateChildOwnership(childId, userId)
 
         // check and get lesson with survey
-        const lesson = await this.lessonsService.findSimplefiedWithSurvey(lessonId)
+        const lesson = await this.lessonsService.findSimplifiedWithSurvey(lessonId)
 
         // check that there's no active enrollment
         await this.validateActiveEnrollmentExisting(lessonId, childId)

@@ -17,9 +17,10 @@ import { GetManageScheduleOverrideQueryDto } from "../dto/get-manage-schedule-ov
 import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
 import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { IManageLessonsService } from "../interfaces/manage-lessons-service.interface"
 
 @Injectable()
-export class ManageLessonsService {
+export class ManageLessonsService implements IManageLessonsService {
     private readonly logger = new Logger(ManageLessonsService.name)
 
     constructor(
@@ -309,10 +310,9 @@ export class ManageLessonsService {
         }
     
         Object.assign(lesson, otherData)
-        const updatedLesson = await this.lessonRepository.save(lesson)
+        await this.lessonRepository.save(lesson)
 
         this.logger.log(`Lesson with id ${lessonId} updated successfully`)
-        return updatedLesson 
     }
 
 
@@ -324,8 +324,6 @@ export class ManageLessonsService {
             this.logger.log(`Cannot delete lesson. No lesson with id: ${lessonId}`)
             throw new NotFoundException(`Lesson with id ${lessonId} not found`)
         }
-
-        return deleteResult
     }
 
 

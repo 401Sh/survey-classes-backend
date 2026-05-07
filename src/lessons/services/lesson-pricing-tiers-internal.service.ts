@@ -2,10 +2,11 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
+import { ILessonsPricingTiersInternalService } from "../interfaces/lesson-pricing-tiers-internal-service.interface"
 
 @Injectable()
-export class LessonsPricingTiersInternalService {
-    private readonly logger = new Logger(LessonsPricingTiersInternalService.name)
+export class LessonPricingTiersInternalService implements ILessonsPricingTiersInternalService {
+    private readonly logger = new Logger(LessonPricingTiersInternalService.name)
 
     constructor(
         @InjectRepository(LessonPricingTierEntity)

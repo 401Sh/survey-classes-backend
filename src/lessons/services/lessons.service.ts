@@ -9,9 +9,10 @@ import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
+import { ILessonsService } from "../interfaces/lessons-service.interface"
 
 @Injectable()
-export class LessonsService {
+export class LessonsService implements ILessonsService {
     private readonly logger = new Logger(LessonsService.name)
 
     constructor(

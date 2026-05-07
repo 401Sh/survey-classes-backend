@@ -3,9 +3,10 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { Repository } from "typeorm"
 import { UpdateWeeklySlotBodyDto } from "../dto/update-weekly-slot-body.dto"
+import { IManageWeeklySlotsService } from "../interfaces/manage-weekly-slots-service.interface"
 
 @Injectable()
-export class ManageWeeklySlotsService {
+export class ManageWeeklySlotsService implements IManageWeeklySlotsService {
     private readonly logger = new Logger(ManageWeeklySlotsService.name)
 
     constructor(
@@ -61,10 +62,9 @@ export class ManageWeeklySlotsService {
         }
     
         Object.assign(weeklySlot, data)
-        const updatedResult = await this.weeklySlotRepository.save(weeklySlot)
+        await this.weeklySlotRepository.save(weeklySlot)
 
         this.logger.log(`Weekly slot with id ${slotId} updated successfully`)
-        return updatedResult
     }
 
 
@@ -76,7 +76,5 @@ export class ManageWeeklySlotsService {
             this.logger.log(`Cannot delete weekly slot. No weekly slot with id: ${slotId}`)
             throw new NotFoundException(`Weekly slot with id ${slotId} not found`)
         }
-
-        return deleteResult
     }
 }

@@ -2,9 +2,10 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 import { LessonEntity } from "../entities/lesson.entity"
+import { ILessonsInternalService } from "../interfaces/lessons-internal-service.interface"
 
 @Injectable()
-export class LessonsInternalService {
+export class LessonsInternalService implements ILessonsInternalService {
     private readonly logger = new Logger(LessonsInternalService.name)
 
     constructor(
@@ -20,7 +21,7 @@ export class LessonsInternalService {
         return isExists
     }
 
-    async findSimplefiedWithSurvey(id: number) {
+    async findSimplifiedWithSurvey(id: number) {
         const lesson = await this.lessonRepository.findOne({
             where: {
                 id,

@@ -16,7 +16,7 @@ import { ManagePricingTiersController } from "./controllers/manage-pricing-tiers
 import { ManageWeeklySlotsController } from "./controllers/manage-weekly-slots.controller"
 import { ManageScheduleOverridesController } from "./controllers/manage-schedule-overrides.controller"
 import { LessonsInternalService } from "./services/lessons-internal.service"
-import { LessonsPricingTiersInternalService } from "./services/lessons-pricing-tiers-internal.service"
+import { LessonPricingTiersInternalService } from "./services/lesson-pricing-tiers-internal.service"
 import { MediaModule } from "src/media/media.module"
 import { ManageLessonImagesService } from "./services/manage-lesson-images.service"
 import { ManageLessonImagesController } from "./controllers/manage-lesson-images.controller"
@@ -49,12 +49,12 @@ import { LessonImageEntity } from "./entities/lesson-image.entity"
         ManageWeeklySlotsService,
         ManageScheduleOverridesService,
         LessonsInternalService,
-        LessonsPricingTiersInternalService,
+        LessonPricingTiersInternalService,
         ManageLessonImagesService,
     ],
     exports: [
         LessonsInternalService,
-        LessonsPricingTiersInternalService,
+        LessonPricingTiersInternalService,
     ],
 })
 export class LessonsModule {}
