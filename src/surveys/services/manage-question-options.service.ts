@@ -49,6 +49,8 @@ export class ManageQuestionOptionsService implements IManageQuestionOptionsServi
                 const oldPosition = option.position
                 const newPosition = Math.min(data.position, maxPosition ?? data.position)
 
+                data.position = newPosition
+
                 if (newPosition > oldPosition) {
                     // if we move question down - other questions moving up
                     await manager.createQueryBuilder()
