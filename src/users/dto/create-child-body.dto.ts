@@ -25,7 +25,7 @@ export class CreateChildBodyDto {
     @MaxLength(LABEL_MAX_LENGTH, {
         message: `SecondName must be at most ${LABEL_MAX_LENGTH} characters`
     })
-    secondName: string
+    secondName?: string
 
     @ApiProperty({
         description: "Дата рождения",

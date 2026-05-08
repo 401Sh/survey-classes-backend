@@ -14,7 +14,7 @@ export class UpdateChildBodyDto {
     @MaxLength(LABEL_MAX_LENGTH, {
         message: `FirstName must be at most ${LABEL_MAX_LENGTH} characters`
     })
-    firstName: string
+    firstName?: string
 
     @ApiPropertyOptional({
         description: "Фамилия ребенка",
@@ -26,7 +26,7 @@ export class UpdateChildBodyDto {
     @MaxLength(LABEL_MAX_LENGTH, {
         message: `SecondName must be at most ${LABEL_MAX_LENGTH} characters`
     })
-    secondName: string
+    secondName?: string
 
     @ApiPropertyOptional({
         description: "Дата рождения",
@@ -36,5 +36,5 @@ export class UpdateChildBodyDto {
     @Type(() => Date)
     @IsDate()
     @IsOptional()
-    birthDate: Date
+    birthDate?: Date
 }
