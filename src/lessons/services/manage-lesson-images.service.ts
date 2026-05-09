@@ -105,22 +105,8 @@ export class ManageLessonImagesService implements IManageLessonImagesService {
 
         if (!image) throw new NotFoundException('Lesson image not found')
 
-        // remove cover
-        const lesson = await this.lessonRepository.findOne({
-            where: {
-                id: lessonId,
-                coverImage: { id: imageId },
-            },
-            relations: { coverImage: true },
-        })
-
-        if (lesson && lesson.coverImage) {
-            lesson.coverImage = null
-            await this.lessonRepository.save(lesson)
-        }
-
         await this.imageRepository.manager.transaction(async (manager) => {
-            // снимаем обложку если нужно
+            // remove cover
             await manager.update(LessonEntity,
                 {
                     id: lessonId,

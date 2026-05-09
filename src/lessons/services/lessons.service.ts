@@ -97,6 +97,9 @@ export class LessonsService implements ILessonsService {
             where: { 
                 id, 
                 isActive: true,
+                pricingTiers: {
+                    isActive: true,
+                },
             },
             relations: {
                 images: true,
@@ -125,7 +128,7 @@ export class LessonsService implements ILessonsService {
                     price: true,
                     sessionsCount: true,
                     isActive: true,
-                }
+                },
             },
         })
     
@@ -133,9 +136,7 @@ export class LessonsService implements ILessonsService {
             this.logger.log(`No lesson with id: ${id}`)
             throw new NotFoundException(`Lesson with id ${id} not found`)
         }
-
-        lesson.pricingTiers = lesson.pricingTiers.filter(tier => tier.isActive)
-    
+   
         this.logger.log(`Finded lesson with id: ${id}`)
         return lesson
     }
