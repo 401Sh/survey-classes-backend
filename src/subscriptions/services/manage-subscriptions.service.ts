@@ -197,11 +197,16 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
             throw new BadRequestException("Only paid subscriptions can be refunded")
         }
 
-        await this.subscriptionRepository.update({ id: subscriptionId }, {
+        const updateResult = await this.subscriptionRepository.update({ id: subscriptionId }, {
             paymentStatus: PaymentStatus.REFUNDED,
             refundedAmount: subscription.paidAmount,
             refundedAt: refundedAt,
             isActive: false,
         })
+
+        if (updateResult.affected === 0) {
+            this.logger.debug(`Cannot update subscription payment with id: ${subscriptionId}`)
+            throw new NotFoundException("Subscription not found")
+        }
     }
 }
