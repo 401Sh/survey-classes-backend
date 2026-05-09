@@ -28,7 +28,7 @@ export class CreateEnrollmentBodyDto {
     })
     @Type(() => Date)
     @IsDate()
-    consentedAt: number
+    consentedAt: Date
 
     @ApiProperty({
         description: "Согласие на обработку данных",
