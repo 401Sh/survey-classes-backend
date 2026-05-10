@@ -99,7 +99,7 @@ export class AuthService implements IAuthService {
         if (!user) throw new NotFoundException("User does not exist")
 
         if (user.isEmailVerified) {
-        throw new BadRequestException("Mail is already confirmed")
+            throw new BadRequestException("Mail is already confirmed")
         }
 
         if (

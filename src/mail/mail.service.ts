@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import * as nodemailer from "nodemailer"
 import * as handlebars from "handlebars"
@@ -14,6 +14,8 @@ import { IMailService } from "./interfaces/mail-service.interface"
 
 @Injectable()
 export class MailService implements IMailService {
+    private readonly logger = new Logger(MailService.name)
+
     private readonly mailer: nodemailer.Transporter
     private readonly confirmationTemplate: handlebars.TemplateDelegate
     private readonly resetPasswordTemplate: handlebars.TemplateDelegate
@@ -54,7 +56,12 @@ export class MailService implements IMailService {
 
 
     private async send(to: string, subject: string, html: string) {
-        await this.mailer.sendMail({ to, subject, html })
+        try {
+            await this.mailer.sendMail({ to, subject, html })
+        } catch (error) {
+            this.logger.error(`Failed to send email to ${to}: ${error.message}`)
+            throw new InternalServerErrorException("Failed to send email")
+        }
     }
 
 
