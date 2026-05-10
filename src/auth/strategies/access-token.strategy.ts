@@ -11,14 +11,14 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "jwt") {
         const jwtSecret = process.env.JWT_ACCESS_SECRET
 
         if (!jwtSecret) {
-        AccessTokenStrategy.logger.error("JWT_ACCESS_SECRET is not defined. Application cannot start.")
-        throw new Error("JWT_ACCESS_SECRET is not defined")
+            AccessTokenStrategy.logger.error("JWT_ACCESS_SECRET is not defined. Application cannot start.")
+            throw new Error("JWT_ACCESS_SECRET is not defined")
         }
 
         super({
-        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-        secretOrKey: jwtSecret,
-        ignoreExpiration: false,
+            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            secretOrKey: jwtSecret,
+            ignoreExpiration: false,
         })
     }
     

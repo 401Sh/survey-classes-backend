@@ -247,11 +247,10 @@ export class AuthController {
         @Request() req,
         @Headers("user-agent") userAgent: string,
         @Headers("x-fingerprint") fingerprint: string,
-        @Headers("x-refresh-token") refreshToken: string,
         @Ip() ip: string,
         @Res() res: Response,
     ) {
-        const userId = req.user.sub
+        const { sub: userId, refreshToken } = req.user
 
         const tokens = await this.authService.refreshTokens(
             userId,
