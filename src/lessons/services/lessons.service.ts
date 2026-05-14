@@ -42,7 +42,7 @@ export class LessonsService implements ILessonsService {
         const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
 
         queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers", "pricingTiers.isActive = true")
-        queryBuilder.leftJoinAndSelect("lessons.images", "images", "images.isCover = true")
+        queryBuilder.leftJoinAndSelect("lessons.coverImage", "coverImage")
         queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
 
         queryBuilder.where("lessons.isActive = true")
