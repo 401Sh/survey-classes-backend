@@ -12,11 +12,11 @@ import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
 import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { Throttle } from "@nestjs/throttler"
-import { AUTH_THROTTLE_TTL } from "src/common/constants/throttle.constant"
+import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL } from "src/common/constants/throttle.constant"
 
 @Throttle({ default: {
     ttl: AUTH_THROTTLE_TTL,
-    limit: AUTH_THROTTLE_TTL,
+    limit: AUTH_THROTTLE_LIMIT,
 }})
 @Controller("auth")
 export class AuthController {
