@@ -118,7 +118,7 @@ export class AuthService implements IAuthService {
             user.emailVerification.code,
         )
         if (!isCodeValid) {
-            this.logger.log(`Access denied for user: ${user.id}. Incorrect confirmation code`)
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect confirmation code`)
             throw new ForbiddenException("Confirmation Denied")
         }
 
@@ -168,6 +168,7 @@ export class AuthService implements IAuthService {
             user.password,
         )
         if (!isPasswordValid) {
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect password`)
             throw new BadRequestException("Password is incorrect")
         }
 
@@ -262,7 +263,7 @@ export class AuthService implements IAuthService {
             passwordReset.code,
         )
         if (!isCodeValid) {
-            this.logger.log(`Access denied for user: ${user.id}. Incorrect reset code`)
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect reset code`)
             throw new ForbiddenException("Invalid reset code")
         }
     
@@ -311,14 +312,14 @@ export class AuthService implements IAuthService {
         const session = await this.tokensService.findRefreshSession(user.id, fingerprint)
 
         if (!session) {
-            this.logger.log(`Access denied for user: ${user.id}. No existing session`)
+            this.logger.warn(`Access denied for user: ${user.id}. No existing session`)
             throw new ForbiddenException("Access Denied")
         }
 
         // Check if token has expired
         const currentTime = new Date()
         if (session.expiresAt < currentTime) {
-            this.logger.log(
+            this.logger.warn(
                 `Access denied for user: ${user.id}. Refresh token expired`,
             )
             throw new ForbiddenException("Refresh token expired")
@@ -330,7 +331,7 @@ export class AuthService implements IAuthService {
         )
 
         if (!isTokenValid) {
-            this.logger.log(`Access denied for user: ${user.id}. Incorrect refresh token`)
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect refresh token`)
             throw new ForbiddenException("Access Denied")
         }
 
