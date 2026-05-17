@@ -1,5 +1,4 @@
-import { IsDate, IsEnum, IsOptional } from "class-validator"
-import { ScheduleOverrideStatus } from "../enums/schedule-override-status.enum"
+import { IsDate, IsOptional } from "class-validator"
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
 
