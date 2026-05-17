@@ -62,7 +62,7 @@ export class ManageQuestionsController {
     @ApiBearerAuth()
     @ApiSecurity("api-key")
     @ApiOperation({
-        description: "Получение всех вариантов ответа у вопроса"
+        summary: "Получение всех вариантов ответа у вопроса"
     })
     @ApiParam({
         name: "questionId",
