@@ -1,6 +1,10 @@
 import { UserEntity } from "src/users/entities/user.entity"
+import { MAIL_TEMPLATES } from "../constants/mail-template.constant"
 
 export interface IMailService {
-    sendUserConfirmation(user: UserEntity, code: string): Promise<void>
-    sendPasswordReset(user: UserEntity, code: string): Promise<void>
+    sendMail(
+        templateKey: keyof typeof MAIL_TEMPLATES,
+        user: UserEntity,
+        context: Record<string, unknown>
+    ): Promise<void>
 }

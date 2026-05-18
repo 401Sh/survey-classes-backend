@@ -17,6 +17,7 @@ import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { UsersInternalService } from "src/users/services/users-internal.service"
 import { IAuthService } from "./interfaces/auth-service.interface"
 import { CryptoService } from "./services/crypto.service"
+import { MailTemplate } from "src/common/enums/mail-template.enum"
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -59,7 +60,7 @@ export class AuthService implements IAuthService {
             expiresAt,
         })
     
-        await this.mailService.sendUserConfirmation(newUser, code)
+        await this.mailService.sendMail(MailTemplate.Confirmation, newUser, { code })
     
         return newUser
     }
@@ -87,7 +88,7 @@ export class AuthService implements IAuthService {
             })
         }
     
-        await this.mailService.sendUserConfirmation(user, code)
+        await this.mailService.sendMail(MailTemplate.Confirmation, user, { code })
     
         return user
     }
@@ -232,7 +233,7 @@ export class AuthService implements IAuthService {
             expiresAt,
         })
     
-        await this.mailService.sendPasswordReset(user, code)
+        await this.mailService.sendMail(MailTemplate.PasswordReset, user, { code })
     }
 
 
