@@ -130,6 +130,7 @@ export class ManageLessonsService implements IManageLessonsService {
             dateTo,
             isActive,
             search,
+            minAge,
             sortDirection,
             categoryId,
             priceFrom,
@@ -151,6 +152,10 @@ export class ManageLessonsService implements IManageLessonsService {
                 "(lessons.name LIKE :search OR lessons.description LIKE :search)",
                 { search: `%${search}%` },
             )
+        }
+
+        if (minAge) {
+            queryBuilder.andWhere("lessons.minAge >= :minAge", { minAge })
         }
 
         if (categoryId) {

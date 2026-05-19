@@ -3,7 +3,6 @@ import { LessonEntity } from "../entities/lesson.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
 import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
-
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
@@ -33,6 +32,7 @@ export class LessonsService implements ILessonsService {
             dateFrom,
             dateTo,
             search,
+            minAge,
             sortDirection,
             categoryId,
             priceFrom,
@@ -52,6 +52,10 @@ export class LessonsService implements ILessonsService {
                 "(lessons.name LIKE :search OR lessons.description LIKE :search)",
                 { search: `%${search}%` },
             )
+        }
+
+        if (minAge) {
+            queryBuilder.andWhere("lessons.minAge >= :minAge", { minAge })
         }
 
         if (categoryId) {
@@ -110,6 +114,7 @@ export class LessonsService implements ILessonsService {
                 id: true,
                 name: true,
                 description: true,
+                minAge: true,
                 teacher: true,
                 startsAt: true,
                 endsAt: true,
