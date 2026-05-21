@@ -101,6 +101,7 @@ describe("ManageLessonsService", () => {
                 isActive: false,
                 enrollmentMode: EnrollmentMode.AUTO,
                 categoryIds: [],
+                minAge: 0,
             })
 
             expect(result).toEqual(fakeLesson)
@@ -119,6 +120,7 @@ describe("ManageLessonsService", () => {
                 isActive: false,
                 enrollmentMode: EnrollmentMode.AUTO,
                 categoryIds: [1, 2],
+                minAge: 0,
             })
 
             expect(mockManageDictionariesService.findCategoriesByIds).toHaveBeenCalledWith([1, 2])
@@ -136,6 +138,7 @@ describe("ManageLessonsService", () => {
                 isActive: false,
                 enrollmentMode: EnrollmentMode.AUTO,
                 categoryIds: [],
+                minAge: 0,
             })
 
             expect(mockManageDictionariesService.findCategoriesByIds).not.toHaveBeenCalled()
