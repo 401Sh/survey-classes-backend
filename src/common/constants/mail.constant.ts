@@ -3,6 +3,8 @@ export const MAIL_CONFIRMATION_SUBJECT = "Welcome to Our Events! Confirm your Em
 export const MAIL_RESET_PASSWORD_SUBJECT = "Восстановление пароля"
 
 export const MAIL_TEMPLATES_PATH = "./templates"
+export const MAIL_TEMPLATE_OTP_CONFIRM = "confirmation.hbs"
+export const MAIL_TEMPLATE_PASSWORD_RESET = "reset-password.hbs"
 
 export const MAIL_CONFIRMATION_CODE_LENGTH = 6
 // 15 minutes

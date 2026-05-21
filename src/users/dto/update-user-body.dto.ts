@@ -13,7 +13,7 @@ export class UpdateUserBodyDto {
     @MaxLength(LABEL_MAX_LENGTH, {
         message: `FirstName must be at most ${LABEL_MAX_LENGTH} characters`
     })
-    firstName: string
+    firstName?: string
 
     @ApiPropertyOptional({
         description: "Фамилия пользователя",
@@ -25,5 +25,5 @@ export class UpdateUserBodyDto {
     @MaxLength(LABEL_MAX_LENGTH, {
         message: `SecondName must be at most ${LABEL_MAX_LENGTH} characters`
     })
-    secondName: string
+    secondName?: string
 }

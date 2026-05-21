@@ -1,27 +1,25 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import * as nodemailer from "nodemailer"
-import * as handlebars from "handlebars"
-import { type UserEntity } from "src/users/entities/user.entity"
-import { join } from "path"
-import { readFileSync } from "fs"
-import {
-    MAIL_CONFIRMATION_SUBJECT,
-    MAIL_FROM_NAME, MAIL_RESET_PASSWORD_SUBJECT,
-    MAIL_TEMPLATES_PATH
-} from "src/common/constants/mail.constant"
+import { MAIL_FROM_NAME } from "src/common/constants/mail.constant"
 import { IMailService } from "./interfaces/mail-service.interface"
+import { MailTemplateRegistry } from "./mail-template.registry"
+import { MAIL_TEMPLATES } from "./constants/mail-template.constant"
+import { UserEntity } from "src/users/entities/user.entity"
+import { MailTemplate } from "src/common/enums/mail-template.enum"
 
 @Injectable()
 export class MailService implements IMailService {
+    private readonly logger = new Logger(MailService.name)
+
     private readonly mailer: nodemailer.Transporter
-    private readonly confirmationTemplate: handlebars.TemplateDelegate
-    private readonly resetPasswordTemplate: handlebars.TemplateDelegate
 
-    constructor(private readonly configService: ConfigService) {
-        this.confirmationTemplate = this.loadTemplate("confirmation.hbs")
-        this.resetPasswordTemplate = this.loadTemplate("reset-password.hbs")
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly templateRegistry: MailTemplateRegistry,
+    ) {
 
+        // TODO: change constants to configService registerAs
         this.mailer = nodemailer.createTransport(
             {
                 host: this.configService.getOrThrow("MAIL_HOST"),
@@ -41,28 +39,26 @@ export class MailService implements IMailService {
         )
     }
 
-    async sendUserConfirmation(user: UserEntity, code: string) {
-        const html = this.confirmationTemplate({ name: user.firstName, code })
-        await this.send(user.email, MAIL_CONFIRMATION_SUBJECT, html)
+    async sendMail(
+        templateKey: MailTemplate,
+        user: UserEntity,
+        context: Record<string, unknown>,
+    ): Promise<void> {
+        const config = MAIL_TEMPLATES[templateKey]
+        const html = this.templateRegistry.render(templateKey, {
+            name: user.firstName,
+            ...context,
+        })
+        await this.send(user.email, config.subject, html)
     }
 
 
-    async sendPasswordReset(user: UserEntity, code: string) {
-        const html = this.resetPasswordTemplate({ name: user.firstName, code })
-        await this.send(user.email, MAIL_RESET_PASSWORD_SUBJECT, html)
-    }
-
-
-    private async send(to: string, subject: string, html: string) {
-        await this.mailer.sendMail({ to, subject, html })
-    }
-
-
-    private loadTemplate(name: string) {
-        const tempFolder = join(__dirname, MAIL_TEMPLATES_PATH)
-        const tempPath = join(tempFolder, name)
-
-        const source = readFileSync(tempPath, "utf8")
-        return handlebars.compile(source)
+    private async send(to: string, subject: string, html: string): Promise<void> {
+        try {
+            await this.mailer.sendMail({ to, subject, html })
+        } catch (error) {
+            this.logger.error(`Failed to send email to ${to}: ${error.message}`)
+            throw new InternalServerErrorException("Failed to send email")
+        }
     }
 }

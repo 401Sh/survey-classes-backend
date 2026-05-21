@@ -61,6 +61,7 @@ export class UsersInternalService implements IUsersInternalService {
                 firstName: true,
                 secondName: true,
                 password: true,
+                email: true,
                 role: true,
                 isEmailVerified: true,
             },

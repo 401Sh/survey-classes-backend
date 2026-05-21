@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
-import { Transform, Type } from "class-transformer"
+import { Transform } from "class-transformer"
 import { ArrayUnique, IsArray, IsBoolean, IsInt, IsOptional } from "class-validator"
 import { DayOfWeek } from "../enums/day-of-week.enum"
 

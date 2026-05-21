@@ -36,6 +36,9 @@ export class LessonEntity extends BaseEntity {
     @Column({ type: "bool", default: false })
     isActive: boolean
 
+    @Column({ type: "smallint", default: 0 })
+    minAge: number
+
     @Column({ type: "varchar", length: 255, nullable: true })
     teacher?: string
 

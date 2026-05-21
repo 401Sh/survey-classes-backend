@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { Injectable, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { EntityManager, Repository } from "typeorm"
@@ -7,8 +7,6 @@ import { IEnrollmentsInternalService } from "../interfaces/enrollments-internal-
 
 @Injectable()
 export class EnrollmentsInternalService implements IEnrollmentsInternalService {
-    private readonly logger = new Logger(EnrollmentsInternalService.name)
-
     constructor(
         @InjectRepository(EnrollmentEntity)
         private enrollmentRepository: Repository<EnrollmentEntity>,

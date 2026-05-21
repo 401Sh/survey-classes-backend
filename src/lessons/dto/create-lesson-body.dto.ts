@@ -32,6 +32,16 @@ export class CreateLessonBodyDto {
     isActive: boolean = false
 
     @ApiPropertyOptional({
+        description: "Минимальный возраст ребенка",
+        example: 45,
+        type: Number,
+        default: 0,
+    })
+    @Type(() => Number)
+    @IsInt()
+    minAge: number = 0
+
+    @ApiPropertyOptional({
         description: "Описание занятия",
         example: "Some test text for lesson",
         type: String,

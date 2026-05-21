@@ -17,6 +17,7 @@ import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { UsersInternalService } from "src/users/services/users-internal.service"
 import { IAuthService } from "./interfaces/auth-service.interface"
 import { CryptoService } from "./services/crypto.service"
+import { MailTemplate } from "src/common/enums/mail-template.enum"
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -59,7 +60,7 @@ export class AuthService implements IAuthService {
             expiresAt,
         })
     
-        await this.mailService.sendUserConfirmation(newUser, code)
+        await this.mailService.sendMail(MailTemplate.Confirmation, newUser, { code })
     
         return newUser
     }
@@ -87,7 +88,7 @@ export class AuthService implements IAuthService {
             })
         }
     
-        await this.mailService.sendUserConfirmation(user, code)
+        await this.mailService.sendMail(MailTemplate.Confirmation, user, { code })
     
         return user
     }
@@ -99,7 +100,7 @@ export class AuthService implements IAuthService {
         if (!user) throw new NotFoundException("User does not exist")
 
         if (user.isEmailVerified) {
-        throw new BadRequestException("Mail is already confirmed")
+            throw new BadRequestException("Mail is already confirmed")
         }
 
         if (
@@ -118,7 +119,7 @@ export class AuthService implements IAuthService {
             user.emailVerification.code,
         )
         if (!isCodeValid) {
-            this.logger.log(`Access denied for user: ${user.id}. Incorrect confirmation code`)
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect confirmation code`)
             throw new ForbiddenException("Confirmation Denied")
         }
 
@@ -168,6 +169,7 @@ export class AuthService implements IAuthService {
             user.password,
         )
         if (!isPasswordValid) {
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect password`)
             throw new BadRequestException("Password is incorrect")
         }
 
@@ -231,7 +233,7 @@ export class AuthService implements IAuthService {
             expiresAt,
         })
     
-        await this.mailService.sendPasswordReset(user, code)
+        await this.mailService.sendMail(MailTemplate.PasswordReset, user, { code })
     }
 
 
@@ -262,7 +264,7 @@ export class AuthService implements IAuthService {
             passwordReset.code,
         )
         if (!isCodeValid) {
-            this.logger.log(`Access denied for user: ${user.id}. Incorrect reset code`)
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect reset code`)
             throw new ForbiddenException("Invalid reset code")
         }
     
@@ -311,14 +313,14 @@ export class AuthService implements IAuthService {
         const session = await this.tokensService.findRefreshSession(user.id, fingerprint)
 
         if (!session) {
-            this.logger.log(`Access denied for user: ${user.id}. No existing session`)
+            this.logger.warn(`Access denied for user: ${user.id}. No existing session`)
             throw new ForbiddenException("Access Denied")
         }
 
         // Check if token has expired
         const currentTime = new Date()
         if (session.expiresAt < currentTime) {
-            this.logger.log(
+            this.logger.warn(
                 `Access denied for user: ${user.id}. Refresh token expired`,
             )
             throw new ForbiddenException("Refresh token expired")
@@ -330,7 +332,7 @@ export class AuthService implements IAuthService {
         )
 
         if (!isTokenValid) {
-            this.logger.log(`Access denied for user: ${user.id}. Incorrect refresh token`)
+            this.logger.warn(`Access denied for user: ${user.id}. Incorrect refresh token`)
             throw new ForbiddenException("Access Denied")
         }
 

@@ -12,11 +12,11 @@ import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
 import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
 import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { Throttle } from "@nestjs/throttler"
-import { AUTH_THROTTLE_TTL } from "src/common/constants/throttle.constant"
+import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL } from "src/common/constants/throttle.constant"
 
 @Throttle({ default: {
     ttl: AUTH_THROTTLE_TTL,
-    limit: AUTH_THROTTLE_TTL,
+    limit: AUTH_THROTTLE_LIMIT,
 }})
 @Controller("auth")
 export class AuthController {
@@ -247,11 +247,10 @@ export class AuthController {
         @Request() req,
         @Headers("user-agent") userAgent: string,
         @Headers("x-fingerprint") fingerprint: string,
-        @Headers("x-refresh-token") refreshToken: string,
         @Ip() ip: string,
         @Res() res: Response,
     ) {
-        const userId = req.user.sub
+        const { sub: userId, refreshToken } = req.user
 
         const tokens = await this.authService.refreshTokens(
             userId,

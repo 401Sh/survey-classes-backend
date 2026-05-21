@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnsupportedMediaTypeException } from "@nestjs/common"
 import * as fs from "fs/promises"
 import { randomUUID } from "crypto"
 import { join } from "path"
@@ -18,7 +18,12 @@ export class MediaService implements IMediaService {
     }
 
     async saveFile(file: Express.Multer.File, subfolder: string): Promise<string> {
-        const ext = MIME_TO_EXT[file.mimetype] ?? ".jpg"
+        const ext = MIME_TO_EXT[file.mimetype]
+        if (!ext) {
+            this.logger.error(`Unsupported mime type: ${file.mimetype}`)
+            throw new UnsupportedMediaTypeException(`Unsupported mime type: ${file.mimetype}`)
+        }
+
         const filename = randomUUID() + ext
 
         const absoluteDir = join(this.uploadRoot, subfolder)
@@ -42,14 +47,16 @@ export class MediaService implements IMediaService {
     async deleteFile(relativePath: string): Promise<void> {
         const absolutePath = join(this.uploadRoot, relativePath)
 
-        const isFileExists = await this.exists(absolutePath)
-
-        if (!isFileExists) {
-            this.logger.debug(`No file ${relativePath}`)
-            throw new NotFoundException("File not found")
+        try {
+            await fs.unlink(absolutePath)
+        } catch (error) {
+            if (error.code === "ENOENT") {
+                this.logger.warn(`File not found: ${relativePath}`)
+                throw new NotFoundException("File not found")
+            }
+            this.logger.error(`Failed to delete file ${relativePath}: ${error.message}`)
+            throw new InternalServerErrorException("Failed to delete file")
         }
-
-        await fs.unlink(absolutePath)
     }
 
 

@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsInt, IsArray, ValidateNested } from "class-validator"
+import { IsArray, ValidateNested } from "class-validator"
 import { CreateAnswerBodyDto } from "./create-answer-body.dto"
 
 export class UpdateApplicationBodyDto {

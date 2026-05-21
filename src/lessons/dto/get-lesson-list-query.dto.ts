@@ -6,6 +6,7 @@ import {
     LABEL_MAX_LENGTH,
     PAGE_MIN_VALUE,
     PRICE_MIN_VALUE,
+    ZERO_INT_MIN_VALUE,
 } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 
@@ -79,6 +80,19 @@ export class GetLessonListQueryDto {
         message: `Text search must be at most ${LABEL_MAX_LENGTH} characters`
     })
     search?: string
+
+    @ApiPropertyOptional({
+        description: "Минимальный возраст для посещения занятия",
+        example: 12,
+        type: Number,
+    })
+    @Type(() => Number)
+    @IsNumber()
+    @IsOptional()
+    @Min(PRICE_MIN_VALUE, {
+        message: `Age cannot be less than ${ZERO_INT_MIN_VALUE}`,
+    })
+    minAge?: number
 
     @ApiPropertyOptional({
         description: "Минимальная цена (по любому активному тарифу оплаты занятия)",
