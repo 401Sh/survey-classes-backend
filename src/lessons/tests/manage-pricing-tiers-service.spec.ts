@@ -9,6 +9,7 @@ const mockPricingTierRepository = {
     findOne: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    softDelete: vi.fn(),
 }
 
 describe("ManagePricingTiersService", () => {
@@ -65,13 +66,13 @@ describe("ManagePricingTiersService", () => {
 
     describe("delete", () => {
         it("should delete pricing tier successfully", async () => {
-            mockPricingTierRepository.delete.mockResolvedValue({ affected: 1 })
+            mockPricingTierRepository.softDelete.mockResolvedValue({ affected: 1 })
 
             await expect(service.delete(1)).resolves.not.toThrow()
         })
 
         it("should throw NotFoundException when pricing tier does not exist", async () => {
-            mockPricingTierRepository.delete.mockResolvedValue({ affected: 0 })
+            mockPricingTierRepository.softDelete.mockResolvedValue({ affected: 0 })
 
             await expect(service.delete(99)).rejects.toThrow(NotFoundException)
         })

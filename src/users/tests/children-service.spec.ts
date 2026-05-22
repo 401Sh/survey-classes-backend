@@ -11,6 +11,7 @@ const mockChildRepository = {
     findOne: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    exists: vi.fn(),
 }
 
 describe("ChildrenService", () => {

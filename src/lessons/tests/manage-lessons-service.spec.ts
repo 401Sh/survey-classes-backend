@@ -31,6 +31,7 @@ const mockLessonRepository = {
     exists: vi.fn(),
     delete: vi.fn(),
     createQueryBuilder: vi.fn(),
+    softDelete: vi.fn(),
 }
 
 const mockPricingTierRepository = {
@@ -479,13 +480,13 @@ describe("ManageLessonsService", () => {
 
     describe("delete", () => {
         it("should delete lesson successfully", async () => {
-            mockLessonRepository.delete.mockResolvedValue({ affected: 1 })
+            mockLessonRepository.softDelete.mockResolvedValue({ affected: 1 })
 
             await expect(service.delete(1)).resolves.not.toThrow()
         })
 
         it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.delete.mockResolvedValue({ affected: 0 })
+            mockLessonRepository.softDelete.mockResolvedValue({ affected: 0 })
 
             await expect(service.delete(99)).rejects.toThrow(NotFoundException)
         })
