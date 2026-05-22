@@ -223,7 +223,7 @@ export class EnrollmentsService implements IEnrollmentsService {
         })
 
         if (deleteResult.affected === 0) {
-            this.logger.log(`Cannot delete enrollment. No  pending enrollment with id: ${enrollmentId}`)
+            this.logger.log(`Cannot delete enrollment. No pending enrollment with id: ${enrollmentId}`)
             throw new NotFoundException(`Pending enrollment with id ${enrollmentId} not found`)
         }
     }

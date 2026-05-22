@@ -4,6 +4,7 @@ import {
     BaseEntity,
     Column,
     CreateDateColumn,
+    DeleteDateColumn,
     Entity,
     JoinColumn,
     JoinTable,
@@ -59,6 +60,9 @@ export class LessonEntity extends BaseEntity {
 
     @UpdateDateColumn()
     updatedAt: Date
+
+    @DeleteDateColumn()
+    deletedAt: Date | null
 
     @OneToOne(() => SurveyEntity, (survey) => survey.lesson)
     survey: SurveyEntity

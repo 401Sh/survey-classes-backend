@@ -32,7 +32,10 @@ export class SurveyEntity extends BaseEntity {
     @UpdateDateColumn()
     updatedAt: Date
     
-    @OneToOne(() => LessonEntity, (lesson) => lesson.survey, { nullable: true })
+    @OneToOne(() => LessonEntity, (lesson) => lesson.survey, {
+        onDelete: "SET NULL",
+        nullable: true,
+    })
     @JoinColumn()
     lesson: LessonEntity
 

@@ -54,7 +54,7 @@ export class ManagePricingTiersService implements IManagePricingTiersService {
 
     async delete(tierId: number) {
         this.logger.log(`Deleting pricing tier with id: ${tierId}`)
-        const deleteResult = await this.pricingTierRepository.delete({ id: tierId })
+        const deleteResult = await this.pricingTierRepository.softDelete({ id: tierId })
 
         if (deleteResult.affected === 0) {
             this.logger.log(`Cannot delete pricing tier. No pricing tier with id: ${tierId}`)

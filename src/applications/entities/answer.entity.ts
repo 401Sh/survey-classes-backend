@@ -29,10 +29,13 @@ export class AnswerEntity extends BaseEntity {
     @ManyToOne(() => ApplicationEntity, (response) => response.answers, { onDelete: "CASCADE" })
     response: ApplicationEntity
 
-    @ManyToOne(() => QuestionEntity, (question) => question.answers)
+    @ManyToOne(() => QuestionEntity, (question) => question.answers, { onDelete: "CASCADE" })
     question: QuestionEntity
 
     // only for radio and checkbox questions. Null for text question
-    @ManyToOne(() => QuestionOptionEntity, (option) => option.answers, { nullable: true })
+    @ManyToOne(() => QuestionOptionEntity, (option) => option.answers, {
+        onDelete: "SET NULL",
+        nullable: true,
+    })
     selectedOption?: QuestionOptionEntity
 }
