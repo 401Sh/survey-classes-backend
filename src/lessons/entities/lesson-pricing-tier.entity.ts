@@ -1,6 +1,7 @@
 import { BaseEntity,
     Column,
     CreateDateColumn,
+    DeleteDateColumn,
     Entity,
     ManyToOne,
     OneToMany,
@@ -32,6 +33,9 @@ export class LessonPricingTierEntity  extends BaseEntity {
 
     @UpdateDateColumn()
     updatedAt: Date
+
+    @DeleteDateColumn()
+    deletedAt: Date | null
 
     @ManyToOne(() => LessonEntity, (lesson) => lesson.pricingTiers, { onDelete: "CASCADE" })
     lesson: LessonEntity

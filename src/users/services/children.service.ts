@@ -1,10 +1,11 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { UserChildEntity } from "../entities/user-child.entity"
-import { Repository } from "typeorm"
+import { Not, Repository } from "typeorm"
 import { CreateChildBodyDto } from "../dto/create-child-body.dto"
 import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
 import { IChildrenService } from "../interfaces/children-service.interface"
+import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
 
 @Injectable()
 export class ChildrenService implements IChildrenService {
@@ -84,6 +85,19 @@ export class ChildrenService implements IChildrenService {
 
 
     async delete(userId: number, childId: number) {
+        const hasEnrollments = await this.childRepository.exists({
+            where: {
+                id: childId,
+                enrollments: { status: Not(EnrollmentStatus.SUSPENDED) },
+            },
+            relations: { enrollments: true },
+        })
+
+        if (hasEnrollments) {
+            this.logger.log(`Cannot delete child with active enrollments with id: ${childId}`)
+            throw new ConflictException("Cannot delete child with active enrollments")
+        }
+
         this.logger.log(`Deleting child with id: ${childId}`)
         const deleteResult = await this.childRepository.delete({
             id: childId,

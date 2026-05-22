@@ -18,6 +18,7 @@ import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
 import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { IManageLessonsService } from "../interfaces/manage-lessons-service.interface"
+import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
 
 @Injectable()
 export class ManageLessonsService implements IManageLessonsService {
@@ -322,8 +323,21 @@ export class ManageLessonsService implements IManageLessonsService {
 
 
     async delete(lessonId: number) {
+        const hasActiveEnrollments = await this.lessonRepository.exists({
+            where: {
+                id: lessonId,
+                enrollments: { status: EnrollmentStatus.ACTIVE },
+            },
+            relations: { enrollments: true },
+        })
+
+        if (hasActiveEnrollments) {
+            this.logger.log(`Cannot delete lesson with active enrollments: ${lessonId}`)
+            throw new ConflictException("Cannot delete lesson with active enrollments")
+        }
+
         this.logger.log(`Deleting lesson with id: ${lessonId}`)
-        const deleteResult = await this.lessonRepository.delete({ id: lessonId })
+        const deleteResult = await this.lessonRepository.softDelete({ id: lessonId })
 
         if (deleteResult.affected === 0) {
             this.logger.log(`Cannot delete lesson. No lesson with id: ${lessonId}`)
