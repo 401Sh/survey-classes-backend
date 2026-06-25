@@ -13,7 +13,6 @@ import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { UserEntity } from "src/users/entities/user.entity"
-import { ApplicationEntity } from "src/applications/entities/application.entity"
 import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
 
 @Entity("enrollments")
@@ -38,9 +37,6 @@ export class EnrollmentEntity extends BaseEntity {
 
     @UpdateDateColumn()
     updatedAt: Date
-
-    @OneToOne(() => ApplicationEntity, (application) => application.enrollment)
-    application?: ApplicationEntity
 
     @ManyToOne(() => LessonEntity, (lesson) => lesson.enrollments, { onDelete: "CASCADE" })
     lesson: LessonEntity

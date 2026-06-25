@@ -36,7 +36,7 @@ const mockChildrenService = {
 }
 
 const mockLessonsService = {
-    findSimplifiedWithSurvey: vi.fn(),
+    findSimplified: vi.fn(),
 }
 
 const mockPricingTiersService = {
@@ -95,62 +95,35 @@ describe("EnrollmentsService", () => {
             isConsented: true,
         }
 
-        it("should create enrollment with ACTIVE status when lesson is AUTO mode without survey", async () => {
+        it("should create enrollment with ACTIVE status when lesson is AUTO mode", async () => {
             const fakeLesson = {
                 id: 1,
                 enrollmentMode: EnrollmentMode.AUTO,
-                requiresSurvey: false,
-                survey: null,
             }
             const fakeEnrollment = { id: 1, status: EnrollmentStatus.ACTIVE } as unknown as EnrollmentEntity
 
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplifiedWithSurvey.mockResolvedValue(fakeLesson)
+            mockLessonsService.findSimplified.mockResolvedValue(fakeLesson)
             mockEnrollmentRepository.exists.mockResolvedValue(false)
             mockEnrollmentRepository.save.mockResolvedValue(fakeEnrollment)
 
             const result = await service.create(1, baseDto)
 
-            expect(result.enrollment).toEqual(fakeEnrollment)
+            expect(result).toEqual(fakeEnrollment)
             expect(mockEnrollmentRepository.save).toHaveBeenCalledWith(
                 expect.objectContaining({ status: EnrollmentStatus.ACTIVE })
             )
-        })
-
-        it("should create enrollment with PENDING status when lesson requires survey", async () => {
-            const fakeLesson = {
-                id: 1,
-                enrollmentMode: EnrollmentMode.AUTO,
-                requiresSurvey: true,
-                survey: { id: 5 },
-            }
-            const fakeEnrollment = { id: 1, status: EnrollmentStatus.PENDING } as unknown as EnrollmentEntity
-
-            mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplifiedWithSurvey.mockResolvedValue(fakeLesson)
-            mockEnrollmentRepository.exists.mockResolvedValue(false)
-            mockEnrollmentRepository.save.mockResolvedValue(fakeEnrollment)
-
-            const result = await service.create(1, baseDto)
-
-            expect(mockEnrollmentRepository.save).toHaveBeenCalledWith(
-                expect.objectContaining({ status: EnrollmentStatus.PENDING })
-            )
-            expect(result.requiresSurvey).toBe(true)
-            expect(result.surveyId).toBe(5)
         })
 
         it("should create enrollment with PENDING status when lesson is MANUAL mode", async () => {
             const fakeLesson = {
                 id: 1,
                 enrollmentMode: EnrollmentMode.MANUAL,
-                requiresSurvey: false,
-                survey: null,
             }
             const fakeEnrollment = { id: 1 } as unknown as EnrollmentEntity
 
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplifiedWithSurvey.mockResolvedValue(fakeLesson)
+            mockLessonsService.findSimplified.mockResolvedValue(fakeLesson)
             mockEnrollmentRepository.exists.mockResolvedValue(false)
             mockEnrollmentRepository.save.mockResolvedValue(fakeEnrollment)
 
@@ -161,26 +134,6 @@ describe("EnrollmentsService", () => {
             )
         })
 
-        it("should return requiresSurvey false and surveyId null when lesson has no survey", async () => {
-            const fakeLesson = {
-                id: 1,
-                enrollmentMode: EnrollmentMode.AUTO,
-                requiresSurvey: false,
-                survey: null,
-            }
-            const fakeEnrollment = { id: 1 } as unknown as EnrollmentEntity
-
-            mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplifiedWithSurvey.mockResolvedValue(fakeLesson)
-            mockEnrollmentRepository.exists.mockResolvedValue(false)
-            mockEnrollmentRepository.save.mockResolvedValue(fakeEnrollment)
-
-            const result = await service.create(1, baseDto)
-
-            expect(result.requiresSurvey).toBe(false)
-            expect(result.surveyId).toBeNull()
-        })
-
         it("should throw NotFoundException when child does not belong to user", async () => {
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(false)
 
@@ -189,7 +142,7 @@ describe("EnrollmentsService", () => {
 
         it("should throw NotFoundException when lesson does not exist", async () => {
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplifiedWithSurvey.mockRejectedValue(new NotFoundException())
+            mockLessonsService.findSimplified.mockRejectedValue(new NotFoundException())
 
             await expect(service.create(1, baseDto)).rejects.toThrow(NotFoundException)
         })
@@ -198,12 +151,10 @@ describe("EnrollmentsService", () => {
             const fakeLesson = {
                 id: 1,
                 enrollmentMode: EnrollmentMode.AUTO,
-                requiresSurvey: false,
-                survey: null,
             }
 
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplifiedWithSurvey.mockResolvedValue(fakeLesson)
+            mockLessonsService.findSimplified.mockResolvedValue(fakeLesson)
             mockEnrollmentRepository.exists.mockResolvedValue(true) // уже есть активная запись
 
             await expect(service.create(1, baseDto)).rejects.toThrow(BadRequestException)

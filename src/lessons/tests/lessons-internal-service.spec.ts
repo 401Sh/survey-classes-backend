@@ -4,6 +4,7 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { LessonEntity } from "../entities/lesson.entity"
 import { LessonsInternalService } from "../services/lessons-internal.service"
+import { EnrollmentMode } from "../enums/enrollment-mode.enum"
 
 const mockLessonRepository = {
     exists: vi.fn(),
@@ -50,53 +51,23 @@ describe("LessonsInternalService", () => {
         })
     })
 
-    describe("findSimplifiedWithSurvey", () => {
+    describe("findSimplified", () => {
         it("should return lesson when it exists and is active", async () => {
             const fakeLesson = {
                 id: 1,
-                enrollmentMode: "open",
-                requiresSurvey: true,
-                survey: { id: 5 },
+                enrollmentMode: EnrollmentMode.AUTO,
             } as unknown as LessonEntity
             mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
 
-            const result = await service.findSimplifiedWithSurvey(1)
+            const result = await service.findSimplified(1)
 
             expect(result).toEqual(fakeLesson)
-        })
-
-        it("should return lesson without survey when survey is not set", async () => {
-            const fakeLesson = {
-                id: 1,
-                enrollmentMode: "open",
-                requiresSurvey: false,
-                survey: null,
-            } as unknown as LessonEntity
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-
-            const result = await service.findSimplifiedWithSurvey(1)
-
-            expect(result.survey).toBeNull()
         })
 
         it("should throw NotFoundException when lesson does not exist or is inactive", async () => {
             mockLessonRepository.findOne.mockResolvedValue(null)
 
-            await expect(service.findSimplifiedWithSurvey(99)).rejects.toThrow(NotFoundException)
-        })
-    })
-
-    describe("updateSurveyRequirement", () => {
-        it("should update requiresSurvey successfully", async () => {
-            mockLessonRepository.update.mockResolvedValue({ affected: 1 })
-
-            await expect(service.updateSurveyRequirement(1, true)).resolves.not.toThrow()
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.update.mockResolvedValue({ affected: 0 })
-
-            await expect(service.updateSurveyRequirement(99, true)).rejects.toThrow(NotFoundException)
+            await expect(service.findSimplified(99)).rejects.toThrow(NotFoundException)
         })
     })
 })

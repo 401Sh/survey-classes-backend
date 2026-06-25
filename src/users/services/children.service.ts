@@ -41,7 +41,7 @@ export class ChildrenService implements IChildrenService {
             },
         })
 
-        this.logger.debug("Get survey list: ", children)
+        this.logger.debug("Get children list: ", children)
         return children
     }
 

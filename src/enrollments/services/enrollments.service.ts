@@ -33,14 +33,14 @@ export class EnrollmentsService implements IEnrollmentsService {
         // check that the child belongs to the user
         await this.validateChildOwnership(childId, userId)
 
-        // check and get lesson with survey
-        const lesson = await this.lessonsService.findSimplifiedWithSurvey(lessonId)
+        // check and get lesson
+        const lesson = await this.lessonsService.findSimplified(lessonId)
 
         // check that there's no active enrollment
         await this.validateActiveEnrollmentExisting(lessonId, childId)
 
         // check status by lesson EnrollmentMode
-        const status = (lesson.enrollmentMode === EnrollmentMode.AUTO && !lesson.requiresSurvey)
+        const status = (lesson.enrollmentMode === EnrollmentMode.AUTO)
             ? EnrollmentStatus.ACTIVE
             : EnrollmentStatus.PENDING
 
@@ -54,15 +54,8 @@ export class EnrollmentsService implements IEnrollmentsService {
             status,
         })
 
-        // If the lesson requires a survey - return the flag so that the front shows the form
-        const requiresSurvey = lesson.requiresSurvey && !!lesson.survey
-
         this.logger.log(`Created child ${childId} enrollment for lesson ${lessonId}`)
-        return {
-            enrollment: enrollment,
-            requiresSurvey,
-            surveyId: requiresSurvey ? lesson.survey.id : null,
-        }
+        return enrollment
     }
 
 
@@ -157,7 +150,6 @@ export class EnrollmentsService implements IEnrollmentsService {
                     attendances: true,
                     pricingTier: true,
                 },
-                application: true,
             },
             select: {
                 id: true,

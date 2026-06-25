@@ -9,7 +9,6 @@ import {
     OneToOne,
 } from "typeorm"
 import { UserChildEntity } from "./user-child.entity"
-import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserRole } from "../enums/user-role.enum"
 import { CodeVerificationEntity } from "src/auth/entities/code-verification.entity"
@@ -56,9 +55,6 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => LessonEntity, (lesson) => lesson.createdBy)
     lessons: LessonEntity[]
-
-    @OneToMany(() => SurveyEntity, (survey) => survey.createdBy)
-    surveys: SurveyEntity[]
 
     @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.user)
     enrollments: EnrollmentEntity[]

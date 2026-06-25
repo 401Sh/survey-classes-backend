@@ -1,7 +1,6 @@
 import { NotFoundException, BadRequestException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
 import { getRepositoryToken } from "@nestjs/typeorm"
-import { ApplicationStatus } from "src/applications/enums/application-status.enum"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
@@ -133,11 +132,10 @@ describe("ManageEnrollmentsService", () => {
     // -------------------------------------------------------------------------
 
     describe("activate", () => {
-        it("should activate pending enrollment without application", async () => {
+        it("should activate pending enrollment", async () => {
             const fakeEnrollment = {
                 id: 1,
                 status: EnrollmentStatus.PENDING,
-                application: null,
             } as unknown as EnrollmentEntity
 
             mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
@@ -151,36 +149,10 @@ describe("ManageEnrollmentsService", () => {
             )
         })
 
-        it("should activate pending enrollment with approved application", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.PENDING,
-                application: { id: 1, status: ApplicationStatus.APPROVED },
-            } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-            mockEnrollmentRepository.update.mockResolvedValue({ affected: 1 })
-
-            await expect(service.activate(1)).resolves.not.toThrow()
-        })
-
         it("should throw BadRequestException when enrollment is not pending", async () => {
             const fakeEnrollment = {
                 id: 1,
                 status: EnrollmentStatus.ACTIVE,
-                application: null,
-            } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-
-            await expect(service.activate(1)).rejects.toThrow(BadRequestException)
-        })
-
-        it("should throw BadRequestException when application is not approved", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.PENDING,
-                application: { id: 1, status: ApplicationStatus.PENDING },
             } as unknown as EnrollmentEntity
 
             mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)

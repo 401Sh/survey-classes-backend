@@ -1,5 +1,4 @@
 import { EnrollmentEntity } from "src/enrollments/entities/enrollment.entity"
-import { SurveyEntity } from "src/surveys/entities/survey.entity"
 import {
     BaseEntity,
     Column,
@@ -52,9 +51,6 @@ export class LessonEntity extends BaseEntity {
     @Column({ type: "enum", enum: EnrollmentMode, default: EnrollmentMode.MANUAL })
     enrollmentMode: EnrollmentMode
 
-    @Column({ type: "bool", default: false })
-    requiresSurvey: boolean
-
     @CreateDateColumn()
     createdAt: Date
 
@@ -63,9 +59,6 @@ export class LessonEntity extends BaseEntity {
 
     @DeleteDateColumn()
     deletedAt: Date | null
-
-    @OneToOne(() => SurveyEntity, (survey) => survey.lesson)
-    survey: SurveyEntity
 
     @OneToOne(() => LessonImageEntity, {
         nullable: true,

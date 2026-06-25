@@ -4,10 +4,9 @@ import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
 import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
-import { CreateEnrollmentResult } from "./create-enrollment-result.interface"
 
 export interface IEnrollmentsService {
-    create(userId: number, data: CreateEnrollmentBodyDto): Promise<CreateEnrollmentResult>
+    create(userId: number, data: CreateEnrollmentBodyDto): Promise<EnrollmentEntity>
     createSubscription(
         userId: number,
         enrollmentId: number,

@@ -19,7 +19,7 @@ export class LessonsInternalService implements ILessonsInternalService {
         return isExists
     }
 
-    async findSimplifiedWithSurvey(id: number) {
+    async findSimplified(id: number) {
         const lesson = await this.lessonRepository.findOne({
             where: {
                 id,
@@ -28,12 +28,7 @@ export class LessonsInternalService implements ILessonsInternalService {
             select: {
                 id: true,
                 enrollmentMode: true,
-                requiresSurvey: true,
-                survey: {
-                    id: true,
-                },
             },
-            relations: { survey: true },
         })
     
         if (!lesson) {
@@ -41,14 +36,5 @@ export class LessonsInternalService implements ILessonsInternalService {
         }
 
         return lesson
-    }
-
-
-    async updateSurveyRequirement(id: number, requiresSurvey: boolean) {
-        const result = await this.lessonRepository.update(id, { requiresSurvey: requiresSurvey })
-
-        if (result.affected === 0) {
-            throw new NotFoundException(`Lesson with id ${id} not found`)
-        }
     }
 }

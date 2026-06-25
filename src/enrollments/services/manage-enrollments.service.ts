@@ -4,7 +4,6 @@ import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Repository } from "typeorm"
 import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
-import { ApplicationStatus } from "src/applications/enums/application-status.enum"
 import { IManageEnrollmentsService } from "../interfaces/manage-enrollments-service.interface"
 
 @Injectable()
@@ -31,7 +30,6 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
 
         const queryBuilder = this.enrollmentRepository.createQueryBuilder("enrollments")
 
-        queryBuilder.leftJoinAndSelect("enrollments.application", "applications")
         queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
         queryBuilder.leftJoinAndSelect("enrollments.user", "users")
         queryBuilder.leftJoinAndSelect("enrollments.child", "children")
@@ -83,7 +81,6 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
             where: { id },
             relations: {
                 subscriptions: true,
-                application: true,
                 lesson: true,
                 child: true,
                 user: true,
@@ -104,18 +101,12 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
     async activate(enrollmentId: number) {
         const enrollment = await this.enrollmentRepository.findOne({
             where: { id: enrollmentId },
-            relations: { application: true },
         })
 
         if (!enrollment) throw new NotFoundException("Enrollment not found")
 
         if (enrollment.status !== EnrollmentStatus.PENDING) {
             throw new BadRequestException("Only pending enrollments can be activated")
-        }
-
-        // if there is an application - it must be approved.
-        if (enrollment.application && enrollment.application.status !== ApplicationStatus.APPROVED) {
-            throw new BadRequestException("Application must be approved before activating enrollment")
         }
 
         const updateResult = await this.enrollmentRepository.update(
