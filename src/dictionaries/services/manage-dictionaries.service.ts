@@ -2,9 +2,8 @@ import { ConflictException, Injectable, Logger, NotFoundException } from "@nestj
 import { InjectRepository } from "@nestjs/typeorm"
 import { CategoryEntity } from "../entities/category.entity"
 import { In, Repository } from "typeorm"
-import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
-import { CreateCategoryBodyDto } from "../dto/create-category-body.dto"
 import { IManageDictionariesService } from "../interfaces/manage-dictionaries-service.interface"
+import { CreateCategoryBodyDto, UpdateCategoryBodyDto } from "../dto"
 
 @Injectable()
 export class ManageDictionariesService implements IManageDictionariesService {

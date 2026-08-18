@@ -3,8 +3,7 @@ import { ManageDictionariesService } from "../services/manage-dictionaries.servi
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { CreateCategoryBodyDto } from "../dto/create-category-body.dto"
-import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
+import { CreateCategoryBodyDto, UpdateCategoryBodyDto } from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/dictionaries")

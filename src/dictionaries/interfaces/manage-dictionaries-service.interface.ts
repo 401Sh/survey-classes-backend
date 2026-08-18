@@ -1,5 +1,4 @@
-import { CreateCategoryBodyDto } from "../dto/create-category-body.dto"
-import { UpdateCategoryBodyDto } from "../dto/update-category-body.dto"
+import { CreateCategoryBodyDto, UpdateCategoryBodyDto } from "../dto"
 import { CategoryEntity } from "../entities/category.entity"
 
 export interface IManageDictionariesService {
