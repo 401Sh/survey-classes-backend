@@ -1,9 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Request } from "@nestjs/common"
 import { EnrollmentsService } from "../services/enrollments.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
-import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
-import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
+import { CreateEnrollmentBodyDto, CreateEnrollmentSubscriptionBodyDto, GetEnrollmentListQueryDto } from "../dto"
 
 @Controller("enrollments/me")
 export class EnrollmentsController {

@@ -2,9 +2,9 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Repository } from "typeorm"
-import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { IManageEnrollmentsService } from "../interfaces/manage-enrollments-service.interface"
+import { GetManageEnrollmentListQueryDto } from "../dto"
 
 @Injectable()
 export class ManageEnrollmentsService implements IManageEnrollmentsService {

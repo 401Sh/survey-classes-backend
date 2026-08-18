@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
-import { GetManageEnrollmentListQueryDto } from "../dto/get-manage-enrollment-list-query.dto"
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
+import { GetManageEnrollmentListQueryDto } from "../dto"
 
 @Controller("manage/enrollments")
 export class ManageEnrollmentsController {

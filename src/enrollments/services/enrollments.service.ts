@@ -2,16 +2,14 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { InjectRepository } from "@nestjs/typeorm"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { Not, Repository } from "typeorm"
-import { GetEnrollmentListQueryDto } from "../dto/get-enrollment-list-query.dto"
-import { CreateEnrollmentBodyDto } from "../dto/create-enrollment-body.dto"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
-import { CreateEnrollmentSubscriptionBodyDto } from "../dto/create-enrollment-subscription-body.dto"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
 import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
 import { SubscriptionsInternalService } from "src/subscriptions/services/subscriptions-internal.service"
 import { IEnrollmentsService } from "../interfaces/enrollments-service.interface"
+import { CreateEnrollmentBodyDto, CreateEnrollmentSubscriptionBodyDto, GetEnrollmentListQueryDto } from "../dto"
 
 @Injectable()
 export class EnrollmentsService implements IEnrollmentsService {
