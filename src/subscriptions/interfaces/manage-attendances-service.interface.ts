@@ -1,7 +1,6 @@
 import { PaginatedResult } from "src/common/interfaces/paginated-result.interface"
-import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
-import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { AttendanceEntity } from "../entities/attendance.entity"
+import { GetAttendanceListQueryDto, UpdateAttendanceBodyDto } from "../dto"
 
 export interface IManageAttendancesService {
     findAll(query: GetAttendanceListQueryDto): Promise<PaginatedResult<AttendanceEntity>>

@@ -2,10 +2,9 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { AttendanceEntity } from "../entities/attendance.entity"
 import { Repository } from "typeorm"
-import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
-import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 import { IManageAttendancesService } from "../interfaces/manage-attendances-service.interface"
+import { GetAttendanceListQueryDto, UpdateAttendanceBodyDto } from "../dto"
 
 @Injectable()
 export class ManageAttendancesService implements IManageAttendancesService {

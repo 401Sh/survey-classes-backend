@@ -1,10 +1,12 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common"
 import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { PayFullPriceSubscriptionPaymentBodyDto } from "../dto/pay-full-price-subscription-payment-body.dto"
-import { GetManageSubscriptionListQueryDto } from "../dto/get-manage-subscription-list-query.dto"
-import { RefundSubscriptionPaymentBodyDto } from "../dto/refund-subscription-payment-body.dto"
-import { CreateAttendanceBodyDto } from "../dto/create-attendance-body.dto"
+import {
+    CreateAttendanceBodyDto,
+    GetManageSubscriptionListQueryDto,
+    PayFullPriceSubscriptionPaymentBodyDto,
+    RefundSubscriptionPaymentBodyDto
+} from "../dto"
 
 @Controller("manage/subscriptions")
 export class ManageSubscriptionsController {

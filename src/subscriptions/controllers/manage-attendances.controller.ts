@@ -1,8 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { UpdateAttendanceBodyDto } from "../dto/update-attendance-body.dto"
 import { ManageAttendancesService } from "../services/manage-attendances.service"
-import { GetAttendanceListQueryDto } from "../dto/get-attendance-list-query.dto"
+import { GetAttendanceListQueryDto, UpdateAttendanceBodyDto } from "../dto"
 
 @Controller("manage/attendances")
 export class ManageAttendancesController {
