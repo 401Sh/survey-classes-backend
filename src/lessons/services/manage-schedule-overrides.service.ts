@@ -2,8 +2,8 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
-import { UpdateScheduleOverrideBodyDto } from "../dto/update-schedule-override-body.dto"
 import { IManageScheduleOverridesService } from "../interfaces/manage-schedule-overrides-service.interface"
+import { UpdateScheduleOverrideBodyDto } from "../dto"
 
 @Injectable()
 export class ManageScheduleOverridesService implements IManageScheduleOverridesService {

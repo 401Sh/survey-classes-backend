@@ -1,4 +1,4 @@
-import { UpdateScheduleOverrideBodyDto } from "../dto/update-schedule-override-body.dto"
+import { UpdateScheduleOverrideBodyDto } from "../dto"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 
 export interface IManageScheduleOverridesService {

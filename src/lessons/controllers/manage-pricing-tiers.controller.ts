@@ -3,7 +3,7 @@ import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManagePricingTiersService } from "../services/manage-pricing-tiers.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { UpdatePricingTierBodyDto } from "../dto/update-pricing-tier-body.dto"
+import { UpdatePricingTierBodyDto } from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/pricing-tiers")

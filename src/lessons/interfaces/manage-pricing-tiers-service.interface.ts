@@ -1,4 +1,4 @@
-import { UpdatePricingTierBodyDto } from "../dto/update-pricing-tier-body.dto"
+import { UpdatePricingTierBodyDto } from "../dto"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 
 export interface IManagePricingTiersService {

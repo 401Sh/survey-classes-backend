@@ -1,17 +1,19 @@
 import { PaginatedResult } from "src/common/interfaces/paginated-result.interface"
-import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
-import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
-import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
-import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
-import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
-import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
-import { GetManageScheduleOverrideQueryDto } from "../dto/get-manage-schedule-override-query.dto"
-import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
-import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { LessonEntity } from "../entities/lesson.entity"
+import {
+    CreateLessonBodyDto,
+    CreatePricingTierBodyDto,
+    CreateScheduleOverrideBodyDto,
+    CreateWeeklySlotBodyDto,
+    GetManageLessonListQueryDto,
+    GetManagePricingTierQueryDto,
+    GetManageScheduleOverrideQueryDto,
+    GetWeeklySlotQueryDto,
+    UpdateLessonBodyDto
+} from "../dto"
 
 export interface IManageLessonsService {
     create(userId: number, data: CreateLessonBodyDto): Promise<LessonEntity>

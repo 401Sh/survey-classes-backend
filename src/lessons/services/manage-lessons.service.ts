@@ -2,23 +2,25 @@ import { ConflictException, Injectable, Logger, NotFoundException } from "@nestj
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonEntity } from "../entities/lesson.entity"
 import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
-import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
-import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
-import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
 import { CategoryEntity } from "src/dictionaries/entities/category.entity"
 import { ManageDictionariesService } from "src/dictionaries/services/manage-dictionaries.service"
-import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
-import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
-import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
-import { GetManageScheduleOverrideQueryDto } from "../dto/get-manage-schedule-override-query.dto"
-import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
-import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { IManageLessonsService } from "../interfaces/manage-lessons-service.interface"
 import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
+import {
+    CreateLessonBodyDto,
+    CreatePricingTierBodyDto,
+    CreateWeeklySlotBodyDto,
+    CreateScheduleOverrideBodyDto,
+    GetManageLessonListQueryDto,
+    GetManagePricingTierQueryDto,
+    GetWeeklySlotQueryDto,
+    GetManageScheduleOverrideQueryDto,
+    UpdateLessonBodyDto
+} from "../dto"
 
 @Injectable()
 export class ManageLessonsService implements IManageLessonsService {

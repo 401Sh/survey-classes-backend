@@ -3,7 +3,7 @@ import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManageScheduleOverridesService } from "../services/manage-schedule-overrides.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { UpdateScheduleOverrideBodyDto } from "../dto/update-schedule-override-body.dto"
+import { UpdateScheduleOverrideBodyDto } from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/schedule-overrides")

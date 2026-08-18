@@ -2,8 +2,8 @@ import { ConflictException, Injectable, Logger, NotFoundException } from "@nestj
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { Repository } from "typeorm"
-import { UpdateWeeklySlotBodyDto } from "../dto/update-weekly-slot-body.dto"
 import { IManageWeeklySlotsService } from "../interfaces/manage-weekly-slots-service.interface"
+import { UpdateWeeklySlotBodyDto } from "../dto"
 
 @Injectable()
 export class ManageWeeklySlotsService implements IManageWeeklySlotsService {

@@ -3,7 +3,7 @@ import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ManageWeeklySlotsService } from "../services/manage-weekly-slots.service"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { UpdateWeeklySlotBodyDto } from "../dto/update-weekly-slot-body.dto"
+import { UpdateWeeklySlotBodyDto } from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/weekly-slots")

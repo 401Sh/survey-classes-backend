@@ -1,9 +1,8 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from "@nestjs/common"
 import { LessonsService } from "../services/lessons.service"
 import { Public } from "src/common/decorators/public.decorator"
-import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
 import { ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
+import { GetLessonListQueryDto, GetScheduleOverrideQueryDto } from "../dto"
 
 @Controller("lessons")
 export class LessonsController {

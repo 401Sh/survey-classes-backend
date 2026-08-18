@@ -2,13 +2,12 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { LessonEntity } from "../entities/lesson.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
-import { GetLessonListQueryDto } from "../dto/get-lesson-list-query.dto"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
-import { GetScheduleOverrideQueryDto } from "../dto/get-schedule-override-query.dto"
 import { ILessonsService } from "../interfaces/lessons-service.interface"
+import { GetLessonListQueryDto, GetScheduleOverrideQueryDto } from "../dto"
 
 @Injectable()
 export class LessonsService implements ILessonsService {

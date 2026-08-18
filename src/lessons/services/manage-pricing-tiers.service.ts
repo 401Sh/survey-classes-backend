@@ -2,8 +2,8 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { Repository } from "typeorm"
-import { UpdatePricingTierBodyDto } from "../dto/update-pricing-tier-body.dto"
 import { IManagePricingTiersService } from "../interfaces/manage-pricing-tiers-service.interface"
+import { UpdatePricingTierBodyDto } from "../dto"
 
 @Injectable()
 export class ManagePricingTiersService implements IManagePricingTiersService {

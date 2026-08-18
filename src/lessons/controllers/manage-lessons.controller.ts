@@ -1,18 +1,20 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request } from "@nestjs/common"
 import { ManageLessonsService } from "../services/manage-lessons.service"
 import { UserRole } from "src/users/enums/user-role.enum"
-import { CreateLessonBodyDto } from "../dto/create-lesson-body.dto"
-import { GetManageLessonListQueryDto } from "../dto/get-manage-lesson-list-query.dto"
 import { Roles } from "src/common/decorators/role.decorator"
-import { UpdateLessonBodyDto } from "../dto/update-lesson-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
-import { CreateWeeklySlotBodyDto } from "../dto/create-weekly-slot-body.dto"
-import { CreateScheduleOverrideBodyDto } from "../dto/create-schedule-override-body.dto"
-import { CreatePricingTierBodyDto } from "../dto/create-pricing-tier-body.dto"
-import { GetManagePricingTierQueryDto } from "../dto/get-manage-pricing-tier-query.dto"
-import { GetWeeklySlotQueryDto } from "../dto/get-weekly-slot-query.dto"
-import { GetManageScheduleOverrideQueryDto } from "../dto/get-manage-schedule-override-query.dto"
 import { ScheduleOverrideStatus } from "../enums/schedule-override-status.enum"
+import {
+    CreateLessonBodyDto,
+    CreatePricingTierBodyDto,
+    CreateWeeklySlotBodyDto,
+    CreateScheduleOverrideBodyDto,
+    GetManageLessonListQueryDto,
+    GetManagePricingTierQueryDto,
+    GetWeeklySlotQueryDto,
+    GetManageScheduleOverrideQueryDto,
+    UpdateLessonBodyDto
+} from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/lessons")

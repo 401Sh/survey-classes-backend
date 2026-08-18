@@ -1,4 +1,4 @@
-import { UpdateWeeklySlotBodyDto } from "../dto/update-weekly-slot-body.dto"
+import { UpdateWeeklySlotBodyDto } from "../dto"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
 
 export interface IManageWeeklySlotsService {
