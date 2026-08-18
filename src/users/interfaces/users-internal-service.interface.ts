@@ -1,4 +1,4 @@
-import { SignUpDto } from "src/auth/dto/signup.dto"
+import { SignUpDto } from "src/auth/dto"
 import { UserEntity } from "../entities/user.entity"
 
 export interface IUsersInternalService {

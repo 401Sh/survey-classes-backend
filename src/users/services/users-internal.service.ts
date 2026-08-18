@@ -2,9 +2,9 @@ import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedE
 import { InjectRepository } from "@nestjs/typeorm"
 import { UserEntity } from "../entities/user.entity"
 import { Repository } from "typeorm"
-import { SignUpDto } from "src/auth/dto/signup.dto"
 import * as argon2 from "argon2"
 import { IUsersInternalService } from "../interfaces/users-internal-service.interface"
+import { SignUpDto } from "src/auth/dto"
 
 @Injectable()
 export class UsersInternalService implements IUsersInternalService {

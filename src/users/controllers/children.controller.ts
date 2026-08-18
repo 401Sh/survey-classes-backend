@@ -1,8 +1,7 @@
 import { ChildrenService } from "../services/children.service"
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Request } from "@nestjs/common"
-import { CreateChildBodyDto } from "../dto/create-child-body.dto"
-import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
+import { CreateChildBodyDto, UpdateChildBodyDto } from "../dto"
 
 @Controller("users/me/children")
 export class ChildrenController {

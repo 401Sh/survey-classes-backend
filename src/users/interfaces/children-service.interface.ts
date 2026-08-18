@@ -1,5 +1,4 @@
-import { CreateChildBodyDto } from "../dto/create-child-body.dto"
-import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
+import { CreateChildBodyDto, UpdateChildBodyDto } from "../dto"
 import { UserChildEntity } from "../entities/user-child.entity"
 
 export interface IChildrenService {

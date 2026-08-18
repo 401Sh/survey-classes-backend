@@ -1,4 +1,4 @@
-import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
+import { UpdateUserBodyDto } from "../dto"
 import { UserEntity } from "../entities/user.entity"
 
 export interface IUsersService {

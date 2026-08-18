@@ -2,10 +2,9 @@ import { ConflictException, Injectable, Logger, NotFoundException } from "@nestj
 import { InjectRepository } from "@nestjs/typeorm"
 import { UserChildEntity } from "../entities/user-child.entity"
 import { Not, Repository } from "typeorm"
-import { CreateChildBodyDto } from "../dto/create-child-body.dto"
-import { UpdateChildBodyDto } from "../dto/update-child-body.dto"
 import { IChildrenService } from "../interfaces/children-service.interface"
 import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
+import { CreateChildBodyDto, UpdateChildBodyDto } from "../dto"
 
 @Injectable()
 export class ChildrenService implements IChildrenService {

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Patch, Request } from "@nestjs/common"
 import { UsersService } from "../services/users.service"
-import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiSecurity } from "@nestjs/swagger"
+import { UpdateUserBodyDto } from "../dto"
 
 @Controller("users/me")
 export class UsersController {

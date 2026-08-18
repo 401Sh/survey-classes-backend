@@ -2,9 +2,9 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { UserEntity } from "../entities/user.entity"
 import { Repository } from "typeorm"
-import { UpdateUserBodyDto } from "../dto/update-user-body.dto"
 import { UsersInternalService } from "./users-internal.service"
 import { IUsersService } from "../interfaces/users-service.interface"
+import { UpdateUserBodyDto } from "../dto"
 
 @Injectable()
 export class UsersService implements IUsersService {
