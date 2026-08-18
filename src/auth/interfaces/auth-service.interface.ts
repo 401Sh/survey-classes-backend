@@ -1,11 +1,13 @@
 import { UserEntity } from "src/users/entities/user.entity"
-import { ForgotPasswordBodyDto } from "../dto/forgot-password-body.dto"
-import { ForgotPasswordConfirmBodyDto } from "../dto/forgot-password-confirm-body.dto"
-import { JWTTokensReturnDto } from "../dto/jwt-tokens-return.dto"
-import { ResetPasswordBodyDto } from "../dto/reset-password-body.dto"
-import { SignInDto } from "../dto/signin.dto"
-import { SignUpConfirmDto } from "../dto/signup-confirm.dto"
-import { SignUpDto } from "../dto/signup.dto"
+import {
+    SignUpDto,
+    SignUpConfirmDto,
+    JWTTokensReturnDto,
+    SignInDto,
+    ForgotPasswordBodyDto,
+    ForgotPasswordConfirmBodyDto,
+    ResetPasswordBodyDto
+} from "../dto"
 
 export interface IAuthService {
     signUp(data: SignUpDto): Promise<UserEntity>

@@ -1,7 +1,4 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { SignUpDto } from "./dto/signup.dto"
-import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
-import { SignInDto } from "./dto/signin.dto"
 import { MAIL_CONFIRMATION_CODE_LENGTH, MAIL_CONFIRMATION_CODE_TTL } from "src/common/constants/mail.constant"
 import { type UserEntity } from "src/users/entities/user.entity"
 import { InjectRepository } from "@nestjs/typeorm"
@@ -11,13 +8,18 @@ import { MailService } from "src/mail/mail.service"
 import { TokensService } from "./services/tokens.service"
 import { randomInt } from "crypto"
 import { VerificationType } from "./enums/verification-type.enum"
-import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
-import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
-import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { UsersInternalService } from "src/users/services/users-internal.service"
 import { IAuthService } from "./interfaces/auth-service.interface"
 import { CryptoService } from "./services/crypto.service"
 import { MailTemplate } from "src/common/enums/mail-template.enum"
+import {
+    ForgotPasswordBodyDto,
+    ForgotPasswordConfirmBodyDto,
+    ResetPasswordBodyDto,
+    SignInDto,
+    SignUpConfirmDto,
+    SignUpDto
+} from "./dto"
 
 @Injectable()
 export class AuthService implements IAuthService {

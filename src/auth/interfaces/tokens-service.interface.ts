@@ -1,6 +1,6 @@
 import { UserEntity } from "src/users/entities/user.entity"
-import { JWTTokensReturnDto } from "../dto/jwt-tokens-return.dto"
 import { RefreshSessionEntity } from "../entities/refresh-session.entity"
+import { JWTTokensReturnDto } from "../dto"
 
 export interface ITokensService {
     createRefreshSession(

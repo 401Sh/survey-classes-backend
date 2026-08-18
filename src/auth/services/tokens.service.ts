@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { JwtService } from "@nestjs/jwt"
 import { ConfigService } from "@nestjs/config"
-import { JWTTokensReturnDto } from "../dto/jwt-tokens-return.dto"
 import { ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL, RESET_TOKEN_TTL } from "src/common/constants/jwt-token.constant"
 import { InjectRepository } from "@nestjs/typeorm"
 import { RefreshSessionEntity } from "../entities/refresh-session.entity"
@@ -10,6 +9,7 @@ import { type UserEntity } from "src/users/entities/user.entity"
 import { UserRole } from "src/users/enums/user-role.enum"
 import { ITokensService } from "../interfaces/tokens-service.interface"
 import { CryptoService } from "./crypto.service"
+import { JWTTokensReturnDto } from "../dto"
 
 @Injectable()
 export class TokensService implements ITokensService {

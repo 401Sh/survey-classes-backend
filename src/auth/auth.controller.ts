@@ -1,18 +1,20 @@
 import { Body, Controller, Ip, Post, Headers, Res, Request, HttpStatus, UseGuards, Delete } from "@nestjs/common"
 import { AuthService } from "./auth.service"
-import { SignUpDto } from "./dto/signup.dto"
-import { SignUpConfirmDto } from "./dto/signup-confirm.dto"
 import { Response } from "express"
-import { SignInDto } from "./dto/signin.dto"
 import { RefreshTokenGuard } from "../common/guards/refresh-token.guard"
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiResponse, ApiSecurity } from "@nestjs/swagger"
-import { JWTTokensReturnDto } from "./dto/jwt-tokens-return.dto"
 import { Public } from "src/common/decorators/public.decorator"
-import { ForgotPasswordBodyDto } from "./dto/forgot-password-body.dto"
-import { ForgotPasswordConfirmBodyDto } from "./dto/forgot-password-confirm-body.dto"
-import { ResetPasswordBodyDto } from "./dto/reset-password-body.dto"
 import { Throttle } from "@nestjs/throttler"
 import { AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL } from "src/common/constants/throttle.constant"
+import {
+    ForgotPasswordBodyDto,
+    ForgotPasswordConfirmBodyDto,
+    JWTTokensReturnDto,
+    ResetPasswordBodyDto,
+    SignInDto,
+    SignUpConfirmDto,
+    SignUpDto
+} from "./dto"
 
 @Throttle({ default: {
     ttl: AUTH_THROTTLE_TTL,
