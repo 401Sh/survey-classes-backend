@@ -41,6 +41,7 @@ export class ManageAttendancesService implements IManageAttendancesService {
         }
 
         if (lessonId) {
+            queryBuilder.leftJoin("enrollments.lesson", "lessons")
             queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
         }
 
