@@ -13,7 +13,7 @@ import {
     GetManagePricingTierQueryDto,
     GetWeeklySlotQueryDto,
     GetManageScheduleOverrideQueryDto,
-    UpdateLessonBodyDto
+    UpdateLessonBodyDto,
 } from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)

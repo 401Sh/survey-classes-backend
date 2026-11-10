@@ -170,7 +170,7 @@ export class ManageLessonsService implements IManageLessonsService {
 
         if (priceFrom || priceTo) {
             queryBuilder.innerJoin("lessons.pricingTiers", "priceFilter")
-        
+
             if (priceFrom) {
                 queryBuilder.andWhere("priceFilter.price >= :priceFrom", { priceFrom })
             }
@@ -216,12 +216,12 @@ export class ManageLessonsService implements IManageLessonsService {
                 scheduleOverrides: true,
             },
         })
-        
+
         if (!lesson) {
             this.logger.log(`No lesson with id: ${id}`)
             throw new NotFoundException(`Lesson with id ${id} not found`)
         }
-    
+
         this.logger.log(`Finded lesson with id: ${id}`)
         this.logger.debug("Get lesson: ", lesson)
         return lesson
@@ -308,15 +308,15 @@ export class ManageLessonsService implements IManageLessonsService {
             where: { id: lessonId },
             relations: { categories: true },
         })
-    
+
         if (!lesson) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
-    
+
         if (categoryIds !== undefined) {
             lesson.categories = categoryIds.length > 0
                 ? await this.manageDictionariesService.findCategoriesByIds(categoryIds)
                 : []
         }
-    
+
         Object.assign(lesson, otherData)
         await this.lessonRepository.save(lesson)
 
