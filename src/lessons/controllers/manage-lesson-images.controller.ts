@@ -7,7 +7,6 @@ import {
     Param,
     ParseFilePipe,
     ParseIntPipe,
-    Patch,
     Post,
     UploadedFile,
     UseInterceptors,
@@ -93,36 +92,6 @@ export class ManageLessonImagesController {
         const result = await this.manageLessonImagesService.findAll(lessonId)
 
         return result
-    }
-
-
-    @ApiBearerAuth()
-    @ApiSecurity("api-key")
-    @ApiOperation({
-        summary: "Обновление обложки занятия",
-    })
-    @ApiParam({
-        name: "lessonId",
-        required: true,
-        description: "ID занятия",
-        example: 1,
-    })
-    @ApiParam({
-        name: "imageId",
-        required: true,
-        description: "ID изображения",
-        example: 1,
-    })
-    @Patch(":imageId/cover")
-    async setCover(
-        @Param("lessonId", ParseIntPipe) lessonId: number,
-        @Param("imageId", ParseIntPipe) imageId: number,
-    ) {
-        await this.manageLessonImagesService.setCover(lessonId, imageId)
-
-        return {
-            message: "Image updated successfully",
-        }
     }
 
 

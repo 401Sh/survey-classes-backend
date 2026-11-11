@@ -1,15 +1,7 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { LessonEntity } from "../entities/lesson.entity"
-import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
 import { CategoryEntity } from "src/dictionaries/entities/category.entity"
 import { ManageDictionariesService } from "src/dictionaries/services/manage-dictionaries.service"
-import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
-import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
-import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { IManageLessonsService } from "../interfaces/manage-lessons-service.interface"
-import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
 import {
     CreateLessonBodyDto,
     CreatePricingTierBodyDto,
@@ -21,22 +13,22 @@ import {
     GetManageScheduleOverrideQueryDto,
     UpdateLessonBodyDto
 } from "../dto"
+import { LessonRepository } from "../abstracts/lesson-repository.abstract"
+import { PricingTierRepository } from "../abstracts/pricing-tier-repository.abstract"
+import { WeeklySlotRepository } from "../abstracts/weekly-slot-repository.abstract"
+import { ScheduleOverrideRepository } from "../abstracts/schedule-override-repository.abstract"
 
 @Injectable()
 export class ManageLessonsService implements IManageLessonsService {
     private readonly logger = new Logger(ManageLessonsService.name)
 
     constructor(
-        @InjectRepository(LessonEntity)
-        private lessonRepository: Repository<LessonEntity>,
-        @InjectRepository(LessonPricingTierEntity)
-        private pricingTierRepository: Repository<LessonPricingTierEntity>,
-        @InjectRepository(LessonWeeklySlotEntity)
-        private weeklySlotRepository: Repository<LessonWeeklySlotEntity>,
-        @InjectRepository(LessonScheduleOverrideEntity)
-        private scheduleOverrideRepository: Repository<LessonScheduleOverrideEntity>,
+        private readonly lessonRepository: LessonRepository,
+        private readonly weeklySlotRepository: WeeklySlotRepository,
+        private readonly scheduleOverrideRepository: ScheduleOverrideRepository,
+        private readonly pricingTierRepository: PricingTierRepository,
 
-        private manageDictionariesService: ManageDictionariesService,
+        private readonly manageDictionariesService: ManageDictionariesService,
     ) {}
 
     async create(userId: number, data: CreateLessonBodyDto) {
@@ -47,11 +39,7 @@ export class ManageLessonsService implements IManageLessonsService {
             categories = await this.manageDictionariesService.findCategoriesByIds(categoryIds)
         }
 
-        const lesson = await this.lessonRepository.save({
-            ...lessonData,
-            createdBy: { id: userId },
-            categories: categories.length ? categories : [],
-        })
+        const lesson = await this.lessonRepository.create(userId, lessonData, categories)
 
         this.logger.log(`Created new lesson for user: ${userId}`)
         this.logger.debug("Created new lesson: ", lesson)
@@ -63,10 +51,7 @@ export class ManageLessonsService implements IManageLessonsService {
         // check that lesson exists
         await this.validateLessonExists(lessonId)
 
-        const pricingTier = await this.pricingTierRepository.save({
-            ...data,
-            lesson: { id: lessonId },
-        })
+        const pricingTier = await this.pricingTierRepository.create(lessonId, data)
 
         this.logger.log(`Created new pricing tier override for lesson: ${lessonId}`)
         this.logger.debug("Created new pricing tier override: ", pricingTier)
@@ -81,13 +66,11 @@ export class ManageLessonsService implements IManageLessonsService {
         await this.validateLessonExists(lessonId)
 
         // check date + time dublication
-        const existingSlots = await this.weeklySlotRepository.find({
-            where: {
-                lesson: { id: lessonId },
-                dayOfWeek: In(daysOfWeek),
-                startTime: slotData.startTime,
-            },
-        })
+        const existingSlots = await this.weeklySlotRepository.findDuplicates(
+            lessonId,
+            daysOfWeek,
+            slotData.startTime,
+        )
 
         if (existingSlots.length > 0) {
             const duplicateDays = existingSlots.map(s => s.dayOfWeek).join(", ")
@@ -96,13 +79,7 @@ export class ManageLessonsService implements IManageLessonsService {
             )
         }
 
-        const slots = daysOfWeek.map(dayOfWeek => ({
-            ...slotData,
-            dayOfWeek,
-            lesson: { id: lessonId },
-        }))
-
-        const savedWeeklySlots = await this.weeklySlotRepository.save(slots)
+        const savedWeeklySlots = await this.weeklySlotRepository.createMany(lessonId, slotData, daysOfWeek)
 
         this.logger.log(`Created ${savedWeeklySlots.length} new weekly slots for lesson: ${lessonId}`)
         this.logger.debug("Created new weekly slots: ", savedWeeklySlots)
@@ -114,10 +91,7 @@ export class ManageLessonsService implements IManageLessonsService {
         // check that lesson exists
         await this.validateLessonExists(lessonId)
 
-        const scheduleOverride = await this.scheduleOverrideRepository.save({
-            ...data,
-            lesson: { id: lessonId },
-        })
+        const scheduleOverride = await this.scheduleOverrideRepository.create(lessonId, data)
 
         this.logger.log(`Created new schedule override for lesson: ${lessonId}`)
         this.logger.debug("Created new schedule override: ", scheduleOverride)
@@ -126,72 +100,8 @@ export class ManageLessonsService implements IManageLessonsService {
 
 
     async findAll(query: GetManageLessonListQueryDto) {
-        const {
-            limit,
-            page,
-            dateFrom,
-            dateTo,
-            isActive,
-            search,
-            minAge,
-            sortDirection,
-            categoryId,
-            priceFrom,
-            priceTo,
-        } = query
-
-        const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
-
-        queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers")
-        queryBuilder.leftJoinAndSelect("lessons.images", "images")
-        queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
-
-        if (isActive !== undefined) {
-            queryBuilder.where("lessons.isActive = :isActive", { isActive })
-        }
-
-        if (search) {
-            queryBuilder.andWhere(
-                "(lessons.name LIKE :search OR lessons.description LIKE :search)",
-                { search: `%${search}%` },
-            )
-        }
-
-        if (minAge) {
-            queryBuilder.andWhere("lessons.minAge >= :minAge", { minAge })
-        }
-
-        if (categoryId) {
-            // TODO: add array query search
-            queryBuilder
-                .innerJoin("lessons.categories", "categoryFilter") 
-                .andWhere("categoryFilter.id = :categoryId", { categoryId })
-        }
-
-        if (priceFrom || priceTo) {
-            queryBuilder.innerJoin("lessons.pricingTiers", "priceFilter")
-
-            if (priceFrom) {
-                queryBuilder.andWhere("priceFilter.price >= :priceFrom", { priceFrom })
-            }
-            if (priceTo) {
-                queryBuilder.andWhere("priceFilter.price <= :priceTo", { priceTo })
-            }
-        }
-
-        if (dateFrom) {
-            queryBuilder.andWhere("lessons.startsAt >= :dateFrom", { dateFrom })
-        }
-
-        if (dateTo) {
-            queryBuilder.andWhere("lessons.endsAt <= :dateTo", { dateTo })
-        }
-
-        queryBuilder.orderBy("lessons.startsAt", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [lessons, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
+        const [lessons, totalCount] = await this.lessonRepository.findPage(query)
+        const totalPagesAmount = Math.ceil(totalCount / query.limit)
 
         this.logger.debug("Get lessons list: ", lessons)
         return {
@@ -199,23 +109,14 @@ export class ManageLessonsService implements IManageLessonsService {
             meta: {
                 totalCount: totalCount,
                 totalPagesAmount: totalPagesAmount,
-                currentPage: page,
+                currentPage: query.page,
             }
         }
     }
 
 
     async findById(id: number) {
-        const lesson = await this.lessonRepository.findOne({
-            where: { id },
-            relations: {
-                images: true,
-                categories: true,
-                pricingTiers: true,
-                weeklySlots: true,
-                scheduleOverrides: true,
-            },
-        })
+        const lesson = await this.lessonRepository.findByIdWithDetails(id)
 
         if (!lesson) {
             this.logger.log(`No lesson with id: ${id}`)
@@ -234,12 +135,7 @@ export class ManageLessonsService implements IManageLessonsService {
         // check that lesson exists
         await this.validateLessonExists(lessonId)
 
-        const pricingTiers = await this.pricingTierRepository.find({
-            where: {
-                lesson: { id: lessonId },
-                isActive,
-            },
-        })
+        const pricingTiers = await this.pricingTierRepository.findAllByLessonId(lessonId, isActive)
 
         this.logger.log(`Finded pricing tiers for lesson with id: ${lessonId}`)
         this.logger.debug("Get pricing tiers list: ", pricingTiers)
@@ -248,21 +144,10 @@ export class ManageLessonsService implements IManageLessonsService {
 
 
     async findAllWeeklySlotsByLessonId(lessonId: number, query: GetWeeklySlotQueryDto) {
-        const { isActive, daysOfWeek } = query
-
         // check that lesson exists
         await this.validateLessonExists(lessonId)
 
-        const weeklySlots = await this.weeklySlotRepository.find({
-            where: {
-                lesson: { id: lessonId },
-                isActive,
-                dayOfWeek: daysOfWeek ? In(daysOfWeek) : undefined,
-            },
-            order: {
-                dayOfWeek: SortDirection.ASC,
-            }
-        })
+        const weeklySlots = await this.weeklySlotRepository.findAllByLessonId(lessonId, query)
 
         this.logger.log(`Finded weekly slots for lesson with id: ${lessonId}`)
         this.logger.debug("Get weekly slots list: ", weeklySlots)
@@ -271,29 +156,10 @@ export class ManageLessonsService implements IManageLessonsService {
 
 
     async findAllScheduleOverridesByLessonId(lessonId: number, query: GetManageScheduleOverrideQueryDto) {
-        const { dateFrom, dateTo, status } = query
-
         // check that lesson exists
         await this.validateLessonExists(lessonId)
 
-        const dateFilter = dateFrom && dateTo
-            ? Between(dateFrom, dateTo)
-            : dateFrom
-            ? MoreThanOrEqual(dateFrom)
-            : dateTo
-            ? LessThanOrEqual(dateTo)
-            : undefined
-
-        const scheduleOverrides = await this.scheduleOverrideRepository.find({
-            where: {
-                lesson: { id: lessonId },
-                date: dateFilter,
-                status,
-            },
-            order: {
-                date: SortDirection.ASC,
-            }
-        })
+        const scheduleOverrides = await this.scheduleOverrideRepository.findAllByLessonId(lessonId, query)
 
         this.logger.log(`Finded schedule overrides for lesson with id: ${lessonId}`)
         this.logger.debug("Get schedule overrides list: ", scheduleOverrides)
@@ -304,10 +170,7 @@ export class ManageLessonsService implements IManageLessonsService {
     async update(lessonId: number, data: UpdateLessonBodyDto) {
         const { categoryIds, ...otherData } = data
 
-        const lesson = await this.lessonRepository.findOne({
-            where: { id: lessonId },
-            relations: { categories: true },
-        })
+        const lesson = await this.lessonRepository.findByIdWithCategories(lessonId)
 
         if (!lesson) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
 
@@ -325,13 +188,7 @@ export class ManageLessonsService implements IManageLessonsService {
 
 
     async delete(lessonId: number) {
-        const hasActiveEnrollments = await this.lessonRepository.exists({
-            where: {
-                id: lessonId,
-                enrollments: { status: EnrollmentStatus.ACTIVE },
-            },
-            relations: { enrollments: true },
-        })
+        const hasActiveEnrollments = await this.lessonRepository.existsWithActiveEnrollments(lessonId)
 
         if (hasActiveEnrollments) {
             this.logger.log(`Cannot delete lesson with active enrollments: ${lessonId}`)
@@ -339,9 +196,9 @@ export class ManageLessonsService implements IManageLessonsService {
         }
 
         this.logger.log(`Deleting lesson with id: ${lessonId}`)
-        const deleteResult = await this.lessonRepository.softDelete({ id: lessonId })
+        const deleteResult = await this.lessonRepository.softDelete(lessonId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete lesson. No lesson with id: ${lessonId}`)
             throw new NotFoundException(`Lesson with id ${lessonId} not found`)
         }
@@ -349,9 +206,7 @@ export class ManageLessonsService implements IManageLessonsService {
 
 
     private async validateLessonExists(lessonId: number) {
-        const isLessonExists = await this.lessonRepository.exists({
-            where: { id: lessonId }
-        })
+        const isLessonExists = await this.lessonRepository.existsById(lessonId)
 
         if (!isLessonExists) throw new NotFoundException(`Lesson with id ${lessonId} not found`)
     }

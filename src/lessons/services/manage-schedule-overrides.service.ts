@@ -1,23 +1,16 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
 import { IManageScheduleOverridesService } from "../interfaces/manage-schedule-overrides-service.interface"
 import { UpdateScheduleOverrideBodyDto } from "../dto"
+import { ScheduleOverrideRepository } from "../abstracts/schedule-override-repository.abstract"
 
 @Injectable()
 export class ManageScheduleOverridesService implements IManageScheduleOverridesService {
     private readonly logger = new Logger(ManageScheduleOverridesService.name)
 
-    constructor(
-        @InjectRepository(LessonScheduleOverrideEntity)
-        private scheduleOverrideRepository: Repository<LessonScheduleOverrideEntity>,
-    ) {}
+    constructor(private readonly scheduleOverrideRepository: ScheduleOverrideRepository) {}
 
     async findById(id: number) {
-        const scheduleOverride = await this.scheduleOverrideRepository.findOne({
-            where: { id },
-        })
+        const scheduleOverride = await this.scheduleOverrideRepository.findById(id)
 
         if (!scheduleOverride) {
             this.logger.log(`No schedule override with id: ${id}`)
@@ -31,12 +24,9 @@ export class ManageScheduleOverridesService implements IManageScheduleOverridesS
 
 
     async update(overrideId: number, data: UpdateScheduleOverrideBodyDto) {
-        const updateResult = await this.scheduleOverrideRepository.update(
-            { id: overrideId },
-            { ...data },
-        )
+        const updateResult = await this.scheduleOverrideRepository.update(overrideId, data)
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update schedule override with id: ${overrideId}`)
             throw new NotFoundException("Schedule override not found")
         }
@@ -47,9 +37,9 @@ export class ManageScheduleOverridesService implements IManageScheduleOverridesS
 
     async delete(overrideId: number) {
         this.logger.log(`Deleting schedule override with id: ${overrideId}`)
-        const deleteResult = await this.scheduleOverrideRepository.delete({ id: overrideId })
+        const deleteResult = await this.scheduleOverrideRepository.delete(overrideId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete schedule override. No schedule override with id: ${overrideId}`)
             throw new NotFoundException(`Schedule override with id ${overrideId} not found`)
         }

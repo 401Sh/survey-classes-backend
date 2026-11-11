@@ -1,30 +1,16 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
-import { Repository } from "typeorm"
 import { IManagePricingTiersService } from "../interfaces/manage-pricing-tiers-service.interface"
 import { UpdatePricingTierBodyDto } from "../dto"
+import { PricingTierRepository } from "../abstracts/pricing-tier-repository.abstract"
 
 @Injectable()
 export class ManagePricingTiersService implements IManagePricingTiersService {
     private readonly logger = new Logger(ManagePricingTiersService.name)
 
-    constructor(
-        @InjectRepository(LessonPricingTierEntity)
-        private pricingTierRepository: Repository<LessonPricingTierEntity>,
-    ) {}
+    constructor(private readonly pricingTierRepository: PricingTierRepository) {}
 
     async findById(id: number) {
-        const pricingTier = await this.pricingTierRepository.findOne({
-            where: { id },
-            select: {
-                id: true,
-                label: true,
-                price: true,
-                sessionsCount: true,
-                isActive: true,
-            },
-        })
+        const pricingTier = await this.pricingTierRepository.findById(id)
 
         if (!pricingTier) {
             this.logger.log(`No pricing tier with id: ${id}`)
@@ -38,12 +24,9 @@ export class ManagePricingTiersService implements IManagePricingTiersService {
 
 
     async update(tierId: number, data: UpdatePricingTierBodyDto) {
-        const updateResult = await this.pricingTierRepository.update(
-            { id: tierId },
-            { ...data },
-        )
+        const updateResult = await this.pricingTierRepository.update(tierId, data)
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update pricing tier with id: ${tierId}`)
             throw new NotFoundException("Pricing tier not found")
         }
@@ -54,9 +37,9 @@ export class ManagePricingTiersService implements IManagePricingTiersService {
 
     async delete(tierId: number) {
         this.logger.log(`Deleting pricing tier with id: ${tierId}`)
-        const deleteResult = await this.pricingTierRepository.softDelete({ id: tierId })
+        const deleteResult = await this.pricingTierRepository.softDelete(tierId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete pricing tier. No pricing tier with id: ${tierId}`)
             throw new NotFoundException(`Pricing tier with id ${tierId} not found`)
         }

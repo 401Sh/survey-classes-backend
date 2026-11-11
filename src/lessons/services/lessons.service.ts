@@ -1,87 +1,26 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { LessonEntity } from "../entities/lesson.entity"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm"
-import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
-import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
-import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { ILessonsService } from "../interfaces/lessons-service.interface"
 import { GetLessonListQueryDto, GetScheduleOverrideQueryDto } from "../dto"
+import { LessonRepository } from "../abstracts/lesson-repository.abstract"
+import { PricingTierRepository } from "../abstracts/pricing-tier-repository.abstract"
+import { WeeklySlotRepository } from "../abstracts/weekly-slot-repository.abstract"
+import { ScheduleOverrideRepository } from "../abstracts/schedule-override-repository.abstract"
 
 @Injectable()
 export class LessonsService implements ILessonsService {
     private readonly logger = new Logger(LessonsService.name)
 
     constructor(
-        @InjectRepository(LessonEntity)
-        private lessonRepository: Repository<LessonEntity>,
-        @InjectRepository(LessonPricingTierEntity)
-        private pricingTierRepository: Repository<LessonPricingTierEntity>,
-        @InjectRepository(LessonWeeklySlotEntity)
-        private weeklySlotRepository: Repository<LessonWeeklySlotEntity>,
-        @InjectRepository(LessonScheduleOverrideEntity)
-        private scheduleOverrideRepository: Repository<LessonScheduleOverrideEntity>,
+        private readonly lessonRepository: LessonRepository,
+        private readonly weeklySlotRepository: WeeklySlotRepository,
+        private readonly scheduleOverrideRepository: ScheduleOverrideRepository,
+        private readonly pricingTierRepository: PricingTierRepository,
     ) {}
 
     async findAll(query: GetLessonListQueryDto) {
-        const {
-            limit,
-            page,
-            dateFrom,
-            dateTo,
-            search,
-            minAge,
-            sortDirection,
-            categoryId,
-            priceFrom,
-            priceTo,
-        } = query
-
-        const queryBuilder = this.lessonRepository.createQueryBuilder("lessons")
-
-        queryBuilder.leftJoinAndSelect("lessons.pricingTiers", "pricingTiers", "pricingTiers.isActive = true")
-        queryBuilder.leftJoinAndSelect("lessons.coverImage", "coverImage")
-        queryBuilder.leftJoinAndSelect("lessons.categories", "categories")
-
-        queryBuilder.where("lessons.isActive = true")
-
-        if (search) {
-            queryBuilder.andWhere(
-                "(lessons.name LIKE :search OR lessons.description LIKE :search)",
-                { search: `%${search}%` },
-            )
-        }
-
-        if (minAge) {
-            queryBuilder.andWhere("lessons.minAge >= :minAge", { minAge })
-        }
-
-        if (categoryId) {
-            queryBuilder.andWhere("categories.id = :categoryId", { categoryId })
-        }
-
-        if (priceFrom) {
-            queryBuilder.andWhere("pricingTiers.price >= :priceFrom", { priceFrom })
-        }
-
-        if (priceTo) {
-            queryBuilder.andWhere("pricingTiers.price <= :priceTo", { priceTo })
-        }
-
-        if (dateFrom) {
-            queryBuilder.andWhere("lessons.startsAt >= :dateFrom", { dateFrom })
-        }
-
-        if (dateTo) {
-            queryBuilder.andWhere("lessons.endsAt <= :dateTo", { dateTo })
-        }
-
-        queryBuilder.orderBy("lessons.startsAt", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [lessons, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
+        const [lessons, totalCount] = await this.lessonRepository.findActivePage(query)
+        const totalPagesAmount = Math.ceil(totalCount / query.limit)
 
         this.logger.debug("Get lessons list: ", lessons)
         return {
@@ -89,52 +28,14 @@ export class LessonsService implements ILessonsService {
             meta: {
                 totalCount: totalCount,
                 totalPagesAmount: totalPagesAmount,
-                currentPage: page,
+                currentPage: query.page,
             }
         }
     }
 
 
     async findById(id: number): Promise<LessonEntity>{
-        const lesson = await this.lessonRepository.findOne({
-            where: { 
-                id, 
-                isActive: true,
-                pricingTiers: {
-                    isActive: true,
-                },
-            },
-            relations: {
-                images: true,
-                categories: true,
-                pricingTiers: true,
-            },
-            select: {
-                id: true,
-                name: true,
-                description: true,
-                minAge: true,
-                teacher: true,
-                startsAt: true,
-                endsAt: true,
-                images: {
-                    id: true,
-                    path: true,
-                    position: true,
-                },
-                categories: {
-                    id: true,
-                    name: true,
-                },
-                pricingTiers: {
-                    id: true,
-                    label: true,
-                    price: true,
-                    sessionsCount: true,
-                    isActive: true,
-                },
-            },
-        })
+        const lesson = await this.lessonRepository.findActiveByIdWithDetails(id)
     
         if (!lesson) {
             this.logger.log(`No lesson with id: ${id}`)
@@ -149,52 +50,9 @@ export class LessonsService implements ILessonsService {
     async findSchedulesByLessonId(lessonId: number, query: GetScheduleOverrideQueryDto) {
         const { dateFrom, dateTo } = query
 
-        const dateFilter = dateFrom && dateTo
-            ? Between(dateFrom, dateTo)
-            : dateFrom
-            ? MoreThanOrEqual(dateFrom)
-            : dateTo
-            ? LessThanOrEqual(dateTo)
-            : undefined
-
         const [weeklySlots, overrides] = await Promise.all([
-            this.weeklySlotRepository.find({
-                where: {
-                    lesson: {
-                        id: lessonId,
-                    },
-                    isActive: true,
-                },
-                select: {
-                    id: true,
-                    dayOfWeek: true,
-                    startTime: true,
-                    durationMinutes: true,
-                    address: true,
-                },
-                order: {
-                    dayOfWeek: SortDirection.ASC,
-                },
-            }),
-            this.scheduleOverrideRepository.find({
-                where: {
-                    lesson: {
-                        id: lessonId,
-                    },
-                    date: dateFilter,
-                },
-                select: {
-                    id: true,
-                    date: true,
-                    startTime: true,
-                    address: true,
-                    status: true,
-                    note: true,
-                },
-                order: {
-                    date: SortDirection.ASC,
-                },
-            }),
+            this.weeklySlotRepository.findActiveByLessonId(lessonId),
+            this.scheduleOverrideRepository.findPublicByLessonId(lessonId, dateFrom, dateTo),
         ])
 
         return { weeklySlots, overrides }
@@ -202,20 +60,7 @@ export class LessonsService implements ILessonsService {
 
 
     async findPricingTiersByLessonId(lessonId: number) {
-        const pricingTiers = await this.pricingTierRepository.find({
-            where: {
-                lesson: {
-                    id: lessonId,
-                },
-                isActive: true,
-            },
-            select: {
-                id: true,
-                label: true,
-                price: true,
-                sessionsCount: true,
-            },
-        })
+        const pricingTiers = await this.pricingTierRepository.findActiveByLessonId(lessonId)
 
         return pricingTiers
     }

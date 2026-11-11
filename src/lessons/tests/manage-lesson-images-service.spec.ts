@@ -142,39 +142,6 @@ describe("ManageLessonImagesService", () => {
 
     // -------------------------------------------------------------------------
 
-    describe("setCover", () => {
-        it("should set cover image successfully", async () => {
-            const fakeLesson = { id: 1, coverImage: null } as unknown as LessonEntity
-            const fakeImage = { id: 1 } as unknown as LessonImageEntity
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-            mockImageRepository.findOne.mockResolvedValue(fakeImage)
-            mockLessonRepository.update.mockResolvedValue({ affected: 1 })
-
-            await expect(service.setCover(1, 1)).resolves.not.toThrow()
-
-            expect(mockLessonRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                { coverImage: { id: 1 } }
-            )
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.setCover(99, 1)).rejects.toThrow(NotFoundException)
-        })
-
-        it("should throw NotFoundException when image does not exist or belongs to another lesson", async () => {
-            const fakeLesson = { id: 1 } as unknown as LessonEntity
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-            mockImageRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.setCover(1, 99)).rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
     describe("remove", () => {
         const setupTransaction = (managerMock: ReturnType<typeof createTransactionManagerMock>) => {
             mockImageRepository.manager.transaction.mockImplementation(
@@ -233,35 +200,6 @@ describe("ManageLessonImagesService", () => {
             await service.remove(1, 1)
 
             expect(mockMediaService.deleteFile).toHaveBeenCalledWith("lessons/1/photo.jpg")
-        })
-
-        it("should reset cover before removing when image is cover", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeImage = {
-                id: 1,
-                path: "lessons/1/photo.jpg",
-                lesson: { id: 1 },
-            } as unknown as LessonImageEntity
-
-            const fakeLesson = {
-                id: 1,
-                coverImage: { id: 1 }, // изображение является обложкой
-            } as unknown as LessonEntity
-
-            mockImageRepository.findOne.mockResolvedValueOnce(fakeImage)
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-            setupTransaction(manager)
-            manager.find.mockResolvedValue([])
-            manager.save.mockResolvedValue(undefined)
-            mockMediaService.deleteFile.mockResolvedValue(undefined)
-
-            await service.remove(1, 1)
-
-            expect(manager.update).toHaveBeenCalledWith(
-                LessonEntity,
-                { id: 1, coverImage: { id: 1 } },
-                { coverImage: null }
-            )
         })
 
         it("should throw NotFoundException when image does not exist or belongs to another lesson", async () => {

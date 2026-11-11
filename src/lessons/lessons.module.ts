@@ -21,6 +21,16 @@ import { MediaModule } from "src/media/media.module"
 import { ManageLessonImagesService } from "./services/manage-lesson-images.service"
 import { ManageLessonImagesController } from "./controllers/manage-lesson-images.controller"
 import { LessonImageEntity } from "./entities/lesson-image.entity"
+import { TypeOrmLessonRepository } from "./repositories/typeorm-lesson.repository"
+import { LessonRepository } from "./abstracts/lesson-repository.abstract"
+import { PricingTierRepository } from "./abstracts/pricing-tier-repository.abstract"
+import { TypeOrmPricingTierRepository } from "./repositories/typeorm-pricing-tier.repository"
+import { WeeklySlotRepository } from "./abstracts/weekly-slot-repository.abstract"
+import { TypeOrmWeeklySlotRepository } from "./repositories/typeorm-weekly-slot.repository"
+import { LessonImageRepository } from "./abstracts/lesson-image-repository.abstract"
+import { ScheduleOverrideRepository } from "./abstracts/schedule-override-repository.abstract"
+import { TypeOrmScheduleOverrideRepository } from "./repositories/typeorm-schedule-override.repository"
+import { TypeOrmLessonImageRepository } from "./repositories/typeorm-lesson-image.repository"
 
 @Module({
     imports: [
@@ -51,6 +61,26 @@ import { LessonImageEntity } from "./entities/lesson-image.entity"
         LessonsInternalService,
         LessonPricingTiersInternalService,
         ManageLessonImagesService,
+        {
+            provide: LessonRepository,
+            useClass: TypeOrmLessonRepository,
+        },
+        {
+            provide: WeeklySlotRepository,
+            useClass: TypeOrmWeeklySlotRepository,
+        },
+        {
+            provide: ScheduleOverrideRepository,
+            useClass: TypeOrmScheduleOverrideRepository,
+        },
+        {
+            provide: PricingTierRepository,
+            useClass: TypeOrmPricingTierRepository,
+        },
+        {
+            provide: LessonImageRepository,
+            useClass: TypeOrmLessonImageRepository,
+        },
     ],
     exports: [
         LessonsInternalService,

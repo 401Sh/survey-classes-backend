@@ -1,23 +1,16 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
-import { Repository } from "typeorm"
 import { IManageWeeklySlotsService } from "../interfaces/manage-weekly-slots-service.interface"
 import { UpdateWeeklySlotBodyDto } from "../dto"
+import { WeeklySlotRepository } from "../abstracts/weekly-slot-repository.abstract"
 
 @Injectable()
 export class ManageWeeklySlotsService implements IManageWeeklySlotsService {
     private readonly logger = new Logger(ManageWeeklySlotsService.name)
 
-    constructor(
-        @InjectRepository(LessonWeeklySlotEntity)
-        private weeklySlotRepository: Repository<LessonWeeklySlotEntity>,
-    ) {}
+    constructor(private readonly weeklySlotRepository: WeeklySlotRepository) {}
 
     async findById(id: number) {
-        const weeklySlot = await this.weeklySlotRepository.findOne({
-            where: { id },
-        })
+        const weeklySlot = await this.weeklySlotRepository.findById(id)
 
         if (!weeklySlot) {
             this.logger.log(`No weekly slot with id: ${id}`)
@@ -31,10 +24,7 @@ export class ManageWeeklySlotsService implements IManageWeeklySlotsService {
 
 
     async update(slotId: number, data: UpdateWeeklySlotBodyDto) {
-        const weeklySlot = await this.weeklySlotRepository.findOne({
-            where: { id: slotId },
-            relations: { lesson: true },
-        })
+        const weeklySlot = await this.weeklySlotRepository.findByIdWithLesson(slotId)
 
         if (!weeklySlot) {
             this.logger.log(`No weekly slot with id: ${slotId}`)
@@ -46,15 +36,15 @@ export class ManageWeeklySlotsService implements IManageWeeklySlotsService {
             const dayOfWeek = data.dayOfWeek ?? weeklySlot.dayOfWeek
             const startTime = data.startTime ?? weeklySlot.startTime
         
-            const duplicate = await this.weeklySlotRepository.findOne({
-                where: {
-                    lesson: { id: weeklySlot.lesson.id },
-                    dayOfWeek,
-                    startTime,
-                },
-            })
+            const duplicates = await this.weeklySlotRepository.findDuplicates(
+                weeklySlot.lesson.id,
+                [dayOfWeek],
+                startTime,
+            )
 
-            if (duplicate && duplicate.id !== slotId) {
+            const isDuplicated = duplicates.some(s => s.id !== slotId)
+
+            if (isDuplicated) {
                 throw new ConflictException(
                     `Weekly slot for day ${dayOfWeek} at ${startTime} already exists for this lesson`
                 )
@@ -70,9 +60,9 @@ export class ManageWeeklySlotsService implements IManageWeeklySlotsService {
 
     async delete(slotId: number) {
         this.logger.log(`Deleting weekly slot with id: ${slotId}`)
-        const deleteResult = await this.weeklySlotRepository.delete({ id: slotId })
+        const deleteResult = await this.weeklySlotRepository.delete(slotId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete weekly slot. No weekly slot with id: ${slotId}`)
             throw new NotFoundException(`Weekly slot with id ${slotId} not found`)
         }

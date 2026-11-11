@@ -5,12 +5,10 @@ import {
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
-    JoinColumn,
     JoinTable,
     ManyToMany,
     ManyToOne,
     OneToMany,
-    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm"
@@ -59,13 +57,6 @@ export class LessonEntity extends BaseEntity {
 
     @DeleteDateColumn()
     deletedAt: Date | null
-
-    @OneToOne(() => LessonImageEntity, {
-        nullable: true,
-        onDelete: "SET NULL",
-    })
-    @JoinColumn()
-    coverImage: LessonImageEntity | null
 
     @ManyToOne(() => UserEntity, (user) => user.lessons)
     createdBy: UserEntity
