@@ -8,6 +8,10 @@ import { ChildrenController } from "./controllers/children.controller"
 import { ChildrenService } from "./services/children.service"
 import { UsersInternalService } from "./services/users-internal.service"
 import { ChildrenInternalService } from "./services/children-internal.service"
+import { UserRepository } from "./abstracts/user-repository.abstract"
+import { TypeOrmUserRepository } from "./repositories/typeorm-user.repository"
+import { ChildRepository } from "./abstracts/child-repository.abstract"
+import { TypeOrmChildRepository } from "./repositories/typeorm-children.repository"
 
 @Module({
     imports: [
@@ -25,6 +29,14 @@ import { ChildrenInternalService } from "./services/children-internal.service"
         ChildrenService,
         UsersInternalService,
         ChildrenInternalService,
+        {
+            provide: UserRepository,
+            useClass: TypeOrmUserRepository,
+        },
+        {
+            provide: ChildRepository,
+            useClass: TypeOrmChildRepository,
+        },
     ],
     exports: [
         UsersInternalService,

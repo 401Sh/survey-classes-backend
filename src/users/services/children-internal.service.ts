@@ -1,24 +1,14 @@
 import { Injectable } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { UserChildEntity } from "../entities/user-child.entity"
-import { Repository } from "typeorm"
 import { IChildrenInternalService } from "../interfaces/children-internal-service.interface"
+import { ChildRepository } from "../abstracts/child-repository.abstract"
 
 @Injectable()
 export class ChildrenInternalService implements IChildrenInternalService {
-    constructor(
-        @InjectRepository(UserChildEntity)
-        private childRepository: Repository<UserChildEntity>
-    ) {}
+    constructor(private readonly childRepository: ChildRepository) {}
 
     async existsAndOwnedBy(childId: number, userId: number) {
-        const isExists = await this.childRepository.exists({
-            where: {
-                id: childId,
-                user: { id: userId },
-            },
-        })
+        const isChildExists = await this.childRepository.existsByIdAndUserId(childId, userId)
     
-        return isExists
+        return isChildExists
     }
 }

@@ -134,9 +134,7 @@ export class AuthService implements IAuthService {
 
         await this.usersService.update(
             user.id,
-            {
-                isEmailVerified: true,
-            },
+            { isEmailVerified: true },
         )
 
         if (!fingerprint) {

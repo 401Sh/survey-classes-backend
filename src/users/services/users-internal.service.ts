@@ -1,35 +1,29 @@
 import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
 import { UserEntity } from "../entities/user.entity"
-import { Repository } from "typeorm"
 import * as argon2 from "argon2"
 import { IUsersInternalService } from "../interfaces/users-internal-service.interface"
 import { SignUpDto } from "src/auth/dto"
+import { UserRepository } from "../abstracts/user-repository.abstract"
 
 @Injectable()
 export class UsersInternalService implements IUsersInternalService {
     private readonly logger = new Logger(UsersInternalService.name)
 
-    constructor(
-        @InjectRepository(UserEntity)
-        private userRepository: Repository<UserEntity>
-    ) {}
+    constructor(private readonly userRepository: UserRepository) {}
     
     async create(data: SignUpDto): Promise<UserEntity> {
-        const isAvailable = await this.isEmailAvailable(data.email)
-        if (!isAvailable) {
+        const isEmailAvailable = await this.userRepository.existsByEmail(data.email)
+
+        if (isEmailAvailable) {
             this.logger.log(`Cannot create user. Email ${data.email} is already used`)
             throw new ConflictException(`Email ${data.email} is already used`)
         }
 
-        const { password, ...otherData } = data
-    
         const hashedPassword = await this.hashData(data.password)
+        
+        data.password = hashedPassword
     
-        const user = await this.userRepository.save({
-            ...otherData,
-            password: hashedPassword,
-        })
+        const user = await this.userRepository.create(data)
     
         this.logger.log(`Created user with email: ${data.email}`)
         this.logger.debug("Created user", user)
@@ -37,35 +31,8 @@ export class UsersInternalService implements IUsersInternalService {
     }
 
 
-    async findUser(id: number) {
-        const user = this.userRepository.findOne({
-            where: { id },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                secondName: true,
-                role: true,
-            },
-        })
-
-        return user
-    }
-
-
     async findByEmailWithPass(email: string) {
-        const user = await this.userRepository.findOne({
-            where: { email },
-            select: {
-                id: true,
-                firstName: true,
-                secondName: true,
-                password: true,
-                email: true,
-                role: true,
-                isEmailVerified: true,
-            },
-        })
+        const user = await this.userRepository.findByEmail(email)
 
         this.logger.log(`Finded user with email: ${email}`)
 
@@ -74,19 +41,14 @@ export class UsersInternalService implements IUsersInternalService {
 
 
     async findByEmailWithVerification(email: string) {
-        const user = this.userRepository.findOne({
-            where: { email },
-            relations: {
-                emailVerification: true
-            },
-        })
+        const user = this.userRepository.findByEmailWithVerification(email)
 
         return user
     }
 
 
     async findByIdOrUnauthorized(id: number) {
-        const user = await this.findUser(id)
+        const user = await this.userRepository.findSimplifiedById(id)
 
         if (!user) throw new UnauthorizedException()
         
@@ -95,20 +57,12 @@ export class UsersInternalService implements IUsersInternalService {
 
 
     async update(userId: number, data: Partial<UserEntity>) {
-        const updateResult = await this.userRepository.update({ id: userId }, data)
+        const updateResult = await this.userRepository.update(userId, data)
     
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update user with id: ${userId}`)
             throw new NotFoundException("User not found")
         }
-    }
-
-
-    private async isEmailAvailable(email: string): Promise<boolean> {
-        const existingUser = await this.userRepository.findOne({
-            where: { email },
-        })
-        return !existingUser
     }
 
 

@@ -1,25 +1,16 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { UserChildEntity } from "../entities/user-child.entity"
-import { Not, Repository } from "typeorm"
 import { IChildrenService } from "../interfaces/children-service.interface"
-import { EnrollmentStatus } from "src/enrollments/enums/enrollment-status.enum"
 import { CreateChildBodyDto, UpdateChildBodyDto } from "../dto"
+import { ChildRepository } from "../abstracts/child-repository.abstract"
 
 @Injectable()
 export class ChildrenService implements IChildrenService {
     private readonly logger = new Logger(ChildrenService.name)
 
-    constructor(
-        @InjectRepository(UserChildEntity)
-        private childRepository: Repository<UserChildEntity>,
-    ) {}
+    constructor(private readonly childRepository: ChildRepository) {}
 
     async create(userId: number, data: CreateChildBodyDto) {
-        const child = await this.childRepository.save({
-            user: { id: userId },
-            ...data,
-        })
+        const child = await this.childRepository.create(userId, data)
 
         this.logger.log(`Created child by user id: ${userId}`)
         this.logger.debug("Created child", child)
@@ -28,17 +19,7 @@ export class ChildrenService implements IChildrenService {
 
 
     async findAll(userId: number) {
-        const children = await this.childRepository.find({
-            where: {
-                user: { id: userId },
-            },
-            select: {
-                id: true,
-                firstName: true,
-                secondName: true,
-                birthDate: true,
-            },
-        })
+        const children = await this.childRepository.findAllByUserId(userId)
 
         this.logger.debug("Get children list: ", children)
         return children
@@ -46,18 +27,7 @@ export class ChildrenService implements IChildrenService {
 
 
     async findById(userId: number, childId: number) {
-        const child = await this.childRepository.findOne({
-            where: {
-                id: childId,
-                user: { id: userId },
-            },
-            select: {
-                id: true,
-                firstName: true,
-                secondName: true,
-                birthDate: true,
-            },
-        })
+        const child = await this.childRepository.findByIdAndUserId(childId, userId)
 
         if (!child) throw new NotFoundException("Child not found")
         
@@ -66,17 +36,9 @@ export class ChildrenService implements IChildrenService {
 
 
     async update(userId: number, childId: number, data: UpdateChildBodyDto) {
-        const updateResult = await this.childRepository.update(
-            {
-                id: childId,
-                user: {
-                    id: userId,
-                },
-            },
-            data,
-        )
+        const updateResult = await this.childRepository.updateByIdAndUserId(childId, userId, data)
     
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update child with id: ${childId}`)
             throw new NotFoundException("Child not found")
         }
@@ -84,13 +46,11 @@ export class ChildrenService implements IChildrenService {
 
 
     async delete(userId: number, childId: number) {
-        const hasEnrollments = await this.childRepository.exists({
-            where: {
-                id: childId,
-                enrollments: { status: Not(EnrollmentStatus.SUSPENDED) },
-            },
-            relations: { enrollments: true },
-        })
+        const isChildExists = await this.childRepository.existsByIdAndUserId(childId, userId)
+
+        if (!isChildExists) throw new NotFoundException("Child not found")
+
+        const hasEnrollments = await this.childRepository.existsNotSuspendedEnrollments(childId)
 
         if (hasEnrollments) {
             this.logger.log(`Cannot delete child with active enrollments with id: ${childId}`)
@@ -98,12 +58,9 @@ export class ChildrenService implements IChildrenService {
         }
 
         this.logger.log(`Deleting child with id: ${childId}`)
-        const deleteResult = await this.childRepository.delete({
-            id: childId,
-            user: { id: userId },
-        })
+        const deleteResult = await this.childRepository.delete(childId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete child. No child with id: ${childId}`)
             throw new NotFoundException(`Child with id ${childId} not found`)
         }
