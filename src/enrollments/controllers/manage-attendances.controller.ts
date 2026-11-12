@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Query } from "@nestjs/common"
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiSecurity } from "@nestjs/swagger"
 import { ManageAttendancesService } from "../services/manage-attendances.service"
-import { GetAttendanceListQueryDto, UpdateAttendanceBodyDto } from "../dto"
 import { Roles } from "src/common/decorators/role.decorator"
 import { UserRole } from "src/users/enums/user-role.enum"
+import { GetAttendanceListQueryDto, UpdateAttendanceBodyDto } from "../dto"
 
 @Roles(UserRole.ADMIN, UserRole.MODERATOR)
 @Controller("manage/attendances")

@@ -4,7 +4,6 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
-import { SubscriptionsInternalService } from "src/subscriptions/services/subscriptions-internal.service"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
@@ -72,7 +71,7 @@ describe("EnrollmentsService", () => {
                     useValue: mockPricingTiersService,
                 },
                 {
-                    provide: SubscriptionsInternalService,
+                    provide: LessonsInternalService,
                     useValue: mockSubscriptionsService,
                 },
             ],

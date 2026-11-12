@@ -4,7 +4,7 @@ import { BaseEntity,
     Entity,
     ManyToOne,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from "typeorm"
 import { SubscriptionEntity } from "./subscription.entity"
 

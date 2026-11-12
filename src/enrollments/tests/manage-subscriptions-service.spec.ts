@@ -5,8 +5,8 @@ import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { AttendanceEntity } from "../entities/attendance.entity"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 import { PaymentStatus } from "../enums/payment-status.enum"
-import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
 
 const createTransactionManagerMock = () => ({
     findOne: vi.fn(),

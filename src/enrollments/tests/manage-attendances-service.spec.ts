@@ -4,8 +4,8 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { AttendanceEntity } from "../entities/attendance.entity"
 import { SubscriptionEntity } from "../entities/subscription.entity"
-import { ManageAttendancesService } from "../services/manage-attendances.service"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { ManageAttendancesService } from "../services/manage-attendances.service"
 
 const createTransactionManagerMock = () => {
     return {

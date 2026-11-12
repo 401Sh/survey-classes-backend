@@ -7,9 +7,9 @@ import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
 import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
-import { SubscriptionsInternalService } from "src/subscriptions/services/subscriptions-internal.service"
 import { IEnrollmentsService } from "../interfaces/enrollments-service.interface"
 import { CreateEnrollmentBodyDto, CreateEnrollmentSubscriptionBodyDto, GetEnrollmentListQueryDto } from "../dto"
+import { SubscriptionEntity } from "../entities/subscription.entity"
 
 @Injectable()
 export class EnrollmentsService implements IEnrollmentsService {
@@ -18,11 +18,12 @@ export class EnrollmentsService implements IEnrollmentsService {
     constructor(
         @InjectRepository(EnrollmentEntity)
         private enrollmentRepository: Repository<EnrollmentEntity>,
+        @InjectRepository(SubscriptionEntity)
+        private subscriptionRepository: Repository<SubscriptionEntity>,
 
         private readonly childrenService: ChildrenInternalService,
         private readonly lessonsService: LessonsInternalService,
         private readonly pricingTiersService: LessonPricingTiersInternalService,
-        private readonly subscriptionsService: SubscriptionsInternalService,
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
@@ -71,7 +72,7 @@ export class EnrollmentsService implements IEnrollmentsService {
         const lessonId = enrollment.lesson.id
         const pricingTier = await this.pricingTiersService.findActiveAndLinked(pricingTierId, lessonId)
 
-        const subscription = await this.subscriptionsService.bareCreate(
+        const subscription = await this.bareCreateSubscription(
             enrollment.id,
             pricingTierId,
             pricingTier.price,
@@ -198,7 +199,7 @@ export class EnrollmentsService implements IEnrollmentsService {
 
 
     async findAllSubscriptionsByEnrollmentId(userId: number, enrollmentId: number) {
-        const subscriptions = await this.subscriptionsService.findAllByEnrollmentIdAndUserId(userId, enrollmentId)
+        const subscriptions = await this.findAllSubscriptionsByEnrollmentIdAndUserId(userId, enrollmentId)
 
         return subscriptions
     }
@@ -260,5 +261,56 @@ export class EnrollmentsService implements IEnrollmentsService {
         }
 
         return enrollment
+    }
+
+
+    private async findAllSubscriptionsByEnrollmentIdAndUserId(userId: number, enrollmentId: number) {
+        const subscriptions = await this.subscriptionRepository.find({
+            where: {
+                enrollment: {
+                    id: enrollmentId,
+                    user: { id: userId },
+                }
+            },
+            select: {
+                id: true,
+                paymentStatus: true,
+                priceSnapshot: true,
+                paidAmount: true,
+                sessionsTotal: true,
+                sessionsLeft: true,
+                pricingTier: {
+                    id: true,
+                    label: true,
+                    sessionsCount: true,
+                },
+            },
+            relations: {
+                pricingTier: true,
+            },
+        })
+
+        this.logger.debug("Get subscription list: ", subscriptions)
+        return subscriptions
+    }
+
+
+    private async bareCreateSubscription(
+        enrollmentId: number,
+        pricingTierId: number,
+        price: number,
+        sessionsCount: number,
+    ) {
+        const subscription = await this.subscriptionRepository.save({
+            enrollment: { id: enrollmentId },
+            pricingTier: { id: pricingTierId },
+            priceSnapshot: price,
+            sessionsTotal: sessionsCount,
+            sessionsLeft: sessionsCount,
+        })
+
+        this.logger.log(`Created new subscription for enrollmentId: ${enrollmentId}`)
+        this.logger.debug("Created new subscription: ", subscription)
+        return subscription
     }
 }

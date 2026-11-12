@@ -1,5 +1,5 @@
 import { PaginatedResult } from "src/common/interfaces/paginated-result.interface"
-import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
+import { SubscriptionEntity } from "src/enrollments/entities/subscription.entity"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { CreateEnrollmentBodyDto, CreateEnrollmentSubscriptionBodyDto, GetEnrollmentListQueryDto } from "../dto"
 

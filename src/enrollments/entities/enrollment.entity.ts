@@ -5,7 +5,6 @@ import {
     Entity,
     ManyToOne,
     OneToMany,
-    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from "typeorm"
@@ -13,7 +12,7 @@ import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { LessonEntity } from "src/lessons/entities/lesson.entity"
 import { UserChildEntity } from "src/users/entities/user-child.entity"
 import { UserEntity } from "src/users/entities/user.entity"
-import { SubscriptionEntity } from "src/subscriptions/entities/subscription.entity"
+import { SubscriptionEntity } from "src/enrollments/entities/subscription.entity"
 
 @Entity("enrollments")
 export class EnrollmentEntity extends BaseEntity {

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { Type } from "class-transformer"
-import { IsInt, IsOptional, Min, IsDate, IsBoolean, IsEnum } from "class-validator"
+import { IsInt, IsOptional, Min, IsDate, IsEnum } from "class-validator"
 import { AMOUNT_MIN_VALUE, PAGE_MIN_VALUE } from "src/common/constants/dto-request-limits.constant"
 import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { PaymentStatus } from "../enums/payment-status.enum"

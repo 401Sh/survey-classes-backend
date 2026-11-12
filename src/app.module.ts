@@ -13,7 +13,6 @@ import { AccessTokenGuard } from "./common/guards/access-token.guard"
 import { RolesGuard } from "./common/guards/role.guard"
 import { DictionariesModule } from "./dictionaries/dictionaries.module"
 import { EnrollmentsModule } from "./enrollments/enrollments.module"
-import { SubscriptionsModule } from "./subscriptions/subscriptions.module"
 import { MediaModule } from "./media/media.module"
 import { ServeStaticModule } from "@nestjs/serve-static"
 import { join } from "path"
@@ -35,7 +34,6 @@ import { ApiKeyGuard } from "./common/guards/api-key.guard"
         MailModule,
         DictionariesModule,
         EnrollmentsModule,
-        SubscriptionsModule,
         MediaModule,
         ServeStaticModule.forRootAsync({
             inject: [ConfigService],

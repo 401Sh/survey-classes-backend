@@ -5,7 +5,7 @@ import {
     CreateAttendanceBodyDto,
     GetManageSubscriptionListQueryDto,
     PayFullPriceSubscriptionPaymentBodyDto,
-    RefundSubscriptionPaymentBodyDto
+    RefundSubscriptionPaymentBodyDto,
 } from "../dto"
 
 export interface IManageSubscriptionsService {
