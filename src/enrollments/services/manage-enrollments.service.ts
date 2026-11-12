@@ -1,68 +1,18 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { EnrollmentEntity } from "../entities/enrollment.entity"
-import { Repository } from "typeorm"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { IManageEnrollmentsService } from "../interfaces/manage-enrollments-service.interface"
 import { GetManageEnrollmentListQueryDto } from "../dto"
+import { EnrollmentRepository } from "../abstracts/enrollment-repository.abstract"
 
 @Injectable()
 export class ManageEnrollmentsService implements IManageEnrollmentsService {
     private readonly logger = new Logger(ManageEnrollmentsService.name)
 
-    constructor(
-        @InjectRepository(EnrollmentEntity)
-        private enrollmentRepository: Repository<EnrollmentEntity>,
-    ) {}
+    constructor(private readonly enrollmentRepository: EnrollmentRepository) {}
 
     async findAll(query: GetManageEnrollmentListQueryDto) {
-        const {
-            limit,
-            page,
-            dateFrom,
-            dateTo,
-            status,
-            lessonId,
-            parentId,
-            childId,
-            sortDirection,
-        } = query
-
-        const queryBuilder = this.enrollmentRepository.createQueryBuilder("enrollments")
-
-        queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
-        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
-        queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-
-        if (status) {
-            queryBuilder.where("enrollments.status = :status", { status })
-        }
-
-        if (dateFrom) {
-            queryBuilder.andWhere("enrollments.createdAt >= :dateFrom", { dateFrom })
-        }
-
-        if (dateTo) {
-            queryBuilder.andWhere("enrollments.createdAt <= :dateTo", { dateTo })
-        }
-
-        if (lessonId) {
-            queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
-        }
-
-        if (parentId) {
-            queryBuilder.andWhere("users.id = :parentId", { parentId })
-        }
-
-        if (childId) {
-            queryBuilder.andWhere("children.id = :childId", { childId })
-        }
-
-        queryBuilder.orderBy("enrollments.createdAt", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [enrollments, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
+        const [enrollments, totalCount] = await this.enrollmentRepository.findPage(query)
+        const totalPagesAmount = Math.ceil(totalCount / query.limit)
 
         this.logger.debug("Get enrollment list: ", enrollments)
         return {
@@ -70,22 +20,14 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
             meta: {
                 totalCount: totalCount,
                 totalPagesAmount: totalPagesAmount,
-                currentPage: page,
+                currentPage: query.page,
             },
         }
     }
 
 
     async findById(id: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: { id },
-            relations: {
-                subscriptions: true,
-                lesson: true,
-                child: true,
-                user: true,
-            },
-        })
+        const enrollment = await this.enrollmentRepository.findByIdWithDetails(id)
 
         if (!enrollment) {
             this.logger.log(`No enrollment with id: ${id}`)
@@ -99,9 +41,7 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
 
 
     async activate(enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: { id: enrollmentId },
-        })
+        const enrollment = await this.enrollmentRepository.findById(enrollmentId)
 
         if (!enrollment) throw new NotFoundException("Enrollment not found")
 
@@ -109,12 +49,12 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
             throw new BadRequestException("Only pending enrollments can be activated")
         }
 
-        const updateResult = await this.enrollmentRepository.update(
-            { id: enrollmentId },
-            { status: EnrollmentStatus.ACTIVE },
+        const updateResult = await this.enrollmentRepository.updateStatus(
+            enrollmentId,
+            EnrollmentStatus.ACTIVE,
         )
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot activate enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
@@ -122,9 +62,7 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
 
 
     async suspend(enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: { id: enrollmentId },
-        })
+        const enrollment = await this.enrollmentRepository.findById(enrollmentId)
 
         if (!enrollment) throw new NotFoundException("Enrollment not found")
 
@@ -132,12 +70,12 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
             throw new BadRequestException("Only active enrollments can be suspended")
         }
 
-        const updateResult = await this.enrollmentRepository.update(
-            { id: enrollmentId },
-            { status: EnrollmentStatus.SUSPENDED },
+        const updateResult = await this.enrollmentRepository.updateStatus(
+            enrollmentId,
+            EnrollmentStatus.SUSPENDED,
         )
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot suspend enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }
@@ -145,9 +83,7 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
 
 
     async unsuspend(enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: { id: enrollmentId },
-        })
+        const enrollment = await this.enrollmentRepository.findById(enrollmentId)
 
         if (!enrollment) throw new NotFoundException("Enrollment not found")
 
@@ -155,12 +91,12 @@ export class ManageEnrollmentsService implements IManageEnrollmentsService {
             throw new BadRequestException("Only suspended enrollments can be re-activated")
         }
 
-        const updateResult = await this.enrollmentRepository.update(
-            { id: enrollmentId },
-            { status: EnrollmentStatus.ACTIVE },
+        const updateResult = await this.enrollmentRepository.updateStatus(
+            enrollmentId,
+            EnrollmentStatus.ACTIVE,
         )
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot re-activate enrollment with id: ${enrollmentId}`)
             throw new NotFoundException("Enrollment not found")
         }

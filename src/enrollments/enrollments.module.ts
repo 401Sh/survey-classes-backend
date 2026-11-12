@@ -13,6 +13,12 @@ import { ManageSubscriptionsController } from "./controllers/manage-subscription
 import { ManageAttendancesController } from "./controllers/manage-attendances.controller"
 import { ManageSubscriptionsService } from "./services/manage-subscriptions.service"
 import { ManageAttendancesService } from "./services/manage-attendances.service"
+import { EnrollmentRepository } from "./abstracts/enrollment-repository.abstract"
+import { TypeOrmEnrollmentRepository } from "./repositories/typeorm-enrollment.repository"
+import { SubscriptionRepository } from "./abstracts/subscription-repository.abstract"
+import { TypeOrmSubscriptionRepository } from "./repositories/typeorm-subscription.repository"
+import { AttendanceRepository } from "./abstracts/attendance-repository.abstract"
+import { TypeOrmAttendanceRepository } from "./repositories/typeorm-attendance.repository"
 
 @Module({
     imports: [
@@ -35,6 +41,18 @@ import { ManageAttendancesService } from "./services/manage-attendances.service"
         ManageEnrollmentsService,
         ManageSubscriptionsService,
         ManageAttendancesService,
+        {
+            provide: EnrollmentRepository,
+            useClass: TypeOrmEnrollmentRepository,
+        },
+        {
+            provide: SubscriptionRepository,
+            useClass: TypeOrmSubscriptionRepository,
+        },
+        {
+            provide: AttendanceRepository,
+            useClass: TypeOrmAttendanceRepository,
+        },
     ],
 })
 export class EnrollmentsModule {}

@@ -1,75 +1,19 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
 import { AttendanceEntity } from "../entities/attendance.entity"
-import { Repository } from "typeorm"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 import { IManageAttendancesService } from "../interfaces/manage-attendances-service.interface"
 import { GetAttendanceListQueryDto, UpdateAttendanceBodyDto } from "../dto"
+import { AttendanceRepository, SubscriptionSessions } from "../abstracts/attendance-repository.abstract"
 
 @Injectable()
 export class ManageAttendancesService implements IManageAttendancesService {
     private readonly logger = new Logger(ManageAttendancesService.name)
 
-    constructor(
-        @InjectRepository(AttendanceEntity)
-        private attendanceRepository: Repository<AttendanceEntity>,
-    ) {}
+    constructor(private readonly attendanceRepository: AttendanceRepository) {}
 
     async findAll(query: GetAttendanceListQueryDto) {
-        const {
-            limit,
-            page,
-            dateFrom,
-            dateTo,
-            isPresent,
-            subscriptionId,
-            lessonId,
-            userId,
-            childId,
-            sortDirection,
-        } = query
-
-        const queryBuilder = this.attendanceRepository.createQueryBuilder("attendances")
-
-        queryBuilder.leftJoinAndSelect("attendances.subscription", "subscriptions")
-        queryBuilder.leftJoinAndSelect("subscriptions.enrollment", "enrollments")
-        queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
-        
-        if (isPresent !== undefined) {
-            queryBuilder.andWhere("attendances.isPresent = :isPresent", { isPresent })
-        }
-
-        if (lessonId) {
-            queryBuilder.leftJoin("enrollments.lesson", "lessons")
-            queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
-        }
-
-        if (subscriptionId) {
-            queryBuilder.andWhere("subscriptions.id = :subscriptionId", { subscriptionId })
-        }
-
-        if (userId) {
-            queryBuilder.andWhere("users.id = :userId", { userId })
-        }
-
-        if (childId) {
-            queryBuilder.andWhere("children.id = :childId", { childId })
-        }
-
-        if (dateFrom) {
-            queryBuilder.andWhere("attendances.date >= :dateFrom", { dateFrom })
-        }
-
-        if (dateTo) {
-            queryBuilder.andWhere("attendances.date <= :dateTo", { dateTo })
-        }
-
-        queryBuilder.orderBy("attendances.date", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [attendances, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
+        const [attendances, totalCount] = await this.attendanceRepository.findPage(query)
+        const totalPagesAmount = Math.ceil(totalCount / query.limit)
 
         this.logger.debug("Get attendance list: ", attendances)
         return {
@@ -77,7 +21,7 @@ export class ManageAttendancesService implements IManageAttendancesService {
             meta: {
                 totalCount: totalCount,
                 totalPagesAmount: totalPagesAmount,
-                currentPage: page,
+                currentPage: query.page,
             },
         }
     }
@@ -86,40 +30,34 @@ export class ManageAttendancesService implements IManageAttendancesService {
     async update(attendanceId: number, data: UpdateAttendanceBodyDto) {
         const { isPresent } = data
 
-        await this.attendanceRepository.manager.transaction(async (manager) => {
-            const attendance = await manager.findOne(AttendanceEntity,
-                {
-                    where: { id: attendanceId },
-                    relations: { subscription: true },
-                }
-            )
+        const attendance = await this.attendanceRepository.findByIdWithSubscription(attendanceId)
 
-            if (!attendance) throw new NotFoundException("Attendance not found")
+        if (!attendance) throw new NotFoundException("Attendance not found")
 
-            await manager.update(AttendanceEntity,
-                { id: attendanceId },
-                data,
-            )
+        const subscription = attendance.subscription
 
-            // change sessionsLeft
-            if (isPresent !== undefined && isPresent !== attendance.isPresent) {
-                const subscription = attendance.subscription
+        // change sessionsLeft only if presence has changed
+        let sessions: SubscriptionSessions | undefined
 
-                const delta = isPresent ? -1 : +1
-                const newSessionsLeft = subscription.sessionsLeft + delta
+        if (isPresent !== undefined && isPresent !== attendance.isPresent) {
+            const delta = isPresent ? -1 : +1
+            const newSessionsLeft = subscription.sessionsLeft + delta
 
-                // if sessionsLeft is equal to zero - change isActive status to false
-                await manager.update(SubscriptionEntity,
-                    { id: subscription.id },
-                    {
-                        sessionsLeft: newSessionsLeft,
-                        isActive: newSessionsLeft > 0,
-                    },
-                )
+            // if sessionsLeft is equal to zero - change isActive status to false
+            sessions = {
+                sessionsLeft: newSessionsLeft,
+                isActive: newSessionsLeft > 0,
             }
+        }
 
-            return attendance
-        })
+        const isUpdated = await this.attendanceRepository.updateWithSessions(
+            attendanceId,
+            data,
+            subscription.id,
+            sessions,
+        )
+
+        if (!isUpdated) throw new NotFoundException("Attendance not found")
 
         this.logger.log(`Attendance with id ${attendanceId} updated successfully`)
     }
@@ -128,34 +66,26 @@ export class ManageAttendancesService implements IManageAttendancesService {
     async delete(attendanceId: number) {
         this.logger.log(`Deleting attendance with id: ${attendanceId}`)
 
-        await this.attendanceRepository.manager.transaction(async (manager) => {
-            const attendance = await manager.findOne(AttendanceEntity, {
-                where: { id: attendanceId },
-                relations: { subscription: true },
-            })
+        const attendance = await this.attendanceRepository.findByIdWithSubscription(attendanceId)
 
-            if (!attendance) throw new NotFoundException(`Attendance with id ${attendanceId} not found`)
+        if (!attendance) throw new NotFoundException(`Attendance with id ${attendanceId} not found`)
 
-            // return session number if it was used before
-            if (attendance.isPresent) {
-                const subscription = attendance.subscription
-                const newSessionsLeft = subscription.sessionsLeft + 1
-    
-                await manager.update(SubscriptionEntity,
-                    { id: subscription.id },
-                    {
-                        sessionsLeft: newSessionsLeft,
-                        isActive: true,
-                    },
-                )
-            }
+        const subscription = attendance.subscription
 
-            const deleteResult = await manager.delete(AttendanceEntity, { id: attendanceId })
+        // return session number if it was used before
+        const sessions: SubscriptionSessions | undefined = attendance.isPresent
+            ? { sessionsLeft: subscription.sessionsLeft + 1, isActive: true }
+            : undefined
 
-            if (deleteResult.affected === 0) {
-                this.logger.log(`Cannot delete attendance. No attendance with id: ${attendanceId}`)
-                throw new NotFoundException(`Attendance with id ${attendanceId} not found`)
-            }
-        })
+        const isDeleted = await this.attendanceRepository.deleteWithSessions(
+            attendanceId,
+            subscription.id,
+            sessions,
+        )
+
+        if (!isDeleted) {
+            this.logger.log(`Cannot delete attendance. No attendance with id: ${attendanceId}`)
+            throw new NotFoundException(`Attendance with id ${attendanceId} not found`)
+        }
     }
 }

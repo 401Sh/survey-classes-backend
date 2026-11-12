@@ -1,9 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { SubscriptionEntity } from "../entities/subscription.entity"
-import { Repository } from "typeorm"
 import { PaymentStatus } from "../enums/payment-status.enum"
-import { AttendanceEntity } from "../entities/attendance.entity"
 import { IManageSubscriptionsService } from "../interfaces/manage-subscriptions-service.interface"
 import {
     CreateAttendanceBodyDto,
@@ -11,6 +7,8 @@ import {
     PayFullPriceSubscriptionPaymentBodyDto,
     RefundSubscriptionPaymentBodyDto,
 } from "../dto"
+import { SubscriptionRepository } from "../abstracts/subscription-repository.abstract"
+import { AttendanceRepository, SubscriptionSessions } from "../abstracts/attendance-repository.abstract"
 
 
 @Injectable()
@@ -18,49 +16,35 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
     private readonly logger = new Logger(ManageSubscriptionsService.name)
 
     constructor(
-        @InjectRepository(SubscriptionEntity)
-        private subscriptionRepository: Repository<SubscriptionEntity>,
+        private readonly subscriptionRepository: SubscriptionRepository,
+        private readonly attendanceRepository: AttendanceRepository,
     ) {}
 
     async createAttendance(subscriptionId: number, data: CreateAttendanceBodyDto) {
         const { isPresent } = data
 
-        const attendance = await this.subscriptionRepository.manager.transaction(async (manager) => {
-            const subscription = await manager.findOne(SubscriptionEntity,
-                {
-                    where: { id: subscriptionId },
-                }
-            )
-        
-            if (!subscription) throw new NotFoundException("Subscription not found")
+        const subscription = await this.subscriptionRepository.findById(subscriptionId)
 
-            if (!subscription.isActive) {
-                throw new BadRequestException("Cannot create attendance for inactive subscription")
+        if (!subscription) throw new NotFoundException("Subscription not found")
+
+        if (!subscription.isActive) {
+            throw new BadRequestException("Cannot create attendance for inactive subscription")
+        }
+
+        // change sessionsLeft only if the child was present
+        let sessions: SubscriptionSessions | undefined
+
+        if (isPresent) {
+            const newSessionsLeft = subscription.sessionsLeft - 1
+
+            // if sessionsLeft is equal to zero - change isActive status to false
+            sessions = {
+                sessionsLeft: newSessionsLeft,
+                isActive: newSessionsLeft > 0,
             }
+        }
 
-            const attendance = await manager.save(AttendanceEntity,
-                {
-                    ...data,
-                    subscription: { id: subscriptionId },
-                }
-            )
-
-            // change sessionsLeft
-            if (isPresent) {
-                const newSessionsLeft = subscription.sessionsLeft - 1
-
-                // if sessionsLeft is equal to zero - change isActive status to false
-                await manager.update(SubscriptionEntity,
-                    { id: subscription.id },
-                    {
-                        sessionsLeft: newSessionsLeft,
-                        isActive: newSessionsLeft > 0,
-                    },
-                )
-            }
-
-            return attendance
-        })
+        const attendance = await this.attendanceRepository.createWithSessions(subscriptionId, data, sessions)
 
         this.logger.log(`Created new attendance for subscription: ${subscriptionId}`)
         this.logger.debug("Created new attendance: ", attendance)
@@ -69,47 +53,8 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
 
 
     async findAll(query: GetManageSubscriptionListQueryDto) {
-        const {
-            limit,
-            page,
-            dateFrom,
-            dateTo,
-            paymentStatus,
-            pricingTierId,
-            enrollmentId,
-            sortDirection,
-        } = query
-
-        const queryBuilder = this.subscriptionRepository.createQueryBuilder("subscriptions")
-
-        queryBuilder.leftJoinAndSelect("subscriptions.pricingTier", "pricingTiers")
-        queryBuilder.leftJoinAndSelect("subscriptions.enrollment", "enrollments")
-
-        if (paymentStatus) {
-            queryBuilder.where("subscriptions.paymentStatus = :paymentStatus", { paymentStatus })
-        }
-
-        if (dateFrom) {
-            queryBuilder.andWhere("subscriptions.createdAt >= :dateFrom", { dateFrom })
-        }
-
-        if (dateTo) {
-            queryBuilder.andWhere("subscriptions.createdAt <= :dateTo", { dateTo })
-        }
-
-        if (pricingTierId) {
-            queryBuilder.andWhere("pricingTiers.id = :pricingTierId", { pricingTierId })
-        }
-
-        if (enrollmentId) {
-            queryBuilder.andWhere("enrollments.id = :enrollmentId", { enrollmentId })
-        }
-
-        queryBuilder.orderBy("subscriptions.createdAt", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [subscriptions, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
+        const [subscriptions, totalCount] = await this.subscriptionRepository.findPage(query)
+        const totalPagesAmount = Math.ceil(totalCount / query.limit)
 
         this.logger.debug("Get subscription list: ", subscriptions)
         return {
@@ -117,24 +62,14 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
             meta: {
                 totalCount: totalCount,
                 totalPagesAmount: totalPagesAmount,
-                currentPage: page,
+                currentPage: query.page,
             },
         }
     }
 
 
     async findById(id: number) {
-        const subscription = await this.subscriptionRepository.findOne({
-            where: { id },
-            relations: {
-                enrollment: {
-                    user: true,
-                    child: true,
-                },
-                pricingTier: true,
-                attendances: true,
-            },
-        })
+        const subscription = await this.subscriptionRepository.findByIdWithDetails(id)
 
         if (!subscription) {
             this.logger.log(`No subscription with id: ${id}`)
@@ -148,12 +83,7 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
 
 
     async payFullPrice(subscriptionId: number, data: PayFullPriceSubscriptionPaymentBodyDto) {
-        const { paidAt } = data
-
-        const subscription = await this.subscriptionRepository.findOne({
-            where: { id: subscriptionId },
-            relations: { pricingTier: true },
-        })
+        const subscription = await this.subscriptionRepository.findById(subscriptionId)
 
         if (!subscription) {
             throw new NotFoundException(`Subscription with id ${subscriptionId} not found`)
@@ -172,15 +102,15 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
         }
 
         const updateResult = await this.subscriptionRepository.update(
-            { id: subscriptionId },
+            subscriptionId,
             {
                 paymentStatus: PaymentStatus.PAID,
                 paidAmount: subscription.priceSnapshot,
-                paidAt: paidAt,
-            }
+                ...data,
+            },
         )
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update subscription payment with id: ${subscriptionId}`)
             throw new NotFoundException("Subscription not found")
         }
@@ -188,11 +118,7 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
 
 
     async refund(subscriptionId: number, data: RefundSubscriptionPaymentBodyDto) {
-        const { refundedAt } = data
-
-        const subscription = await this.subscriptionRepository.findOne({
-            where: { id: subscriptionId },
-        })
+        const subscription = await this.subscriptionRepository.findById(subscriptionId)
 
         if (!subscription) throw new NotFoundException(`Subscription with id ${subscriptionId} not found`)
 
@@ -200,14 +126,17 @@ export class ManageSubscriptionsService implements IManageSubscriptionsService {
             throw new BadRequestException("Only paid subscriptions can be refunded")
         }
 
-        const updateResult = await this.subscriptionRepository.update({ id: subscriptionId }, {
-            paymentStatus: PaymentStatus.REFUNDED,
-            refundedAmount: subscription.paidAmount,
-            refundedAt: refundedAt,
-            isActive: false,
-        })
+        const updateResult = await this.subscriptionRepository.update(
+            subscriptionId,
+            {
+                paymentStatus: PaymentStatus.REFUNDED,
+                refundedAmount: subscription.paidAmount,
+                isActive: false,
+                ...data,
+            },
+        )
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update subscription payment with id: ${subscriptionId}`)
             throw new NotFoundException("Subscription not found")
         }

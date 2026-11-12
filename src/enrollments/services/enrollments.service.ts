@@ -1,7 +1,4 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { EnrollmentEntity } from "../entities/enrollment.entity"
-import { Not, Repository } from "typeorm"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
@@ -9,17 +6,16 @@ import { LessonsInternalService } from "src/lessons/services/lessons-internal.se
 import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
 import { IEnrollmentsService } from "../interfaces/enrollments-service.interface"
 import { CreateEnrollmentBodyDto, CreateEnrollmentSubscriptionBodyDto, GetEnrollmentListQueryDto } from "../dto"
-import { SubscriptionEntity } from "../entities/subscription.entity"
+import { EnrollmentRepository } from "../abstracts/enrollment-repository.abstract"
+import { SubscriptionRepository } from "../abstracts/subscription-repository.abstract"
 
 @Injectable()
 export class EnrollmentsService implements IEnrollmentsService {
     private readonly logger = new Logger(EnrollmentsService.name)
 
     constructor(
-        @InjectRepository(EnrollmentEntity)
-        private enrollmentRepository: Repository<EnrollmentEntity>,
-        @InjectRepository(SubscriptionEntity)
-        private subscriptionRepository: Repository<SubscriptionEntity>,
+        private readonly enrollmentRepository: EnrollmentRepository,
+        private readonly subscriptionRepository: SubscriptionRepository,
 
         private readonly childrenService: ChildrenInternalService,
         private readonly lessonsService: LessonsInternalService,
@@ -27,7 +23,7 @@ export class EnrollmentsService implements IEnrollmentsService {
     ) {}
 
     async create(userId: number, data: CreateEnrollmentBodyDto) {
-        const { lessonId, childId, consentedAt, isConsented } = data
+        const { lessonId, childId } = data
 
         // check that the child belongs to the user
         await this.validateChildOwnership(childId, userId)
@@ -43,14 +39,11 @@ export class EnrollmentsService implements IEnrollmentsService {
             ? EnrollmentStatus.ACTIVE
             : EnrollmentStatus.PENDING
 
-        const enrollment = await this.enrollmentRepository.save({
-            user: { id: userId },
-            child: { id: childId },
-            lesson: { id: lessonId },
-            enrolledAt: new Date(),
-            consentedAt,
-            isConsented,
+        const enrollment = await this.enrollmentRepository.create({
+            userId,
             status,
+            enrolledAt: new Date(),
+            ...data,
         })
 
         this.logger.log(`Created child ${childId} enrollment for lesson ${lessonId}`)
@@ -85,42 +78,8 @@ export class EnrollmentsService implements IEnrollmentsService {
 
 
     async findAll(userId: number, query: GetEnrollmentListQueryDto) {
-        const { limit, page, dateFrom, dateTo, status, lessonId, childId, sortDirection } = query
-
-        const queryBuilder = this.enrollmentRepository.createQueryBuilder("enrollments")
-
-        queryBuilder.leftJoinAndSelect("enrollments.child", "children")
-        queryBuilder.leftJoinAndSelect("enrollments.user", "users")
-        queryBuilder.leftJoinAndSelect("enrollments.lesson", "lessons")
-        queryBuilder.leftJoinAndSelect("enrollments.subscriptions", "subscriptions")
-
-        queryBuilder.where("users.id = :userId", { userId })
-
-        if (childId) {
-            queryBuilder.andWhere("children.id = :childId", { childId })
-        }
-
-        if (lessonId) {
-            queryBuilder.andWhere("lessons.id = :lessonId", { lessonId })
-        }
-
-        if (status) {
-            queryBuilder.andWhere("enrollments.status = :status", { status })
-        }
-
-        if (dateFrom) {
-            queryBuilder.andWhere("enrollments.enrolledAt >= :dateFrom", { dateFrom })
-        }
-
-        if (dateTo) {
-            queryBuilder.andWhere("enrollments.enrolledAt <= :dateTo", { dateTo })
-        }
-
-        queryBuilder.orderBy("enrollments.enrolledAt", sortDirection)
-        queryBuilder.skip((page - 1) * limit).take(limit)
-
-        const [enrollments, totalCount] = await queryBuilder.getManyAndCount()
-        const totalPagesAmount = Math.ceil(totalCount / limit)
+        const [enrollments, totalCount] = await this.enrollmentRepository.findPageByUserId(userId, query)
+        const totalPagesAmount = Math.ceil(totalCount / query.limit)
 
         this.logger.debug("Get enrollment list: ", enrollments)
         return {
@@ -128,65 +87,14 @@ export class EnrollmentsService implements IEnrollmentsService {
             meta: {
                 totalCount: totalCount,
                 totalPagesAmount: totalPagesAmount,
-                currentPage: page,
+                currentPage: query.page,
             },
         }
     }
 
 
     async findById(userId: number, enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: {
-                id: enrollmentId,
-                child: {
-                    user: { id: userId },
-                },
-            },
-            relations: {
-                child: true,
-                lesson: true,
-                subscriptions: {
-                    attendances: true,
-                    pricingTier: true,
-                },
-            },
-            select: {
-                id: true,
-                status: true,
-                enrolledAt: true,
-                consentedAt: true,
-                child: {
-                    id: true,
-                    firstName: true,
-                    secondName: true,
-                },
-                lesson: {
-                    id: true,
-                    name: true,
-                    description: true,
-                },
-                subscriptions: {
-                    id: true,
-                    paymentStatus: true,
-                    paidAmount: true,
-                    sessionsTotal: true,
-                    sessionsLeft: true,
-                    createdAt: true,
-                    pricingTier: {
-                        id: true,
-                        label: true,
-                        price: true,
-                        sessionsCount: true,
-                    },
-                    attendances: {
-                        id: true,
-                        date: true,
-                        isPresent: true,
-                        note: true,
-                    },
-                },
-            },
-        })
+        const enrollment = await this.enrollmentRepository.findByIdAndUserIdWithDetails(enrollmentId, userId)
 
         if (!enrollment) {
             this.logger.log(`No enrollment with id: ${enrollmentId}`)
@@ -207,13 +115,9 @@ export class EnrollmentsService implements IEnrollmentsService {
 
     async delete(userId: number, enrollmentId: number) {
         this.logger.log(`Deleting pending enrollment with id: ${enrollmentId}`)
-        const deleteResult = await this.enrollmentRepository.delete({
-            id: enrollmentId,
-            user: { id: userId },
-            status: EnrollmentStatus.PENDING,
-        })
+        const deleteResult = await this.enrollmentRepository.deletePendingByIdAndUserId(enrollmentId, userId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete enrollment. No pending enrollment with id: ${enrollmentId}`)
             throw new NotFoundException(`Pending enrollment with id ${enrollmentId} not found`)
         }
@@ -230,13 +134,10 @@ export class EnrollmentsService implements IEnrollmentsService {
 
 
     private async validateActiveEnrollmentExisting(lessonId: number, childId: number) {
-        const isEnrollmentExists = await this.enrollmentRepository.exists({
-            where: {
-                child: { id: childId },
-                lesson: { id: lessonId },
-                status: Not(EnrollmentStatus.SUSPENDED),
-            },
-        })
+        const isEnrollmentExists = await this.enrollmentRepository.existsNotSuspendedByLessonIdAndChildId(
+            lessonId,
+            childId,
+        )
 
         if (isEnrollmentExists) {
             throw new BadRequestException("Child is already enrolled in this lesson")
@@ -245,17 +146,11 @@ export class EnrollmentsService implements IEnrollmentsService {
 
 
     private async getEnrollmentOrThrow(userId: number, enrollmentId: number) {
-        const enrollment = await this.enrollmentRepository.findOne({
-            where: {
-                id: enrollmentId,
-                status: EnrollmentStatus.ACTIVE,
-                user: { id: userId },
-            },
-            relations: {
-                lesson: true,
-            },
-        })
-    
+        const enrollment = await this.enrollmentRepository.findActiveByIdAndUserIdWithLesson(
+            enrollmentId,
+            userId,
+        )
+
         if (!enrollment) {
             throw new NotFoundException("Enrollment not found")
         }
@@ -265,30 +160,7 @@ export class EnrollmentsService implements IEnrollmentsService {
 
 
     private async findAllSubscriptionsByEnrollmentIdAndUserId(userId: number, enrollmentId: number) {
-        const subscriptions = await this.subscriptionRepository.find({
-            where: {
-                enrollment: {
-                    id: enrollmentId,
-                    user: { id: userId },
-                }
-            },
-            select: {
-                id: true,
-                paymentStatus: true,
-                priceSnapshot: true,
-                paidAmount: true,
-                sessionsTotal: true,
-                sessionsLeft: true,
-                pricingTier: {
-                    id: true,
-                    label: true,
-                    sessionsCount: true,
-                },
-            },
-            relations: {
-                pricingTier: true,
-            },
-        })
+        const subscriptions = await this.subscriptionRepository.findAllByEnrollmentIdAndUserId(enrollmentId, userId)
 
         this.logger.debug("Get subscription list: ", subscriptions)
         return subscriptions
@@ -301,13 +173,15 @@ export class EnrollmentsService implements IEnrollmentsService {
         price: number,
         sessionsCount: number,
     ) {
-        const subscription = await this.subscriptionRepository.save({
-            enrollment: { id: enrollmentId },
-            pricingTier: { id: pricingTierId },
-            priceSnapshot: price,
-            sessionsTotal: sessionsCount,
-            sessionsLeft: sessionsCount,
-        })
+        const subscription = await this.subscriptionRepository.create(
+            enrollmentId,
+            pricingTierId,
+            {
+                priceSnapshot: price,
+                sessionsTotal: sessionsCount,
+                sessionsLeft: sessionsCount,
+            },
+        )
 
         this.logger.log(`Created new subscription for enrollmentId: ${enrollmentId}`)
         this.logger.debug("Created new subscription: ", subscription)
