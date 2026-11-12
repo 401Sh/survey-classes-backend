@@ -1,31 +1,25 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
 import { CategoryEntity } from "../entities/category.entity"
-import { In, Repository } from "typeorm"
 import { IManageDictionariesService } from "../interfaces/manage-dictionaries-service.interface"
 import { CreateCategoryBodyDto, UpdateCategoryBodyDto } from "../dto"
+import { DictionaryRepository } from "../abstracts/dictionary-repository.abstract"
 
 @Injectable()
 export class ManageDictionariesService implements IManageDictionariesService {
     private readonly logger = new Logger(ManageDictionariesService.name)
  
-    constructor(
-        @InjectRepository(CategoryEntity)
-        private categoryRepository: Repository<CategoryEntity>,
-    ) {}
+    constructor(private readonly dictionaryRepository: DictionaryRepository) {}
 
     async createCategory(data: CreateCategoryBodyDto) {
         const { name } = data
 
-        const existing = await this.categoryRepository.findOne({
-            where: { name: name },
-        })
+        const isDictionaryExists = await this.dictionaryRepository.existsByName(name)
 
-        if (existing) {
+        if (isDictionaryExists) {
             throw new ConflictException(`Category "${name}" already exists`)
         }
 
-        const category = await this.categoryRepository.save(data)
+        const category = await this.dictionaryRepository.save(data)
 
         this.logger.log(`Created category: ${name}`)
         return category
@@ -33,36 +27,30 @@ export class ManageDictionariesService implements IManageDictionariesService {
 
 
     async findCategoriesByIds(categoryIds: number[]): Promise<CategoryEntity[]> {
-        return await this.categoryRepository.find({
-            where: { id: In(categoryIds) },
-        })
+        return await this.dictionaryRepository.findAllById(categoryIds)
     }
 
 
     async updateCategory(categoryId: number, data: UpdateCategoryBodyDto) {
         const { name } = data
 
-        const category = await this.categoryRepository.findOne({
-            where: { id: categoryId },
-        })
+        const category = await this.dictionaryRepository.findById(categoryId)
 
         if (!category) {
             throw new NotFoundException(`Category with id ${categoryId} not found`)
         }
 
         if (name && name !== category.name) {
-            const existing = await this.categoryRepository.findOne({
-                where: { name: data.name },
-            })
+            const isDictionaryExists = await this.dictionaryRepository.existsByName(name)
 
-            if (existing) {
+            if (isDictionaryExists) {
                 throw new ConflictException(`Category "${name}" already exists`)
             }
         }
 
-        const updateResult = await this.categoryRepository.update({ id: categoryId }, data)
+        const updateResult = await this.dictionaryRepository.update(categoryId, data)
 
-        if (updateResult.affected === 0) {
+        if (!updateResult) {
             this.logger.debug(`Cannot update category with id: ${categoryId}`)
             throw new NotFoundException(`category with id ${categoryId} not found`)
         }
@@ -73,9 +61,9 @@ export class ManageDictionariesService implements IManageDictionariesService {
 
     async deleteCategory(categoryId: number) {
         this.logger.log(`Deleting category with id: ${categoryId}`)
-        const deleteResult = await this.categoryRepository.delete({ id: categoryId })
+        const deleteResult = await this.dictionaryRepository.delete(categoryId)
 
-        if (deleteResult.affected === 0) {
+        if (!deleteResult) {
             this.logger.log(`Cannot delete category. No category with id: ${categoryId}`)
             throw new NotFoundException(`Category with id ${categoryId} not found`)
         }

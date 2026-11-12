@@ -1,26 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
 import { CategoryEntity } from "../entities/category.entity"
-import { Repository } from "typeorm"
 import { IDictionariesService } from "../interfaces/dictionaries-service.interface"
+import { DictionaryRepository } from "../abstracts/dictionary-repository.abstract"
 
 @Injectable()
 export class DictionariesService implements IDictionariesService {
     private readonly logger = new Logger(DictionariesService.name)
 
-    constructor(
-        @InjectRepository(CategoryEntity)
-        private categoryRepository: Repository<CategoryEntity>,
-    ) {}
+    constructor(private readonly dictionaryRepository: DictionaryRepository) {}
 
 
     async findAllCategories(): Promise<CategoryEntity[]> {
-        const categories = await this.categoryRepository.find({
-            select: {
-                id: true,
-                name: true,
-            },
-        })
+        const categories = await this.dictionaryRepository.findAllSimplified()
 
         this.logger.debug("Get category list: ", categories)
         return categories

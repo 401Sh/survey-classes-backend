@@ -5,6 +5,8 @@ import { DictionariesService } from "./services/dictionaries.service"
 import { DictionariesController } from "./controllers/dictionaries.controller"
 import { ManageDictionariesService } from "./services/manage-dictionaries.service"
 import { ManageDictionariesController } from "./controllers/manage-dictionaries.controller"
+import { DictionaryRepository } from "./abstracts/dictionary-repository.abstract"
+import { TypeOrmDictionaryRepository } from "./repositories/typeorm-dictionary.repository"
 
 @Module({
     imports: [
@@ -18,7 +20,11 @@ import { ManageDictionariesController } from "./controllers/manage-dictionaries.
     ],
     providers: [
         DictionariesService,
-        ManageDictionariesService
+        ManageDictionariesService,
+        {
+            provide: DictionaryRepository,
+            useClass: TypeOrmDictionaryRepository,
+        },
     ],
     exports: [ManageDictionariesService],
 })
