@@ -99,6 +99,10 @@ export class AuthService implements IAuthService {
     async confirmEmail(signUpConfirmDto: SignUpConfirmDto, userAgent: string, ip: string, fingerprint: string) {
         const user = await this.usersService.findByEmailWithVerification(signUpConfirmDto.email)
 
+        if (!fingerprint) {
+            throw new BadRequestException("Fingerprint header is required")
+        }
+
         if (!user) throw new NotFoundException("User does not exist")
 
         if (user.isEmailVerified) {
@@ -136,10 +140,6 @@ export class AuthService implements IAuthService {
             user.id,
             { isEmailVerified: true },
         )
-
-        if (!fingerprint) {
-            throw new BadRequestException("Fingerprint header is required")
-        }
 
         const tokens = await this.tokensService.createRefreshSession(
             user,
