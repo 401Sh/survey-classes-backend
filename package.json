@@ -11,9 +11,15 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+
+    "db:generate": "nest build && typeorm migration:generate -d dist/database/data-source.js",
+    "db:migrate": "nest build && typeorm migration:run -d dist/database/data-source.js",
+    "db:revert": "nest build && typeorm migration:revert -d dist/database/data-source.js",
+    "db:show": "nest build && typeorm migration:show -d dist/database/data-source.js"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
