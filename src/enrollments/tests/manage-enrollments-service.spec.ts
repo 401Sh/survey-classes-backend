@@ -1,26 +1,18 @@
-import { NotFoundException, BadRequestException } from "@nestjs/common"
+import { BadRequestException, NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { EnrollmentRepository } from "../abstracts/enrollment-repository.abstract"
+import { GetManageEnrollmentListQueryDto } from "../dto"
 import { ManageEnrollmentsService } from "../services/manage-enrollments.service"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
-
-const createQueryBuilderMock = () => ({
-    leftJoinAndSelect: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    andWhere: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    skip: vi.fn().mockReturnThis(),
-    take: vi.fn().mockReturnThis(),
-    getManyAndCount: vi.fn(),
-})
 
 const mockEnrollmentRepository = {
-    findOne: vi.fn(),
-    update: vi.fn(),
-    createQueryBuilder: vi.fn(),
+    findById: vi.fn(),
+    findByIdWithDetails: vi.fn(),
+    findPage: vi.fn(),
+    updateStatus: vi.fn(),
 }
 
 describe("ManageEnrollmentsService", () => {
@@ -30,14 +22,11 @@ describe("ManageEnrollmentsService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageEnrollmentsService,
-                {
-                    provide: getRepositoryToken(EnrollmentEntity),
-                    useValue: mockEnrollmentRepository,
-                },
+                { provide: EnrollmentRepository, useValue: mockEnrollmentRepository },
             ],
         }).compile()
 
-        service = module.get<ManageEnrollmentsService>(ManageEnrollmentsService)
+        service = module.get(ManageEnrollmentsService)
     })
 
     afterEach(() => {
@@ -47,66 +36,22 @@ describe("ManageEnrollmentsService", () => {
     // -------------------------------------------------------------------------
 
     describe("findAll", () => {
-        const baseQuery = {
-            page: 1,
-            limit: 10,
-            sortDirection: SortDirection.DESC,
-        }
+        it("should return enrollments with pagination meta", async () => {
+            const query = { page: 2, limit: 5, sortDirection: SortDirection.DESC } as GetManageEnrollmentListQueryDto
+            const fakeEnrollments = [{ id: 1 }] as EnrollmentEntity[]
+            mockEnrollmentRepository.findPage.mockResolvedValue([fakeEnrollments, 11])
 
-        it("should return paginated result", async () => {
-            const fakeEnrollments = [{ id: 1 }, { id: 2 }] as unknown as EnrollmentEntity[]
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([fakeEnrollments, 2])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
+            const result = await service.findAll(query)
 
-            const result = await service.findAll(baseQuery)
-
-            expect(result.data).toEqual(fakeEnrollments)
-            expect(result.meta).toEqual({
-                totalCount: 2,
-                totalPagesAmount: 1,
-                currentPage: 1,
+            expect(mockEnrollmentRepository.findPage).toHaveBeenCalledWith(query)
+            expect(result).toEqual({
+                data: fakeEnrollments,
+                meta: {
+                    totalCount: 11,
+                    totalPagesAmount: 3, // 11 записей по 5 на странице = 3 страницы
+                    currentPage: 2,
+                },
             })
-        })
-
-        it("should calculate totalPagesAmount correctly", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 25])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
-
-            const result = await service.findAll({ ...baseQuery, limit: 10 })
-
-            expect(result.meta.totalPagesAmount).toBe(3)
-        })
-
-        it("should apply status filter when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, status: EnrollmentStatus.ACTIVE })
-
-            expect(qb.where).toHaveBeenCalledWith(
-                "enrollments.status = :status",
-                { status: EnrollmentStatus.ACTIVE }
-            )
-        })
-
-        it("should apply dateFrom and dateTo filters when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, dateFrom: new Date("2024-01-01"), dateTo: new Date("2024-12-31") })
-
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "enrollments.createdAt >= :dateFrom",
-                { dateFrom: new Date("2024-01-01") }
-            )
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "enrollments.createdAt <= :dateTo",
-                { dateTo: new Date("2024-12-31") }
-            )
         })
     })
 
@@ -114,8 +59,8 @@ describe("ManageEnrollmentsService", () => {
 
     describe("findById", () => {
         it("should return enrollment when it exists", async () => {
-            const fakeEnrollment = { id: 1 } as unknown as EnrollmentEntity
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
+            const fakeEnrollment = { id: 1 } as EnrollmentEntity
+            mockEnrollmentRepository.findByIdWithDetails.mockResolvedValue(fakeEnrollment)
 
             const result = await service.findById(1)
 
@@ -123,7 +68,7 @@ describe("ManageEnrollmentsService", () => {
         })
 
         it("should throw NotFoundException when enrollment does not exist", async () => {
-            mockEnrollmentRepository.findOne.mockResolvedValue(null)
+            mockEnrollmentRepository.findByIdWithDetails.mockResolvedValue(null)
 
             await expect(service.findById(99)).rejects.toThrow(NotFoundException)
         })
@@ -133,37 +78,35 @@ describe("ManageEnrollmentsService", () => {
 
     describe("activate", () => {
         it("should activate pending enrollment", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.PENDING,
-            } as unknown as EnrollmentEntity
+            mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status: EnrollmentStatus.PENDING })
+            mockEnrollmentRepository.updateStatus.mockResolvedValue(true)
 
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-            mockEnrollmentRepository.update.mockResolvedValue({ affected: 1 })
+            await service.activate(1)
 
-            await expect(service.activate(1)).resolves.not.toThrow()
-
-            expect(mockEnrollmentRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                { status: EnrollmentStatus.ACTIVE }
-            )
-        })
-
-        it("should throw BadRequestException when enrollment is not pending", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.ACTIVE,
-            } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-
-            await expect(service.activate(1)).rejects.toThrow(BadRequestException)
+            expect(mockEnrollmentRepository.updateStatus).toHaveBeenCalledWith(1, EnrollmentStatus.ACTIVE)
         })
 
         it("should throw NotFoundException when enrollment does not exist", async () => {
-            mockEnrollmentRepository.findOne.mockResolvedValue(null)
+            mockEnrollmentRepository.findById.mockResolvedValue(null)
 
             await expect(service.activate(99)).rejects.toThrow(NotFoundException)
+        })
+
+        it.each([EnrollmentStatus.ACTIVE, EnrollmentStatus.SUSPENDED])(
+            "should throw BadRequestException when enrollment is %s",
+            async (status) => {
+                mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status })
+
+                await expect(service.activate(1)).rejects.toThrow(BadRequestException)
+                expect(mockEnrollmentRepository.updateStatus).not.toHaveBeenCalled()
+            }
+        )
+
+        it("should throw NotFoundException when status was not updated", async () => {
+            mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status: EnrollmentStatus.PENDING })
+            mockEnrollmentRepository.updateStatus.mockResolvedValue(false)
+
+            await expect(service.activate(1)).rejects.toThrow(NotFoundException)
         })
     })
 
@@ -171,75 +114,71 @@ describe("ManageEnrollmentsService", () => {
 
     describe("suspend", () => {
         it("should suspend active enrollment", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.ACTIVE,
-            } as unknown as EnrollmentEntity
+            mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status: EnrollmentStatus.ACTIVE })
+            mockEnrollmentRepository.updateStatus.mockResolvedValue(true)
 
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-            mockEnrollmentRepository.update.mockResolvedValue({ affected: 1 })
+            await service.suspend(1)
 
-            await expect(service.suspend(1)).resolves.not.toThrow()
-
-            expect(mockEnrollmentRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                { status: EnrollmentStatus.SUSPENDED }
-            )
-        })
-
-        it("should throw BadRequestException when enrollment is not active", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.PENDING,
-            } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-
-            await expect(service.suspend(1)).rejects.toThrow(BadRequestException)
+            expect(mockEnrollmentRepository.updateStatus).toHaveBeenCalledWith(1, EnrollmentStatus.SUSPENDED)
         })
 
         it("should throw NotFoundException when enrollment does not exist", async () => {
-            mockEnrollmentRepository.findOne.mockResolvedValue(null)
+            mockEnrollmentRepository.findById.mockResolvedValue(null)
 
             await expect(service.suspend(99)).rejects.toThrow(NotFoundException)
+        })
+
+        it.each([EnrollmentStatus.PENDING, EnrollmentStatus.SUSPENDED])(
+            "should throw BadRequestException when enrollment is %s",
+            async (status) => {
+                mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status })
+
+                await expect(service.suspend(1)).rejects.toThrow(BadRequestException)
+                expect(mockEnrollmentRepository.updateStatus).not.toHaveBeenCalled()
+            }
+        )
+
+        it("should throw NotFoundException when status was not updated", async () => {
+            mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status: EnrollmentStatus.ACTIVE })
+            mockEnrollmentRepository.updateStatus.mockResolvedValue(false)
+
+            await expect(service.suspend(1)).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("unsuspend", () => {
-        it("should unsuspend suspended enrollment", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.SUSPENDED,
-            } as unknown as EnrollmentEntity
+        it("should re-activate suspended enrollment", async () => {
+            mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status: EnrollmentStatus.SUSPENDED })
+            mockEnrollmentRepository.updateStatus.mockResolvedValue(true)
 
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-            mockEnrollmentRepository.update.mockResolvedValue({ affected: 1 })
+            await service.unsuspend(1)
 
-            await expect(service.unsuspend(1)).resolves.not.toThrow()
-
-            expect(mockEnrollmentRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                { status: EnrollmentStatus.ACTIVE }
-            )
-        })
-
-        it("should throw BadRequestException when enrollment is not suspended", async () => {
-            const fakeEnrollment = {
-                id: 1,
-                status: EnrollmentStatus.ACTIVE,
-            } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-
-            await expect(service.unsuspend(1)).rejects.toThrow(BadRequestException)
+            expect(mockEnrollmentRepository.updateStatus).toHaveBeenCalledWith(1, EnrollmentStatus.ACTIVE)
         })
 
         it("should throw NotFoundException when enrollment does not exist", async () => {
-            mockEnrollmentRepository.findOne.mockResolvedValue(null)
+            mockEnrollmentRepository.findById.mockResolvedValue(null)
 
             await expect(service.unsuspend(99)).rejects.toThrow(NotFoundException)
+        })
+
+        it.each([EnrollmentStatus.PENDING, EnrollmentStatus.ACTIVE])(
+            "should throw BadRequestException when enrollment is %s",
+            async (status) => {
+                mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status })
+
+                await expect(service.unsuspend(1)).rejects.toThrow(BadRequestException)
+                expect(mockEnrollmentRepository.updateStatus).not.toHaveBeenCalled()
+            }
+        )
+
+        it("should throw NotFoundException when status was not updated", async () => {
+            mockEnrollmentRepository.findById.mockResolvedValue({ id: 1, status: EnrollmentStatus.SUSPENDED })
+            mockEnrollmentRepository.updateStatus.mockResolvedValue(false)
+
+            await expect(service.unsuspend(1)).rejects.toThrow(NotFoundException)
         })
     })
 })

@@ -1,35 +1,25 @@
 import { NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { AttendanceEntity } from "../entities/attendance.entity"
-import { SubscriptionEntity } from "../entities/subscription.entity"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { AttendanceRepository } from "../abstracts/attendance-repository.abstract"
+import { GetAttendanceListQueryDto } from "../dto"
 import { ManageAttendancesService } from "../services/manage-attendances.service"
 
-const createTransactionManagerMock = () => {
-    return {
-        findOne: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-    }
-}
-
-const createQueryBuilderMock = () => ({
-    leftJoinAndSelect: vi.fn().mockReturnThis(),
-    andWhere: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    skip: vi.fn().mockReturnThis(),
-    take: vi.fn().mockReturnThis(),
-    getManyAndCount: vi.fn(),
-})
-
 const mockAttendanceRepository = {
-    createQueryBuilder: vi.fn(),
-    manager: {
-        transaction: vi.fn(),
-    },
+    findByIdWithSubscription: vi.fn(),
+    findPage: vi.fn(),
+    updateWithSessions: vi.fn(),
+    deleteWithSessions: vi.fn(),
 }
+
+// посещение с подпиской (id = 10, осталось 5 занятий)
+const createFakeAttendance = (isPresent: boolean, sessionsLeft = 5) => ({
+    id: 1,
+    isPresent,
+    subscription: { id: 10, sessionsLeft },
+}) as AttendanceEntity
 
 describe("ManageAttendancesService", () => {
     let service: ManageAttendancesService
@@ -38,14 +28,11 @@ describe("ManageAttendancesService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageAttendancesService,
-                {
-                    provide: getRepositoryToken(AttendanceEntity),
-                    useValue: mockAttendanceRepository,
-                },
+                { provide: AttendanceRepository, useValue: mockAttendanceRepository },
             ],
         }).compile()
 
-        service = module.get<ManageAttendancesService>(ManageAttendancesService)
+        service = module.get(ManageAttendancesService)
     })
 
     afterEach(() => {
@@ -55,263 +42,158 @@ describe("ManageAttendancesService", () => {
     // -------------------------------------------------------------------------
 
     describe("findAll", () => {
-        const baseQuery = {
-            page: 1,
-            limit: 10,
-            sortDirection: SortDirection.DESC,
-        }
+        it("should return attendances with pagination meta", async () => {
+            const query = { page: 3, limit: 10, sortDirection: SortDirection.ASC } as GetAttendanceListQueryDto
+            const fakeAttendances = [{ id: 1 }] as AttendanceEntity[]
+            mockAttendanceRepository.findPage.mockResolvedValue([fakeAttendances, 25])
 
-        it("should return paginated result", async () => {
-            const fakeAttendances = [{ id: 1 }, { id: 2 }] as unknown as AttendanceEntity[]
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([fakeAttendances, 2])
-            mockAttendanceRepository.createQueryBuilder.mockReturnValue(qb)
+            const result = await service.findAll(query)
 
-            const result = await service.findAll(baseQuery)
-
-            expect(result.data).toEqual(fakeAttendances)
-            expect(result.meta).toEqual({
-                totalCount: 2,
-                totalPagesAmount: 1,
-                currentPage: 1,
+            expect(mockAttendanceRepository.findPage).toHaveBeenCalledWith(query)
+            expect(result).toEqual({
+                data: fakeAttendances,
+                meta: { totalCount: 25, totalPagesAmount: 3, currentPage: 3 },
             })
-        })
-
-        it("should calculate totalPagesAmount correctly", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 25])
-            mockAttendanceRepository.createQueryBuilder.mockReturnValue(qb)
-
-            const result = await service.findAll({ ...baseQuery, limit: 10 })
-
-            expect(result.meta.totalPagesAmount).toBe(3)
-        })
-
-        it("should apply isPresent filter when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockAttendanceRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, isPresent: true })
-
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "attendances.isPresent = :isPresent",
-                { isPresent: true }
-            )
-        })
-
-        it("should not apply isPresent filter when not provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockAttendanceRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll(baseQuery)
-
-            const andWhereCalls = qb.andWhere.mock.calls.map((c: any[]) => c[0])
-            expect(andWhereCalls).not.toContain("attendances.isPresent = :isPresent")
-        })
-
-        it("should apply dateFrom and dateTo filters when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockAttendanceRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, dateFrom: new Date("2024-01-01"), dateTo: new Date("2024-12-31") })
-
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "attendances.date >= :dateFrom",
-                { dateFrom: new Date("2024-01-01") }
-            )
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "attendances.date <= :dateTo",
-                { dateTo: new Date("2024-12-31") }
-            )
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("update", () => {
-        const setupTransaction = (managerMock: ReturnType<typeof createTransactionManagerMock>) => {
-            mockAttendanceRepository.manager.transaction.mockImplementation(
-                async (cb: (manager: any) => Promise<void>) => cb(managerMock)
-            )
-        }
-
-        it("should update attendance without changing isPresent", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: true,
-                subscription: { id: 10, sessionsLeft: 3 },
-            } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.update.mockResolvedValue({ affected: 1 })
-
-            // передаём data без isPresent — подписка не должна меняться
-            await expect(service.update(1, {})).resolves.not.toThrow()
-
-            expect(manager.update).toHaveBeenCalledTimes(1) // только attendance, не subscription
-        })
-
-        it("should decrement sessionsLeft when isPresent changes to true", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: false, // было false
-                subscription: { id: 10, sessionsLeft: 3, isActive: true },
-            } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.update.mockResolvedValue({ affected: 1 })
-
-            await service.update(1, { isPresent: true }) // стало true
-
-            expect(manager.update).toHaveBeenCalledWith(
-                SubscriptionEntity,
-                { id: 10 },
-                { sessionsLeft: 2, isActive: true }
-            )
-        })
-
-        it("should increment sessionsLeft when isPresent changes to false", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: true, // было true
-                subscription: { id: 10, sessionsLeft: 0, isActive: false },
-            } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.update.mockResolvedValue({ affected: 1 })
-
-            await service.update(1, { isPresent: false }) // стало false
-
-            expect(manager.update).toHaveBeenCalledWith(
-                SubscriptionEntity,
-                { id: 10 },
-                { sessionsLeft: 1, isActive: true }
-            )
-        })
-
-        it("should set isActive to false when sessionsLeft reaches zero", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: false,
-                subscription: { id: 10, sessionsLeft: 1, isActive: true },
-            } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.update.mockResolvedValue({ affected: 1 })
+        it("should spend one session when absent child becomes present", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(false, 5))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(true)
 
             await service.update(1, { isPresent: true })
 
-            expect(manager.update).toHaveBeenCalledWith(
-                SubscriptionEntity,
-                { id: 10 },
+            expect(mockAttendanceRepository.updateWithSessions).toHaveBeenCalledWith(
+                1,
+                { isPresent: true },
+                10,
+                { sessionsLeft: 4, isActive: true }
+            )
+        })
+
+        it("should return one session when present child becomes absent", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(true, 5))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(true)
+
+            await service.update(1, { isPresent: false })
+
+            expect(mockAttendanceRepository.updateWithSessions).toHaveBeenCalledWith(
+                1,
+                { isPresent: false },
+                10,
+                { sessionsLeft: 6, isActive: true }
+            )
+        })
+
+        it("should deactivate subscription when the last session is spent", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(false, 1))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(true)
+
+            await service.update(1, { isPresent: true })
+
+            expect(mockAttendanceRepository.updateWithSessions).toHaveBeenCalledWith(
+                1,
+                { isPresent: true },
+                10,
                 { sessionsLeft: 0, isActive: false }
             )
         })
 
-        it("should not update subscription when isPresent value does not change", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: true, // уже true
-                subscription: { id: 10, sessionsLeft: 2 },
-            } as unknown as AttendanceEntity
+        it("should reactivate subscription when a session is returned", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(true, 0))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(true)
 
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.update.mockResolvedValue({ affected: 1 })
+            await service.update(1, { isPresent: false })
 
-            await service.update(1, { isPresent: true }) // передаём то же значение
+            expect(mockAttendanceRepository.updateWithSessions).toHaveBeenCalledWith(
+                1,
+                { isPresent: false },
+                10,
+                { sessionsLeft: 1, isActive: true }
+            )
+        })
 
-            expect(manager.update).toHaveBeenCalledTimes(1) // только attendance
+        it("should not change sessions when isPresent is the same", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(true))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(true)
+
+            await service.update(1, { isPresent: true })
+
+            expect(mockAttendanceRepository.updateWithSessions).toHaveBeenCalledWith(
+                1,
+                { isPresent: true },
+                10,
+                undefined
+            )
+        })
+
+        it("should not change sessions when isPresent is not provided", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(true))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(true)
+
+            await service.update(1, { note: "Late" })
+
+            expect(mockAttendanceRepository.updateWithSessions).toHaveBeenCalledWith(
+                1,
+                { note: "Late" },
+                10,
+                undefined
+            )
         })
 
         it("should throw NotFoundException when attendance does not exist", async () => {
-            const manager = createTransactionManagerMock()
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(null)
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(null)
 
             await expect(service.update(99, { isPresent: true })).rejects.toThrow(NotFoundException)
+            expect(mockAttendanceRepository.updateWithSessions).not.toHaveBeenCalled()
+        })
+
+        it("should throw NotFoundException when repository did not update anything", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(false))
+            mockAttendanceRepository.updateWithSessions.mockResolvedValue(false)
+
+            await expect(service.update(1, { isPresent: true })).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("delete", () => {
-        const setupTransaction = (managerMock: ReturnType<typeof createTransactionManagerMock>) => {
-            mockAttendanceRepository.manager.transaction.mockImplementation(
-                async (cb: (manager: any) => Promise<void>) => cb(managerMock)
-            )
-        }
-
-        it("should delete attendance without restoring session when isPresent is false", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: false, // занятие не было посещено — сессию не возвращаем
-                subscription: { id: 10, sessionsLeft: 2 },
-            } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.delete.mockResolvedValue({ affected: 1 })
-
-            await expect(service.delete(1)).resolves.not.toThrow()
-
-            expect(manager.update).not.toHaveBeenCalled()
-            expect(manager.delete).toHaveBeenCalledWith(AttendanceEntity, { id: 1 })
-        })
-
-        it("should restore session when deleting attended attendance", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: true, // занятие было посещено — возвращаем сессию
-                subscription: { id: 10, sessionsLeft: 0, isActive: false },
-            } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.delete.mockResolvedValue({ affected: 1 })
+        it("should return session to subscription when deleted attendance was present", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(true, 5))
+            mockAttendanceRepository.deleteWithSessions.mockResolvedValue(true)
 
             await service.delete(1)
 
-            expect(manager.update).toHaveBeenCalledWith(
-                SubscriptionEntity,
-                { id: 10 },
-                { sessionsLeft: 1, isActive: true }
+            expect(mockAttendanceRepository.deleteWithSessions).toHaveBeenCalledWith(
+                1,
+                10,
+                { sessionsLeft: 6, isActive: true }
             )
         })
 
-        it("should throw NotFoundException when attendance does not exist", async () => {
-            const manager = createTransactionManagerMock()
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(null)
+        it("should not change sessions when deleted attendance was absent", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(false))
+            mockAttendanceRepository.deleteWithSessions.mockResolvedValue(true)
 
-            await expect(service.delete(99)).rejects.toThrow(NotFoundException)
+            await service.delete(1)
+
+            expect(mockAttendanceRepository.deleteWithSessions).toHaveBeenCalledWith(1, 10, undefined)
         })
 
-        it("should throw NotFoundException when delete affects no rows", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeAttendance = {
-                id: 1,
-                isPresent: false,
-                subscription: { id: 10, sessionsLeft: 2 },
-            } as unknown as AttendanceEntity
+        it("should throw NotFoundException when attendance does not exist", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(null)
 
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeAttendance)
-            manager.delete.mockResolvedValue({ affected: 0 })
+            await expect(service.delete(99)).rejects.toThrow(NotFoundException)
+            expect(mockAttendanceRepository.deleteWithSessions).not.toHaveBeenCalled()
+        })
+
+        it("should throw NotFoundException when repository did not delete anything", async () => {
+            mockAttendanceRepository.findByIdWithSubscription.mockResolvedValue(createFakeAttendance(true))
+            mockAttendanceRepository.deleteWithSessions.mockResolvedValue(false)
 
             await expect(service.delete(1)).rejects.toThrow(NotFoundException)
         })

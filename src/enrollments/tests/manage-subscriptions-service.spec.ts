@@ -1,36 +1,24 @@
-import { NotFoundException, BadRequestException, ConflictException } from "@nestjs/common"
+import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { AttendanceEntity } from "../entities/attendance.entity"
 import { SubscriptionEntity } from "../entities/subscription.entity"
 import { PaymentStatus } from "../enums/payment-status.enum"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
+import { AttendanceRepository } from "../abstracts/attendance-repository.abstract"
+import { SubscriptionRepository } from "../abstracts/subscription-repository.abstract"
+import { CreateAttendanceBodyDto, GetManageSubscriptionListQueryDto } from "../dto"
 import { ManageSubscriptionsService } from "../services/manage-subscriptions.service"
 
-const createTransactionManagerMock = () => ({
-    findOne: vi.fn(),
-    save: vi.fn(),
-    update: vi.fn(),
-})
-
-const createQueryBuilderMock = () => ({
-    leftJoinAndSelect: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    andWhere: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    skip: vi.fn().mockReturnThis(),
-    take: vi.fn().mockReturnThis(),
-    getManyAndCount: vi.fn(),
-})
-
 const mockSubscriptionRepository = {
-    findOne: vi.fn(),
+    findById: vi.fn(),
+    findByIdWithDetails: vi.fn(),
+    findPage: vi.fn(),
     update: vi.fn(),
-    createQueryBuilder: vi.fn(),
-    manager: {
-        transaction: vi.fn(),
-    },
+}
+
+const mockAttendanceRepository = {
+    createWithSessions: vi.fn(),
 }
 
 describe("ManageSubscriptionsService", () => {
@@ -40,14 +28,12 @@ describe("ManageSubscriptionsService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageSubscriptionsService,
-                {
-                    provide: getRepositoryToken(SubscriptionEntity),
-                    useValue: mockSubscriptionRepository,
-                },
+                { provide: SubscriptionRepository, useValue: mockSubscriptionRepository },
+                { provide: AttendanceRepository, useValue: mockAttendanceRepository },
             ],
         }).compile()
 
-        service = module.get<ManageSubscriptionsService>(ManageSubscriptionsService)
+        service = module.get(ManageSubscriptionsService)
     })
 
     afterEach(() => {
@@ -57,163 +43,82 @@ describe("ManageSubscriptionsService", () => {
     // -------------------------------------------------------------------------
 
     describe("createAttendance", () => {
-        const setupTransaction = (managerMock: ReturnType<typeof createTransactionManagerMock>) => {
-            mockSubscriptionRepository.manager.transaction.mockImplementation(
-                async (cb: (manager: any) => Promise<void>) => cb(managerMock)
-            )
-        }
+        const date = new Date("2026-01-10")
 
-        it("should create attendance without changing sessionsLeft when isPresent is false", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeSubscription = {
-                id: 1,
-                isActive: true,
-                sessionsLeft: 3,
-            } as unknown as SubscriptionEntity
-            const fakeAttendance = { id: 1, isPresent: false } as unknown as AttendanceEntity
+        it("should spend one session when child was present", async () => {
+            const data = { date, isPresent: true } as CreateAttendanceBodyDto
+            const fakeAttendance = { id: 1 } as AttendanceEntity
+            mockSubscriptionRepository.findById.mockResolvedValue({ id: 1, isActive: true, sessionsLeft: 5 })
+            mockAttendanceRepository.createWithSessions.mockResolvedValue(fakeAttendance)
 
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeSubscription)
-            manager.save.mockResolvedValue(fakeAttendance)
-
-            const result = await service.createAttendance(1, { isPresent: false, date: new Date("2023-01-01") })
+            const result = await service.createAttendance(1, data)
 
             expect(result).toEqual(fakeAttendance)
-            expect(manager.update).not.toHaveBeenCalled()
-        })
-
-        it("should decrement sessionsLeft when isPresent is true", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeSubscription = {
-                id: 1,
-                isActive: true,
-                sessionsLeft: 3,
-            } as unknown as SubscriptionEntity
-            const fakeAttendance = { id: 1, isPresent: true } as unknown as AttendanceEntity
-
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeSubscription)
-            manager.save.mockResolvedValue(fakeAttendance)
-
-            await service.createAttendance(1, { isPresent: true, date: new Date("2023-01-01") })
-
-            expect(manager.update).toHaveBeenCalledWith(
-                SubscriptionEntity,
-                { id: 1 },
-                { sessionsLeft: 2, isActive: true }
+            expect(mockAttendanceRepository.createWithSessions).toHaveBeenCalledWith(
+                1,
+                data,
+                { sessionsLeft: 4, isActive: true }
             )
         })
 
-        it("should set isActive to false when sessionsLeft reaches zero", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeSubscription = {
-                id: 1,
-                isActive: true,
-                sessionsLeft: 1, // последняя сессия
-            } as unknown as SubscriptionEntity
-            const fakeAttendance = { id: 1, isPresent: true } as unknown as AttendanceEntity
+        it("should not change sessions when child was absent", async () => {
+            const data = { date, isPresent: false } as CreateAttendanceBodyDto
+            mockSubscriptionRepository.findById.mockResolvedValue({ id: 1, isActive: true, sessionsLeft: 5 })
+            mockAttendanceRepository.createWithSessions.mockResolvedValue({ id: 1 })
 
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeSubscription)
-            manager.save.mockResolvedValue(fakeAttendance)
+            await service.createAttendance(1, data)
 
-            await service.createAttendance(1, { isPresent: true, date: new Date("2023-01-01") })
+            expect(mockAttendanceRepository.createWithSessions).toHaveBeenCalledWith(1, data, undefined)
+        })
 
-            expect(manager.update).toHaveBeenCalledWith(
-                SubscriptionEntity,
-                { id: 1 },
+        it("should deactivate subscription when the last session is spent", async () => {
+            const data = { date, isPresent: true } as CreateAttendanceBodyDto
+            mockSubscriptionRepository.findById.mockResolvedValue({ id: 1, isActive: true, sessionsLeft: 1 })
+            mockAttendanceRepository.createWithSessions.mockResolvedValue({ id: 1 })
+
+            await service.createAttendance(1, data)
+
+            expect(mockAttendanceRepository.createWithSessions).toHaveBeenCalledWith(
+                1,
+                data,
                 { sessionsLeft: 0, isActive: false }
             )
         })
 
         it("should throw NotFoundException when subscription does not exist", async () => {
-            const manager = createTransactionManagerMock()
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(null)
+            mockSubscriptionRepository.findById.mockResolvedValue(null)
 
-            await expect(service.createAttendance(99, { isPresent: true, date: new Date("2023-01-01") }))
-                .rejects.toThrow(NotFoundException)
+            await expect(
+                service.createAttendance(99, { date, isPresent: true } as CreateAttendanceBodyDto)
+            ).rejects.toThrow(NotFoundException)
+            expect(mockAttendanceRepository.createWithSessions).not.toHaveBeenCalled()
         })
 
         it("should throw BadRequestException when subscription is inactive", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeSubscription = {
-                id: 1,
-                isActive: false,
-                sessionsLeft: 0,
-            } as unknown as SubscriptionEntity
+            mockSubscriptionRepository.findById.mockResolvedValue({ id: 1, isActive: false, sessionsLeft: 0 })
 
-            setupTransaction(manager)
-            manager.findOne.mockResolvedValue(fakeSubscription)
-
-            await expect(service.createAttendance(1, { isPresent: true, date: new Date("2023-01-01") }))
-                .rejects.toThrow(BadRequestException)
+            await expect(
+                service.createAttendance(1, { date, isPresent: true } as CreateAttendanceBodyDto)
+            ).rejects.toThrow(BadRequestException)
+            expect(mockAttendanceRepository.createWithSessions).not.toHaveBeenCalled()
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findAll", () => {
-        const baseQuery = {
-            page: 1,
-            limit: 10,
-            sortDirection: SortDirection.DESC,
-        }
+        it("should return subscriptions with pagination meta", async () => {
+            const query = { page: 1, limit: 10, sortDirection: SortDirection.ASC } as GetManageSubscriptionListQueryDto
+            const fakeSubscriptions = [{ id: 1 }] as SubscriptionEntity[]
+            mockSubscriptionRepository.findPage.mockResolvedValue([fakeSubscriptions, 30])
 
-        it("should return paginated result", async () => {
-            const fakeSubscriptions = [{ id: 1 }, { id: 2 }] as unknown as SubscriptionEntity[]
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([fakeSubscriptions, 2])
-            mockSubscriptionRepository.createQueryBuilder.mockReturnValue(qb)
+            const result = await service.findAll(query)
 
-            const result = await service.findAll(baseQuery)
-
-            expect(result.data).toEqual(fakeSubscriptions)
-            expect(result.meta).toEqual({
-                totalCount: 2,
-                totalPagesAmount: 1,
-                currentPage: 1,
+            expect(mockSubscriptionRepository.findPage).toHaveBeenCalledWith(query)
+            expect(result).toEqual({
+                data: fakeSubscriptions,
+                meta: { totalCount: 30, totalPagesAmount: 3, currentPage: 1 },
             })
-        })
-
-        it("should calculate totalPagesAmount correctly", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 25])
-            mockSubscriptionRepository.createQueryBuilder.mockReturnValue(qb)
-
-            const result = await service.findAll({ ...baseQuery, limit: 10 })
-
-            expect(result.meta.totalPagesAmount).toBe(3)
-        })
-
-        it("should apply paymentStatus filter when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockSubscriptionRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, paymentStatus: PaymentStatus.PAID })
-
-            expect(qb.where).toHaveBeenCalledWith(
-                "subscriptions.paymentStatus = :paymentStatus",
-                { paymentStatus: PaymentStatus.PAID }
-            )
-        })
-
-        it("should apply dateFrom and dateTo filters when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockSubscriptionRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, dateFrom: new Date("2024-01-01"), dateTo: new Date("2024-12-31") })
-
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "subscriptions.createdAt >= :dateFrom",
-                { dateFrom: new Date("2024-01-01") }
-            )
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "subscriptions.createdAt <= :dateTo",
-                { dateTo: new Date("2024-12-31") }
-            )
         })
     })
 
@@ -221,8 +126,8 @@ describe("ManageSubscriptionsService", () => {
 
     describe("findById", () => {
         it("should return subscription when it exists", async () => {
-            const fakeSubscription = { id: 1 } as unknown as SubscriptionEntity
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
+            const fakeSubscription = { id: 1 } as SubscriptionEntity
+            mockSubscriptionRepository.findByIdWithDetails.mockResolvedValue(fakeSubscription)
 
             const result = await service.findById(1)
 
@@ -230,7 +135,7 @@ describe("ManageSubscriptionsService", () => {
         })
 
         it("should throw NotFoundException when subscription does not exist", async () => {
-            mockSubscriptionRepository.findOne.mockResolvedValue(null)
+            mockSubscriptionRepository.findByIdWithDetails.mockResolvedValue(null)
 
             await expect(service.findById(99)).rejects.toThrow(NotFoundException)
         })
@@ -239,134 +144,126 @@ describe("ManageSubscriptionsService", () => {
     // -------------------------------------------------------------------------
 
     describe("payFullPrice", () => {
-        it("should update payment status to PAID", async () => {
-            const fakeSubscription = {
+        const paidAt = new Date("2026-02-01")
+
+        it("should mark subscription as paid with full price", async () => {
+            mockSubscriptionRepository.findById.mockResolvedValue({
                 id: 1,
                 isActive: true,
                 paymentStatus: PaymentStatus.UNPAID,
-                priceSnapshot: 1000,
-                pricingTier: { id: 1 },
-            } as unknown as SubscriptionEntity
+                priceSnapshot: 1500,
+            })
+            mockSubscriptionRepository.update.mockResolvedValue(true)
 
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
-            mockSubscriptionRepository.update.mockResolvedValue({ affected: 1 })
+            await service.payFullPrice(1, { paidAt })
 
-            await expect(service.payFullPrice(1, { paidAt: new Date() })).resolves.not.toThrow()
-
-            expect(mockSubscriptionRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                expect.objectContaining({ paymentStatus: PaymentStatus.PAID })
-            )
+            expect(mockSubscriptionRepository.update).toHaveBeenCalledWith(1, {
+                paymentStatus: PaymentStatus.PAID,
+                paidAmount: 1500,
+                paidAt,
+            })
         })
 
         it("should throw NotFoundException when subscription does not exist", async () => {
-            mockSubscriptionRepository.findOne.mockResolvedValue(null)
+            mockSubscriptionRepository.findById.mockResolvedValue(null)
 
-            await expect(service.payFullPrice(99, { paidAt: new Date() }))
-                .rejects.toThrow(NotFoundException)
+            await expect(service.payFullPrice(99, { paidAt })).rejects.toThrow(NotFoundException)
         })
 
         it("should throw ConflictException when subscription is already paid", async () => {
-            const fakeSubscription = {
+            mockSubscriptionRepository.findById.mockResolvedValue({
                 id: 1,
                 isActive: true,
                 paymentStatus: PaymentStatus.PAID,
-            } as unknown as SubscriptionEntity
+            })
 
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
-
-            await expect(service.payFullPrice(1, { paidAt: new Date() }))
-                .rejects.toThrow(ConflictException)
+            await expect(service.payFullPrice(1, { paidAt })).rejects.toThrow(ConflictException)
+            expect(mockSubscriptionRepository.update).not.toHaveBeenCalled()
         })
 
         it("should throw ConflictException when subscription is refunded", async () => {
-            const fakeSubscription = {
+            mockSubscriptionRepository.findById.mockResolvedValue({
                 id: 1,
                 isActive: false,
                 paymentStatus: PaymentStatus.REFUNDED,
-            } as unknown as SubscriptionEntity
+            })
 
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
-
-            await expect(service.payFullPrice(1, { paidAt: new Date() }))
-                .rejects.toThrow(ConflictException)
+            await expect(service.payFullPrice(1, { paidAt })).rejects.toThrow(ConflictException)
+            expect(mockSubscriptionRepository.update).not.toHaveBeenCalled()
         })
 
         it("should throw BadRequestException when subscription is inactive", async () => {
-            const fakeSubscription = {
+            mockSubscriptionRepository.findById.mockResolvedValue({
                 id: 1,
                 isActive: false,
                 paymentStatus: PaymentStatus.UNPAID,
-            } as unknown as SubscriptionEntity
+            })
 
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
+            await expect(service.payFullPrice(1, { paidAt })).rejects.toThrow(BadRequestException)
+            expect(mockSubscriptionRepository.update).not.toHaveBeenCalled()
+        })
 
-            await expect(service.payFullPrice(1, { paidAt: new Date() }))
-                .rejects.toThrow(BadRequestException)
+        it("should throw NotFoundException when repository did not update anything", async () => {
+            mockSubscriptionRepository.findById.mockResolvedValue({
+                id: 1,
+                isActive: true,
+                paymentStatus: PaymentStatus.UNPAID,
+                priceSnapshot: 1500,
+            })
+            mockSubscriptionRepository.update.mockResolvedValue(false)
+
+            await expect(service.payFullPrice(1, { paidAt })).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("refund", () => {
-        it("should update payment status to REFUNDED", async () => {
-            const fakeSubscription = {
+        const refundedAt = new Date("2026-03-01")
+
+        it("should refund paid subscription and deactivate it", async () => {
+            mockSubscriptionRepository.findById.mockResolvedValue({
                 id: 1,
-                isActive: true,
                 paymentStatus: PaymentStatus.PAID,
-                paidAmount: 1000,
-            } as unknown as SubscriptionEntity
+                paidAmount: 1500,
+            })
+            mockSubscriptionRepository.update.mockResolvedValue(true)
 
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
-            mockSubscriptionRepository.update.mockResolvedValue({ affected: 1 })
+            await service.refund(1, { refundedAt })
 
-            await expect(service.refund(1, { refundedAt: new Date() })).resolves.not.toThrow()
-
-            expect(mockSubscriptionRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                expect.objectContaining({
-                    paymentStatus: PaymentStatus.REFUNDED,
-                    isActive: false,
-                })
-            )
+            expect(mockSubscriptionRepository.update).toHaveBeenCalledWith(1, {
+                paymentStatus: PaymentStatus.REFUNDED,
+                refundedAmount: 1500,
+                isActive: false,
+                refundedAt,
+            })
         })
 
         it("should throw NotFoundException when subscription does not exist", async () => {
-            mockSubscriptionRepository.findOne.mockResolvedValue(null)
+            mockSubscriptionRepository.findById.mockResolvedValue(null)
 
-            await expect(service.refund(99, { refundedAt: new Date() }))
-                .rejects.toThrow(NotFoundException)
+            await expect(service.refund(99, { refundedAt })).rejects.toThrow(NotFoundException)
         })
 
-        it("should throw BadRequestException when subscription is not paid", async () => {
-            const fakeSubscription = {
+        it.each([PaymentStatus.UNPAID, PaymentStatus.REFUNDED])(
+            "should throw BadRequestException when subscription is %s",
+            async (paymentStatus) => {
+                mockSubscriptionRepository.findById.mockResolvedValue({ id: 1, paymentStatus })
+
+                await expect(service.refund(1, { refundedAt })).rejects.toThrow(BadRequestException)
+                expect(mockSubscriptionRepository.update).not.toHaveBeenCalled()
+            }
+        )
+
+        it("should throw NotFoundException when repository did not update anything", async () => {
+            mockSubscriptionRepository.findById.mockResolvedValue({
                 id: 1,
-                paymentStatus: PaymentStatus.UNPAID,
-            } as unknown as SubscriptionEntity
-
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
-
-            await expect(service.refund(1, { refundedAt: new Date() }))
-                .rejects.toThrow(BadRequestException)
-        })
-
-        it("should save paidAmount as refundedAmount", async () => {
-            const fakeSubscription = {
-                id: 1,
-                isActive: true,
                 paymentStatus: PaymentStatus.PAID,
                 paidAmount: 1500,
-            } as unknown as SubscriptionEntity
+            })
+            mockSubscriptionRepository.update.mockResolvedValue(false)
 
-            mockSubscriptionRepository.findOne.mockResolvedValue(fakeSubscription)
-            mockSubscriptionRepository.update.mockResolvedValue({ affected: 1 })
-
-            await service.refund(1, { refundedAt: new Date() })
-
-            expect(mockSubscriptionRepository.update).toHaveBeenCalledWith(
-                { id: 1 },
-                expect.objectContaining({ refundedAmount: 1500 })
-            )
+            await expect(service.refund(1, { refundedAt })).rejects.toThrow(NotFoundException)
         })
     })
 })

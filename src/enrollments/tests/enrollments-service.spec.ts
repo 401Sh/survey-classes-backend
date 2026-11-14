@@ -1,33 +1,31 @@
 import { NotFoundException, BadRequestException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { EnrollmentMode } from "src/lessons/enums/enrollment-mode.enum"
 import { LessonPricingTiersInternalService } from "src/lessons/services/lesson-pricing-tiers-internal.service"
 import { LessonsInternalService } from "src/lessons/services/lessons-internal.service"
 import { ChildrenInternalService } from "src/users/services/children-internal.service"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { EnrollmentEntity } from "../entities/enrollment.entity"
+import { SubscriptionEntity } from "../entities/subscription.entity"
 import { EnrollmentStatus } from "../enums/enrollment-status.enum"
+import { EnrollmentRepository } from "../abstracts/enrollment-repository.abstract"
+import { SubscriptionRepository } from "../abstracts/subscription-repository.abstract"
+import { CreateEnrollmentBodyDto, GetEnrollmentListQueryDto } from "../dto"
 import { EnrollmentsService } from "../services/enrollments.service"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
-
-const createQueryBuilderMock = () => ({
-    leftJoinAndSelect: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    andWhere: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    skip: vi.fn().mockReturnThis(),
-    take: vi.fn().mockReturnThis(),
-    getManyAndCount: vi.fn(),
-})
 
 const mockEnrollmentRepository = {
-    save: vi.fn(),
-    findOne: vi.fn(),
-    find: vi.fn(),
-    exists: vi.fn(),
-    delete: vi.fn(),
-    createQueryBuilder: vi.fn(),
+    create: vi.fn(),
+    findByIdAndUserIdWithDetails: vi.fn(),
+    findActiveByIdAndUserIdWithLesson: vi.fn(),
+    findPageByUserId: vi.fn(),
+    existsNotSuspendedByLessonIdAndChildId: vi.fn(),
+    deletePendingByIdAndUserId: vi.fn(),
+}
+
+const mockSubscriptionRepository = {
+    create: vi.fn(),
+    findAllByEnrollmentIdAndUserId: vi.fn(),
 }
 
 const mockChildrenService = {
@@ -42,11 +40,6 @@ const mockPricingTiersService = {
     findActiveAndLinked: vi.fn(),
 }
 
-const mockSubscriptionsService = {
-    bareCreate: vi.fn(),
-    findAllByEnrollmentIdAndUserId: vi.fn(),
-}
-
 describe("EnrollmentsService", () => {
     let service: EnrollmentsService
 
@@ -54,30 +47,15 @@ describe("EnrollmentsService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 EnrollmentsService,
-                {
-                    provide: getRepositoryToken(EnrollmentEntity),
-                    useValue: mockEnrollmentRepository,
-                },
-                {
-                    provide: ChildrenInternalService,
-                    useValue: mockChildrenService,
-                },
-                {
-                    provide: LessonsInternalService,
-                    useValue: mockLessonsService,
-                },
-                {
-                    provide: LessonPricingTiersInternalService,
-                    useValue: mockPricingTiersService,
-                },
-                {
-                    provide: LessonsInternalService,
-                    useValue: mockSubscriptionsService,
-                },
+                { provide: EnrollmentRepository, useValue: mockEnrollmentRepository },
+                { provide: SubscriptionRepository, useValue: mockSubscriptionRepository },
+                { provide: ChildrenInternalService, useValue: mockChildrenService },
+                { provide: LessonsInternalService, useValue: mockLessonsService },
+                { provide: LessonPricingTiersInternalService, useValue: mockPricingTiersService },
             ],
         }).compile()
 
-        service = module.get<EnrollmentsService>(EnrollmentsService)
+        service = module.get(EnrollmentsService)
     })
 
     afterEach(() => {
@@ -87,233 +65,215 @@ describe("EnrollmentsService", () => {
     // -------------------------------------------------------------------------
 
     describe("create", () => {
-        const baseDto = {
+        const dto = {
             lessonId: 1,
-            childId: 1,
-            consentedAt: new Date(),
+            childId: 2,
+            consentedAt: new Date("2026-01-01"),
             isConsented: true,
-        }
+        } as CreateEnrollmentBodyDto
 
-        it("should create enrollment with ACTIVE status when lesson is AUTO mode", async () => {
-            const fakeLesson = {
-                id: 1,
-                enrollmentMode: EnrollmentMode.AUTO,
-            }
-            const fakeEnrollment = { id: 1, status: EnrollmentStatus.ACTIVE } as unknown as EnrollmentEntity
-
+        it("should create ACTIVE enrollment when lesson has AUTO mode", async () => {
+            const fakeEnrollment = { id: 1 } as EnrollmentEntity
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplified.mockResolvedValue(fakeLesson)
-            mockEnrollmentRepository.exists.mockResolvedValue(false)
-            mockEnrollmentRepository.save.mockResolvedValue(fakeEnrollment)
+            mockLessonsService.findSimplified.mockResolvedValue({ id: 1, enrollmentMode: EnrollmentMode.AUTO })
+            mockEnrollmentRepository.existsNotSuspendedByLessonIdAndChildId.mockResolvedValue(false)
+            mockEnrollmentRepository.create.mockResolvedValue(fakeEnrollment)
 
-            const result = await service.create(1, baseDto)
+            const result = await service.create(5, dto)
 
             expect(result).toEqual(fakeEnrollment)
-            expect(mockEnrollmentRepository.save).toHaveBeenCalledWith(
-                expect.objectContaining({ status: EnrollmentStatus.ACTIVE })
+            expect(mockEnrollmentRepository.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 5,
+                    lessonId: 1,
+                    childId: 2,
+                    isConsented: true,
+                    status: EnrollmentStatus.ACTIVE,
+                })
             )
         })
 
-        it("should create enrollment with PENDING status when lesson is MANUAL mode", async () => {
-            const fakeLesson = {
-                id: 1,
-                enrollmentMode: EnrollmentMode.MANUAL,
-            }
-            const fakeEnrollment = { id: 1 } as unknown as EnrollmentEntity
-
+        it("should create PENDING enrollment when lesson has MANUAL mode", async () => {
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplified.mockResolvedValue(fakeLesson)
-            mockEnrollmentRepository.exists.mockResolvedValue(false)
-            mockEnrollmentRepository.save.mockResolvedValue(fakeEnrollment)
+            mockLessonsService.findSimplified.mockResolvedValue({ id: 1, enrollmentMode: EnrollmentMode.MANUAL })
+            mockEnrollmentRepository.existsNotSuspendedByLessonIdAndChildId.mockResolvedValue(false)
+            mockEnrollmentRepository.create.mockResolvedValue({ id: 1 })
 
-            await service.create(1, baseDto)
+            await service.create(5, dto)
 
-            expect(mockEnrollmentRepository.save).toHaveBeenCalledWith(
+            expect(mockEnrollmentRepository.create).toHaveBeenCalledWith(
                 expect.objectContaining({ status: EnrollmentStatus.PENDING })
             )
         })
 
-        it("should throw NotFoundException when child does not belong to user", async () => {
-            mockChildrenService.existsAndOwnedBy.mockResolvedValue(false)
+        it("should check that child belongs to the user", async () => {
+            mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
+            mockLessonsService.findSimplified.mockResolvedValue({ id: 1, enrollmentMode: EnrollmentMode.AUTO })
+            mockEnrollmentRepository.existsNotSuspendedByLessonIdAndChildId.mockResolvedValue(false)
+            mockEnrollmentRepository.create.mockResolvedValue({ id: 1 })
 
-            await expect(service.create(1, baseDto)).rejects.toThrow(NotFoundException)
+            await service.create(5, dto)
+
+            expect(mockChildrenService.existsAndOwnedBy).toHaveBeenCalledWith(2, 5)
         })
 
-        it("should throw NotFoundException when lesson does not exist", async () => {
+        it("should throw NotFoundException when child does not belong to the user", async () => {
+            mockChildrenService.existsAndOwnedBy.mockResolvedValue(false)
+
+            await expect(service.create(5, dto)).rejects.toThrow(NotFoundException)
+            expect(mockEnrollmentRepository.create).not.toHaveBeenCalled()
+        })
+
+        it("should throw BadRequestException when child is already enrolled in the lesson", async () => {
+            mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
+            mockLessonsService.findSimplified.mockResolvedValue({ id: 1, enrollmentMode: EnrollmentMode.AUTO })
+            mockEnrollmentRepository.existsNotSuspendedByLessonIdAndChildId.mockResolvedValue(true)
+
+            await expect(service.create(5, dto)).rejects.toThrow(BadRequestException)
+            expect(mockEnrollmentRepository.create).not.toHaveBeenCalled()
+        })
+
+        it("should pass NotFoundException from lessons service when lesson is not found", async () => {
             mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
             mockLessonsService.findSimplified.mockRejectedValue(new NotFoundException())
 
-            await expect(service.create(1, baseDto)).rejects.toThrow(NotFoundException)
-        })
-
-        it("should throw BadRequestException when child is already enrolled", async () => {
-            const fakeLesson = {
-                id: 1,
-                enrollmentMode: EnrollmentMode.AUTO,
-            }
-
-            mockChildrenService.existsAndOwnedBy.mockResolvedValue(true)
-            mockLessonsService.findSimplified.mockResolvedValue(fakeLesson)
-            mockEnrollmentRepository.exists.mockResolvedValue(true) // уже есть активная запись
-
-            await expect(service.create(1, baseDto)).rejects.toThrow(BadRequestException)
+            await expect(service.create(5, dto)).rejects.toThrow(NotFoundException)
+            expect(mockEnrollmentRepository.create).not.toHaveBeenCalled()
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("createSubscription", () => {
-        it("should create subscription for active enrollment", async () => {
-            const fakeEnrollment = {
-                id: 1,
+        const dto = { pricingTierId: 7 }
+
+        it("should create subscription with price and sessions from pricing tier", async () => {
+            const fakeSubscription = { id: 1 } as SubscriptionEntity
+            mockEnrollmentRepository.findActiveByIdAndUserIdWithLesson.mockResolvedValue({
+                id: 3,
                 status: EnrollmentStatus.ACTIVE,
                 lesson: { id: 10 },
-            } as unknown as EnrollmentEntity
+            })
+            mockPricingTiersService.findActiveAndLinked.mockResolvedValue({ price: 1000, sessionsCount: 8 })
+            mockSubscriptionRepository.create.mockResolvedValue(fakeSubscription)
 
-            const fakePricingTier = { id: 2, price: 1000, sessionsCount: 8 }
-            const fakeSubscription = { id: 1 } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
-            mockPricingTiersService.findActiveAndLinked.mockResolvedValue(fakePricingTier)
-            mockSubscriptionsService.bareCreate.mockResolvedValue(fakeSubscription)
-
-            const result = await service.createSubscription(1, 1, { pricingTierId: 2 })
+            const result = await service.createSubscription(5, 3, dto)
 
             expect(result).toEqual(fakeSubscription)
-            expect(mockSubscriptionsService.bareCreate).toHaveBeenCalledWith(1, 2, 1000, 8)
+            expect(mockEnrollmentRepository.findActiveByIdAndUserIdWithLesson).toHaveBeenCalledWith(3, 5)
+            expect(mockPricingTiersService.findActiveAndLinked).toHaveBeenCalledWith(7, 10)
+            expect(mockSubscriptionRepository.create).toHaveBeenCalledWith(3, 7, {
+                priceSnapshot: 1000,
+                sessionsTotal: 8,
+                sessionsLeft: 8, // в начале все занятия ещё не использованы
+            })
         })
 
-        it("should throw NotFoundException when enrollment does not exist or not active", async () => {
-            mockEnrollmentRepository.findOne.mockResolvedValue(null)
+        it("should throw NotFoundException when enrollment is not found", async () => {
+            mockEnrollmentRepository.findActiveByIdAndUserIdWithLesson.mockResolvedValue(null)
 
-            await expect(service.createSubscription(1, 99, { pricingTierId: 1 }))
-                .rejects.toThrow(NotFoundException)
+            await expect(service.createSubscription(5, 99, dto)).rejects.toThrow(NotFoundException)
+            expect(mockSubscriptionRepository.create).not.toHaveBeenCalled()
         })
 
-        it("should throw NotFoundException when pricing tier does not exist or not linked to lesson", async () => {
-            const fakeEnrollment = {
-                id: 1,
+        it("should throw BadRequestException when enrollment is not active", async () => {
+            mockEnrollmentRepository.findActiveByIdAndUserIdWithLesson.mockResolvedValue({
+                id: 3,
+                status: EnrollmentStatus.PENDING,
+                lesson: { id: 10 },
+            })
+
+            await expect(service.createSubscription(5, 3, dto)).rejects.toThrow(BadRequestException)
+            expect(mockSubscriptionRepository.create).not.toHaveBeenCalled()
+        })
+
+        it("should not create subscription when pricing tier is not found", async () => {
+            mockEnrollmentRepository.findActiveByIdAndUserIdWithLesson.mockResolvedValue({
+                id: 3,
                 status: EnrollmentStatus.ACTIVE,
                 lesson: { id: 10 },
-            } as unknown as EnrollmentEntity
-
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
+            })
             mockPricingTiersService.findActiveAndLinked.mockRejectedValue(new NotFoundException())
 
-            await expect(service.createSubscription(1, 1, { pricingTierId: 99 }))
-                .rejects.toThrow(NotFoundException)
+            await expect(service.createSubscription(5, 3, dto)).rejects.toThrow(NotFoundException)
+            expect(mockSubscriptionRepository.create).not.toHaveBeenCalled()
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findAll", () => {
-        const baseQuery = {
-            page: 1,
-            limit: 10,
-            sortDirection: SortDirection.DESC,
-        }
+        const query = { page: 1, limit: 10, sortDirection: SortDirection.ASC } as GetEnrollmentListQueryDto
 
-        it("should return paginated result filtered by userId", async () => {
-            const fakeEnrollments = [{ id: 1 }] as unknown as EnrollmentEntity[]
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([fakeEnrollments, 1])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
+        it("should return enrollments with pagination meta", async () => {
+            const fakeEnrollments = [{ id: 1 }, { id: 2 }] as EnrollmentEntity[]
+            mockEnrollmentRepository.findPageByUserId.mockResolvedValue([fakeEnrollments, 21])
 
-            const result = await service.findAll(1, baseQuery)
+            const result = await service.findAll(5, query)
 
-            expect(result.data).toEqual(fakeEnrollments)
-            expect(qb.where).toHaveBeenCalledWith("users.id = :userId", { userId: 1 })
-        })
-
-        it("should calculate totalPagesAmount correctly", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 25])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
-
-            const result = await service.findAll(1, { ...baseQuery, limit: 10 })
-
-            expect(result.meta.totalPagesAmount).toBe(3)
-        })
-
-        it("should apply optional filters when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockEnrollmentRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll(1, {
-                ...baseQuery,
-                childId: 2,
-                lessonId: 3,
-                status: EnrollmentStatus.ACTIVE,
+            expect(mockEnrollmentRepository.findPageByUserId).toHaveBeenCalledWith(5, query)
+            expect(result).toEqual({
+                data: fakeEnrollments,
+                meta: {
+                    totalCount: 21,
+                    totalPagesAmount: 3, // 21 запись по 10 на странице = 3 страницы
+                    currentPage: 1,
+                },
             })
-
-            expect(qb.andWhere).toHaveBeenCalledWith("children.id = :childId", { childId: 2 })
-            expect(qb.andWhere).toHaveBeenCalledWith("lessons.id = :lessonId", { lessonId: 3 })
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "enrollments.status = :status",
-                { status: EnrollmentStatus.ACTIVE }
-            )
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findById", () => {
-        it("should return enrollment when it exists and belongs to user", async () => {
-            const fakeEnrollment = { id: 1 } as unknown as EnrollmentEntity
-            mockEnrollmentRepository.findOne.mockResolvedValue(fakeEnrollment)
+        it("should return enrollment of the user", async () => {
+            const fakeEnrollment = { id: 1 } as EnrollmentEntity
+            mockEnrollmentRepository.findByIdAndUserIdWithDetails.mockResolvedValue(fakeEnrollment)
 
-            const result = await service.findById(1, 1)
+            const result = await service.findById(5, 1)
 
             expect(result).toEqual(fakeEnrollment)
+            // порядок аргументов в репозитории: сначала id записи, потом id пользователя
+            expect(mockEnrollmentRepository.findByIdAndUserIdWithDetails).toHaveBeenCalledWith(1, 5)
         })
 
-        it("should throw NotFoundException when enrollment does not exist or belongs to another user", async () => {
-            mockEnrollmentRepository.findOne.mockResolvedValue(null)
+        it("should throw NotFoundException when enrollment is not found", async () => {
+            mockEnrollmentRepository.findByIdAndUserIdWithDetails.mockResolvedValue(null)
 
-            await expect(service.findById(1, 99)).rejects.toThrow(NotFoundException)
+            await expect(service.findById(5, 99)).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findAllSubscriptionsByEnrollmentId", () => {
-        it("should return subscriptions for enrollment", async () => {
-            const fakeSubscriptions = [{ id: 1 }, { id: 2 }]
-            mockSubscriptionsService.findAllByEnrollmentIdAndUserId.mockResolvedValue(fakeSubscriptions)
+        it("should return subscriptions of the user's enrollment", async () => {
+            const fakeSubscriptions = [{ id: 1 }, { id: 2 }] as SubscriptionEntity[]
+            mockSubscriptionRepository.findAllByEnrollmentIdAndUserId.mockResolvedValue(fakeSubscriptions)
 
-            const result = await service.findAllSubscriptionsByEnrollmentId(1, 1)
+            const result = await service.findAllSubscriptionsByEnrollmentId(5, 3)
 
             expect(result).toEqual(fakeSubscriptions)
+            // порядок аргументов в репозитории: сначала id записи, потом id пользователя
+            expect(mockSubscriptionRepository.findAllByEnrollmentIdAndUserId).toHaveBeenCalledWith(3, 5)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("delete", () => {
-        it("should delete pending enrollment belonging to user", async () => {
-            mockEnrollmentRepository.delete.mockResolvedValue({ affected: 1 })
+        it("should delete pending enrollment of the user", async () => {
+            mockEnrollmentRepository.deletePendingByIdAndUserId.mockResolvedValue(true)
 
-            await expect(service.delete(1, 1)).resolves.not.toThrow()
+            await service.delete(5, 3)
 
-            expect(mockEnrollmentRepository.delete).toHaveBeenCalledWith({
-                id: 1,
-                user: { id: 1 },
-                status: EnrollmentStatus.PENDING,
-            })
+            expect(mockEnrollmentRepository.deletePendingByIdAndUserId).toHaveBeenCalledWith(3, 5)
         })
 
-        it("should throw NotFoundException when pending enrollment not found", async () => {
-            mockEnrollmentRepository.delete.mockResolvedValue({ affected: 0 })
+        it("should throw NotFoundException when pending enrollment is not found", async () => {
+            mockEnrollmentRepository.deletePendingByIdAndUserId.mockResolvedValue(false)
 
-            await expect(service.delete(1, 99)).rejects.toThrow(NotFoundException)
-        })
-
-        it("should throw NotFoundException when enrollment is not in PENDING status", async () => {
-            mockEnrollmentRepository.delete.mockResolvedValue({ affected: 0 })
-
-            await expect(service.delete(1, 1)).rejects.toThrow(NotFoundException)
+            await expect(service.delete(5, 99)).rejects.toThrow(NotFoundException)
         })
     })
 })
