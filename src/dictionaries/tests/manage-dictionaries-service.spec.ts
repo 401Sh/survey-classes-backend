@@ -1,14 +1,15 @@
-import { ConflictException, NotFoundException } from "@nestjs/common"
+import { NotFoundException, ConflictException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { CategoryEntity } from "../entities/category.entity"
+import { DictionaryRepository } from "../abstracts/dictionary-repository.abstract"
 import { ManageDictionariesService } from "../services/manage-dictionaries.service"
 
-const mockCategoryRepository = {
-    findOne: vi.fn(),
-    find: vi.fn(),
+const mockDictionaryRepository = {
     save: vi.fn(),
+    existsByName: vi.fn(),
+    findById: vi.fn(),
+    findAllById: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
 }
@@ -20,14 +21,11 @@ describe("ManageDictionariesService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageDictionariesService,
-                {
-                    provide: getRepositoryToken(CategoryEntity),
-                    useValue: mockCategoryRepository,
-                },
+                { provide: DictionaryRepository, useValue: mockDictionaryRepository },
             ],
         }).compile()
 
-        service = module.get<ManageDictionariesService>(ManageDictionariesService)
+        service = module.get(ManageDictionariesService)
     })
 
     afterEach(() => {
@@ -37,110 +35,103 @@ describe("ManageDictionariesService", () => {
     // -------------------------------------------------------------------------
 
     describe("createCategory", () => {
-        it("should create category when name is unique", async () => {
-            const fakeCategory = { id: 1, name: "Math" } as unknown as CategoryEntity
-            mockCategoryRepository.findOne.mockResolvedValue(null)
-            mockCategoryRepository.save.mockResolvedValue(fakeCategory)
+        it("should create category when name is free", async () => {
+            const fakeCategory = { id: 1, name: "Math" } as CategoryEntity
+            mockDictionaryRepository.existsByName.mockResolvedValue(false)
+            mockDictionaryRepository.save.mockResolvedValue(fakeCategory)
 
             const result = await service.createCategory({ name: "Math" })
 
             expect(result).toEqual(fakeCategory)
+            expect(mockDictionaryRepository.existsByName).toHaveBeenCalledWith("Math")
+            expect(mockDictionaryRepository.save).toHaveBeenCalledWith({ name: "Math" })
         })
 
-        it("should throw ConflictException when category with same name already exists", async () => {
-            const existing = { id: 1, name: "Math" } as unknown as CategoryEntity
-            mockCategoryRepository.findOne.mockResolvedValue(existing)
+        it("should throw ConflictException when category with this name already exists", async () => {
+            mockDictionaryRepository.existsByName.mockResolvedValue(true)
 
-            await expect(service.createCategory({ name: "Math" }))
-                .rejects.toThrow(ConflictException)
+            await expect(service.createCategory({ name: "Math" })).rejects.toThrow(ConflictException)
+            expect(mockDictionaryRepository.save).not.toHaveBeenCalled()
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findCategoriesByIds", () => {
-        it("should return categories matching provided ids", async () => {
-            const fakeCategories = [{ id: 1 }, { id: 2 }] as unknown as CategoryEntity[]
-            mockCategoryRepository.find.mockResolvedValue(fakeCategories)
+        it("should return categories by given ids", async () => {
+            const fakeCategories = [{ id: 1 }, { id: 2 }] as CategoryEntity[]
+            mockDictionaryRepository.findAllById.mockResolvedValue(fakeCategories)
 
             const result = await service.findCategoriesByIds([1, 2])
 
             expect(result).toEqual(fakeCategories)
-        })
-
-        it("should return empty array when no categories match", async () => {
-            mockCategoryRepository.find.mockResolvedValue([])
-
-            const result = await service.findCategoriesByIds([99, 100])
-
-            expect(result).toEqual([])
+            expect(mockDictionaryRepository.findAllById).toHaveBeenCalledWith([1, 2])
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("updateCategory", () => {
-        it("should update category successfully", async () => {
-            const fakeCategory = { id: 1, name: "Math" } as unknown as CategoryEntity
-            mockCategoryRepository.findOne.mockResolvedValueOnce(fakeCategory)
-            mockCategoryRepository.update.mockResolvedValue({ affected: 1 })
+        const fakeCategory = { id: 1, name: "Math" } as CategoryEntity
 
-            await expect(service.updateCategory(1, { name: "Math" })).resolves.not.toThrow()
+        it("should update category with new name", async () => {
+            mockDictionaryRepository.findById.mockResolvedValue(fakeCategory)
+            mockDictionaryRepository.existsByName.mockResolvedValue(false)
+            mockDictionaryRepository.update.mockResolvedValue(true)
+
+            await service.updateCategory(1, { name: "Physics" })
+
+            expect(mockDictionaryRepository.existsByName).toHaveBeenCalledWith("Physics")
+            expect(mockDictionaryRepository.update).toHaveBeenCalledWith(1, { name: "Physics" })
         })
 
-        it("should check for duplicate name when name changes", async () => {
-            const fakeCategory = { id: 1, name: "Math" } as unknown as CategoryEntity
-            mockCategoryRepository.findOne
-                .mockResolvedValueOnce(fakeCategory)
-                .mockResolvedValueOnce(null)
-            mockCategoryRepository.update.mockResolvedValue({ affected: 1 })
-
-            await expect(service.updateCategory(1, { name: "Science" })).resolves.not.toThrow()
-
-            expect(mockCategoryRepository.findOne).toHaveBeenCalledTimes(2)
-        })
-
-        it("should not check for duplicate when name does not change", async () => {
-            const fakeCategory = { id: 1, name: "Math" } as unknown as CategoryEntity
-            mockCategoryRepository.findOne.mockResolvedValueOnce(fakeCategory)
-            mockCategoryRepository.update.mockResolvedValue({ affected: 1 })
+        it("should not check name uniqueness when name is not changed", async () => {
+            mockDictionaryRepository.findById.mockResolvedValue(fakeCategory)
+            mockDictionaryRepository.update.mockResolvedValue(true)
 
             await service.updateCategory(1, { name: "Math" })
 
-            expect(mockCategoryRepository.findOne).toHaveBeenCalledTimes(1)
-        })
-
-        it("should throw ConflictException when new name is already taken", async () => {
-            const fakeCategory = { id: 1, name: "Math" } as unknown as CategoryEntity
-            const duplicate = { id: 2, name: "Science" } as unknown as CategoryEntity
-
-            mockCategoryRepository.findOne
-                .mockResolvedValueOnce(fakeCategory)
-                .mockResolvedValueOnce(duplicate)
-
-            await expect(service.updateCategory(1, { name: "Science" }))
-                .rejects.toThrow(ConflictException)
+            expect(mockDictionaryRepository.existsByName).not.toHaveBeenCalled()
+            expect(mockDictionaryRepository.update).toHaveBeenCalled()
         })
 
         it("should throw NotFoundException when category does not exist", async () => {
-            mockCategoryRepository.findOne.mockResolvedValue(null)
+            mockDictionaryRepository.findById.mockResolvedValue(null)
 
-            await expect(service.updateCategory(99, { name: "Math" }))
-                .rejects.toThrow(NotFoundException)
+            await expect(service.updateCategory(99, { name: "Physics" })).rejects.toThrow(NotFoundException)
+            expect(mockDictionaryRepository.update).not.toHaveBeenCalled()
+        })
+
+        it("should throw ConflictException when new name is already used", async () => {
+            mockDictionaryRepository.findById.mockResolvedValue(fakeCategory)
+            mockDictionaryRepository.existsByName.mockResolvedValue(true)
+
+            await expect(service.updateCategory(1, { name: "Physics" })).rejects.toThrow(ConflictException)
+            expect(mockDictionaryRepository.update).not.toHaveBeenCalled()
+        })
+
+        it("should throw NotFoundException when repository did not update anything", async () => {
+            mockDictionaryRepository.findById.mockResolvedValue(fakeCategory)
+            mockDictionaryRepository.existsByName.mockResolvedValue(false)
+            mockDictionaryRepository.update.mockResolvedValue(false)
+
+            await expect(service.updateCategory(1, { name: "Physics" })).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("deleteCategory", () => {
-        it("should delete category successfully", async () => {
-            mockCategoryRepository.delete.mockResolvedValue({ affected: 1 })
+        it("should delete category", async () => {
+            mockDictionaryRepository.delete.mockResolvedValue(true)
 
-            await expect(service.deleteCategory(1)).resolves.not.toThrow()
+            await service.deleteCategory(1)
+
+            expect(mockDictionaryRepository.delete).toHaveBeenCalledWith(1)
         })
 
         it("should throw NotFoundException when category does not exist", async () => {
-            mockCategoryRepository.delete.mockResolvedValue({ affected: 0 })
+            mockDictionaryRepository.delete.mockResolvedValue(false)
 
             await expect(service.deleteCategory(99)).rejects.toThrow(NotFoundException)
         })
