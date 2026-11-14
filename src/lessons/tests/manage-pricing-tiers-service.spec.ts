@@ -1,14 +1,13 @@
 import { NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { vi, describe, it, afterEach, beforeEach, expect } from "vitest"
+import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
+import { PricingTierRepository } from "../abstracts/pricing-tier-repository.abstract"
 import { ManagePricingTiersService } from "../services/manage-pricing-tiers.service"
-import { getRepositoryToken } from "@nestjs/typeorm"
 
 const mockPricingTierRepository = {
-    findOne: vi.fn(),
+    findById: vi.fn(),
     update: vi.fn(),
-    delete: vi.fn(),
     softDelete: vi.fn(),
 }
 
@@ -19,60 +18,68 @@ describe("ManagePricingTiersService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManagePricingTiersService,
-                {
-                    provide: getRepositoryToken(LessonPricingTierEntity),
-                    useValue: mockPricingTierRepository,
-                },
+                { provide: PricingTierRepository, useValue: mockPricingTierRepository },
             ],
         }).compile()
 
-        service = module.get<ManagePricingTiersService>(ManagePricingTiersService)
+        service = module.get(ManagePricingTiersService)
     })
 
     afterEach(() => {
         vi.clearAllMocks()
     })
 
+    // -------------------------------------------------------------------------
+
     describe("findById", () => {
         it("should return pricing tier when it exists", async () => {
-            const fakeTier = { id: 1, label: "Basic", price: 1000 } as unknown as LessonPricingTierEntity
-            mockPricingTierRepository.findOne.mockResolvedValue(fakeTier)
+            const fakeTier = { id: 1 } as LessonPricingTierEntity
+            mockPricingTierRepository.findById.mockResolvedValue(fakeTier)
 
             const result = await service.findById(1)
 
             expect(result).toEqual(fakeTier)
+            expect(mockPricingTierRepository.findById).toHaveBeenCalledWith(1)
         })
 
         it("should throw NotFoundException when pricing tier does not exist", async () => {
-            mockPricingTierRepository.findOne.mockResolvedValue(null)
+            mockPricingTierRepository.findById.mockResolvedValue(null)
 
             await expect(service.findById(99)).rejects.toThrow(NotFoundException)
         })
     })
 
-    describe("update", () => {
-        it("should update pricing tier successfully", async () => {
-            mockPricingTierRepository.update.mockResolvedValue({ affected: 1 })
+    // -------------------------------------------------------------------------
 
-            await expect(service.update(1, { label: "Premium" })).resolves.not.toThrow()
+    describe("update", () => {
+        it("should update pricing tier with given data", async () => {
+            mockPricingTierRepository.update.mockResolvedValue(true)
+
+            await service.update(1, { price: 500 })
+
+            expect(mockPricingTierRepository.update).toHaveBeenCalledWith(1, { price: 500 })
         })
 
         it("should throw NotFoundException when pricing tier does not exist", async () => {
-            mockPricingTierRepository.update.mockResolvedValue({ affected: 0 })
+            mockPricingTierRepository.update.mockResolvedValue(false)
 
-            await expect(service.update(99, { label: "Premium" })).rejects.toThrow(NotFoundException)
+            await expect(service.update(99, { price: 500 })).rejects.toThrow(NotFoundException)
         })
     })
 
-    describe("delete", () => {
-        it("should delete pricing tier successfully", async () => {
-            mockPricingTierRepository.softDelete.mockResolvedValue({ affected: 1 })
+    // -------------------------------------------------------------------------
 
-            await expect(service.delete(1)).resolves.not.toThrow()
+    describe("delete", () => {
+        it("should delete pricing tier", async () => {
+            mockPricingTierRepository.softDelete.mockResolvedValue(true)
+
+            await service.delete(1)
+
+            expect(mockPricingTierRepository.softDelete).toHaveBeenCalledWith(1)
         })
 
         it("should throw NotFoundException when pricing tier does not exist", async () => {
-            mockPricingTierRepository.softDelete.mockResolvedValue({ affected: 0 })
+            mockPricingTierRepository.softDelete.mockResolvedValue(false)
 
             await expect(service.delete(99)).rejects.toThrow(NotFoundException)
         })

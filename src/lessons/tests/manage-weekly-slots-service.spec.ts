@@ -1,15 +1,27 @@
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
+import { DayOfWeek } from "../enums/day-of-week.enum"
+import { WeeklySlotRepository } from "../abstracts/weekly-slot-repository.abstract"
 import { ManageWeeklySlotsService } from "../services/manage-weekly-slots.service"
 
 const mockWeeklySlotRepository = {
-    findOne: vi.fn(),
+    findById: vi.fn(),
+    findByIdWithLesson: vi.fn(),
+    findDuplicates: vi.fn(),
     save: vi.fn(),
     delete: vi.fn(),
 }
+
+// слот: понедельник 10:00, занятие с id = 10
+const createFakeSlot = () => ({
+    id: 1,
+    dayOfWeek: DayOfWeek.MONDAY,
+    startTime: "10:00",
+    durationMinutes: 45,
+    lesson: { id: 10 },
+}) as LessonWeeklySlotEntity
 
 describe("ManageWeeklySlotsService", () => {
     let service: ManageWeeklySlotsService
@@ -18,14 +30,11 @@ describe("ManageWeeklySlotsService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageWeeklySlotsService,
-                {
-                    provide: getRepositoryToken(LessonWeeklySlotEntity),
-                    useValue: mockWeeklySlotRepository,
-                },
+                { provide: WeeklySlotRepository, useValue: mockWeeklySlotRepository },
             ],
         }).compile()
 
-        service = module.get<ManageWeeklySlotsService>(ManageWeeklySlotsService)
+        service = module.get(ManageWeeklySlotsService)
     })
 
     afterEach(() => {
@@ -36,16 +45,17 @@ describe("ManageWeeklySlotsService", () => {
 
     describe("findById", () => {
         it("should return weekly slot when it exists", async () => {
-            const fakeSlot = { id: 1 } as unknown as LessonWeeklySlotEntity
-            mockWeeklySlotRepository.findOne.mockResolvedValue(fakeSlot)
+            const fakeSlot = createFakeSlot()
+            mockWeeklySlotRepository.findById.mockResolvedValue(fakeSlot)
 
             const result = await service.findById(1)
 
             expect(result).toEqual(fakeSlot)
+            expect(mockWeeklySlotRepository.findById).toHaveBeenCalledWith(1)
         })
 
         it("should throw NotFoundException when weekly slot does not exist", async () => {
-            mockWeeklySlotRepository.findOne.mockResolvedValue(null)
+            mockWeeklySlotRepository.findById.mockResolvedValue(null)
 
             await expect(service.findById(99)).rejects.toThrow(NotFoundException)
         })
@@ -54,118 +64,76 @@ describe("ManageWeeklySlotsService", () => {
     // -------------------------------------------------------------------------
 
     describe("update", () => {
-        it("should update slot without duplicate check when dayOfWeek and startTime not provided", async () => {
-            const fakeSlot = {
-                id: 1,
-                dayOfWeek: 1,
-                startTime: "10:00",
-                lesson: { id: 10 },
-            } as unknown as LessonWeeklySlotEntity
+        it("should throw NotFoundException when weekly slot does not exist", async () => {
+            mockWeeklySlotRepository.findByIdWithLesson.mockResolvedValue(null)
 
-            mockWeeklySlotRepository.findOne.mockResolvedValue(fakeSlot)
-            mockWeeklySlotRepository.save.mockResolvedValue(fakeSlot)
-
-            await expect(service.update(1, { durationMinutes: 60 })).resolves.not.toThrow()
-
-            expect(mockWeeklySlotRepository.findOne).toHaveBeenCalledTimes(1)
+            await expect(service.update(99, { durationMinutes: 60 })).rejects.toThrow(NotFoundException)
+            expect(mockWeeklySlotRepository.save).not.toHaveBeenCalled()
         })
 
-        it("should update slot when no duplicate exists", async () => {
-            const fakeSlot = {
-                id: 1,
-                dayOfWeek: 1,
-                startTime: "10:00",
-                lesson: { id: 10 },
-            } as unknown as LessonWeeklySlotEntity
+        it("should save slot with new data", async () => {
+            mockWeeklySlotRepository.findByIdWithLesson.mockResolvedValue(createFakeSlot())
 
-            mockWeeklySlotRepository.findOne
-                .mockResolvedValueOnce(fakeSlot)
-                .mockResolvedValueOnce(null)
-            mockWeeklySlotRepository.save.mockResolvedValue(fakeSlot)
+            await service.update(1, { durationMinutes: 60 })
 
-            await expect(service.update(1, { dayOfWeek: 2 })).resolves.not.toThrow()
-        })
-
-        it("should throw ConflictException when duplicate slot exists for same lesson", async () => {
-            const fakeSlot = {
-                id: 1,
-                dayOfWeek: 1,
-                startTime: "10:00",
-                lesson: { id: 10 },
-            } as unknown as LessonWeeklySlotEntity
-
-            const duplicateSlot = {
-                id: 2,
-                dayOfWeek: 2,
-                startTime: "10:00",
-            } as unknown as LessonWeeklySlotEntity
-
-            mockWeeklySlotRepository.findOne
-                .mockResolvedValueOnce(fakeSlot)
-                .mockResolvedValueOnce(duplicateSlot)
-
-            await expect(service.update(1, { dayOfWeek: 2 })).rejects.toThrow(ConflictException)
-        })
-
-        it("should not throw ConflictException when duplicate is the same slot", async () => {
-            const fakeSlot = {
-                id: 1,
-                dayOfWeek: 1,
-                startTime: "10:00",
-                lesson: { id: 10 },
-            } as unknown as LessonWeeklySlotEntity
-
-            mockWeeklySlotRepository.findOne
-                .mockResolvedValueOnce(fakeSlot)
-                .mockResolvedValueOnce(fakeSlot) // duplicate.id === slotId
-            mockWeeklySlotRepository.save.mockResolvedValue(fakeSlot)
-
-            await expect(service.update(1, { dayOfWeek: 1 })).resolves.not.toThrow()
-        })
-
-        it("should use existing slot values when only partial data provided", async () => {
-            const fakeSlot = {
-                id: 1,
-                dayOfWeek: 3,
-                startTime: "09:00",
-                lesson: { id: 10 },
-            } as unknown as LessonWeeklySlotEntity
-
-            mockWeeklySlotRepository.findOne
-                .mockResolvedValueOnce(fakeSlot)
-                .mockResolvedValueOnce(null)
-            mockWeeklySlotRepository.save.mockResolvedValue(fakeSlot)
-
-            await service.update(1, { startTime: "11:00" })
-
-            expect(mockWeeklySlotRepository.findOne).toHaveBeenNthCalledWith(2,
-                expect.objectContaining({
-                    where: expect.objectContaining({
-                        dayOfWeek: 3,
-                        startTime: "11:00",
-                    }),
-                })
+            expect(mockWeeklySlotRepository.save).toHaveBeenCalledWith(
+                expect.objectContaining({ id: 1, durationMinutes: 60 })
             )
         })
 
-        it("should throw NotFoundException when slot does not exist", async () => {
-            mockWeeklySlotRepository.findOne.mockResolvedValue(null)
+        it("should not check duplicates when day and time are not changed", async () => {
+            mockWeeklySlotRepository.findByIdWithLesson.mockResolvedValue(createFakeSlot())
 
-            await expect(service.update(99, { dayOfWeek: 1 })).rejects.toThrow(NotFoundException)
+            await service.update(1, { address: "New address" })
+
+            expect(mockWeeklySlotRepository.findDuplicates).not.toHaveBeenCalled()
+        })
+
+        it("should check duplicates when start time is changed", async () => {
+            mockWeeklySlotRepository.findByIdWithLesson.mockResolvedValue(createFakeSlot())
+            mockWeeklySlotRepository.findDuplicates.mockResolvedValue([])
+
+            await service.update(1, { startTime: "12:00" })
+
+            // день остался прежним (понедельник), время новое
+            expect(mockWeeklySlotRepository.findDuplicates).toHaveBeenCalledWith(
+                10,
+                [DayOfWeek.MONDAY],
+                "12:00"
+            )
+        })
+
+        it("should throw ConflictException when another slot has the same day and time", async () => {
+            mockWeeklySlotRepository.findByIdWithLesson.mockResolvedValue(createFakeSlot())
+            mockWeeklySlotRepository.findDuplicates.mockResolvedValue([{ id: 2 }])
+
+            await expect(service.update(1, { dayOfWeek: DayOfWeek.TUESDAY })).rejects.toThrow(ConflictException)
+            expect(mockWeeklySlotRepository.save).not.toHaveBeenCalled()
+        })
+
+        it("should not treat the slot itself as a duplicate", async () => {
+            mockWeeklySlotRepository.findByIdWithLesson.mockResolvedValue(createFakeSlot())
+            mockWeeklySlotRepository.findDuplicates.mockResolvedValue([{ id: 1 }]) // найден только сам слот
+
+            await service.update(1, { startTime: "10:00" })
+
+            expect(mockWeeklySlotRepository.save).toHaveBeenCalled()
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("delete", () => {
-        it("should delete slot successfully", async () => {
-            mockWeeklySlotRepository.delete.mockResolvedValue({ affected: 1 })
+        it("should delete weekly slot", async () => {
+            mockWeeklySlotRepository.delete.mockResolvedValue(true)
 
-            await expect(service.delete(1)).resolves.not.toThrow()
+            await service.delete(1)
+
+            expect(mockWeeklySlotRepository.delete).toHaveBeenCalledWith(1)
         })
 
-        it("should throw NotFoundException when slot does not exist", async () => {
-            mockWeeklySlotRepository.delete.mockResolvedValue({ affected: 0 })
+        it("should throw NotFoundException when weekly slot does not exist", async () => {
+            mockWeeklySlotRepository.delete.mockResolvedValue(false)
 
             await expect(service.delete(99)).rejects.toThrow(NotFoundException)
         })

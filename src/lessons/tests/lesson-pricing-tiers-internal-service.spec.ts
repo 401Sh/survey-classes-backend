@@ -1,12 +1,12 @@
 import { NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
+import { PricingTierRepository } from "../abstracts/pricing-tier-repository.abstract"
 import { LessonPricingTiersInternalService } from "../services/lesson-pricing-tiers-internal.service"
 
 const mockPricingTierRepository = {
-    findOne: vi.fn(),
+    findActiveByIdAndLessonId: vi.fn(),
 }
 
 describe("LessonPricingTiersInternalService", () => {
@@ -16,55 +16,34 @@ describe("LessonPricingTiersInternalService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 LessonPricingTiersInternalService,
-                {
-                    provide: getRepositoryToken(LessonPricingTierEntity),
-                    useValue: mockPricingTierRepository,
-                },
+                { provide: PricingTierRepository, useValue: mockPricingTierRepository },
             ],
         }).compile()
 
-        service = module.get<LessonPricingTiersInternalService>(LessonPricingTiersInternalService)
+        service = module.get(LessonPricingTiersInternalService)
     })
 
     afterEach(() => {
         vi.clearAllMocks()
     })
 
-    describe("findActiveAndLinked", () => {
-        it("should return pricing tier when it exists, is active and linked to lesson", async () => {
-            const fakeTier = {
-                id: 1,
-                label: "Basic",
-                price: 1000,
-                sessionsCount: 8,
-                isActive: true,
-            } as unknown as LessonPricingTierEntity
-            mockPricingTierRepository.findOne.mockResolvedValue(fakeTier)
+    // -------------------------------------------------------------------------
 
-            const result = await service.findActiveAndLinked(1, 1)
+    describe("findActiveAndLinked", () => {
+        it("should return pricing tier when it is active and belongs to the lesson", async () => {
+            const fakeTier = { id: 1 } as LessonPricingTierEntity
+            mockPricingTierRepository.findActiveByIdAndLessonId.mockResolvedValue(fakeTier)
+
+            const result = await service.findActiveAndLinked(1, 10)
 
             expect(result).toEqual(fakeTier)
+            expect(mockPricingTierRepository.findActiveByIdAndLessonId).toHaveBeenCalledWith(1, 10)
         })
 
-        it("should throw NotFoundException when pricing tier does not exist", async () => {
-            mockPricingTierRepository.findOne.mockResolvedValue(null)
+        it("should throw NotFoundException when pricing tier is not found", async () => {
+            mockPricingTierRepository.findActiveByIdAndLessonId.mockResolvedValue(null)
 
-            await expect(service.findActiveAndLinked(99, 1)).rejects.toThrow(NotFoundException)
-        })
-
-        it("should throw NotFoundException when pricing tier is inactive", async () => {
-            // findOne вернёт null потому что where включает isActive: true —
-            // неактивный тир просто не найдётся в БД
-            mockPricingTierRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.findActiveAndLinked(1, 1)).rejects.toThrow(NotFoundException)
-        })
-
-        it("should throw NotFoundException when pricing tier belongs to another lesson", async () => {
-            // аналогично — where включает lesson: { id: lessonId }
-            mockPricingTierRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.findActiveAndLinked(1, 99)).rejects.toThrow(NotFoundException)
+            await expect(service.findActiveAndLinked(99, 10)).rejects.toThrow(NotFoundException)
         })
     })
 })

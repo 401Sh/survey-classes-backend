@@ -1,52 +1,58 @@
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
+import { SortDirection } from "src/common/enums/sort-direction.enum"
 import { CategoryEntity } from "src/dictionaries/entities/category.entity"
 import { ManageDictionariesService } from "src/dictionaries/services/manage-dictionaries.service"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
+import { LessonEntity } from "../entities/lesson.entity"
 import { LessonPricingTierEntity } from "../entities/lesson-pricing-tier.entity"
 import { LessonScheduleOverrideEntity } from "../entities/lesson-schedule-override.entity"
 import { LessonWeeklySlotEntity } from "../entities/lesson-weekly-slot.entity"
-import { LessonEntity } from "../entities/lesson.entity"
-import { ManageLessonsService } from "../services/manage-lessons.service"
+import { DayOfWeek } from "../enums/day-of-week.enum"
 import { EnrollmentMode } from "../enums/enrollment-mode.enum"
 import { ScheduleOverrideStatus } from "../enums/schedule-override-status.enum"
-import { SortDirection } from "src/common/enums/sort-direction.enum"
-
-const createQueryBuilderMock = () => ({
-    leftJoinAndSelect: vi.fn().mockReturnThis(),
-    innerJoin: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    andWhere: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    skip: vi.fn().mockReturnThis(),
-    take: vi.fn().mockReturnThis(),
-    getManyAndCount: vi.fn(),
-})
+import { LessonRepository } from "../abstracts/lesson-repository.abstract"
+import { PricingTierRepository } from "../abstracts/pricing-tier-repository.abstract"
+import { ScheduleOverrideRepository } from "../abstracts/schedule-override-repository.abstract"
+import { WeeklySlotRepository } from "../abstracts/weekly-slot-repository.abstract"
+import {
+    CreateLessonBodyDto,
+    CreatePricingTierBodyDto,
+    CreateScheduleOverrideBodyDto,
+    CreateWeeklySlotBodyDto,
+    GetManageLessonListQueryDto,
+    GetManagePricingTierQueryDto,
+    GetManageScheduleOverrideQueryDto,
+    GetWeeklySlotQueryDto,
+} from "../dto"
+import { ManageLessonsService } from "../services/manage-lessons.service"
 
 const mockLessonRepository = {
+    create: vi.fn(),
     save: vi.fn(),
-    findOne: vi.fn(),
-    find: vi.fn(),
-    exists: vi.fn(),
-    delete: vi.fn(),
-    createQueryBuilder: vi.fn(),
+    findPage: vi.fn(),
+    findByIdWithDetails: vi.fn(),
+    findByIdWithCategories: vi.fn(),
+    existsById: vi.fn(),
+    existsWithActiveEnrollments: vi.fn(),
     softDelete: vi.fn(),
 }
 
 const mockPricingTierRepository = {
-    save: vi.fn(),
-    find: vi.fn(),
+    create: vi.fn(),
+    findAllByLessonId: vi.fn(),
 }
 
 const mockWeeklySlotRepository = {
-    save: vi.fn(),
-    find: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    findDuplicates: vi.fn(),
+    findAllByLessonId: vi.fn(),
 }
 
 const mockScheduleOverrideRepository = {
-    save: vi.fn(),
-    find: vi.fn(),
+    create: vi.fn(),
+    findAllByLessonId: vi.fn(),
 }
 
 const mockManageDictionariesService = {
@@ -60,30 +66,15 @@ describe("ManageLessonsService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageLessonsService,
-                {
-                    provide: getRepositoryToken(LessonEntity),
-                    useValue: mockLessonRepository,
-                },
-                {
-                    provide: getRepositoryToken(LessonPricingTierEntity),
-                    useValue: mockPricingTierRepository,
-                },
-                {
-                    provide: getRepositoryToken(LessonWeeklySlotEntity),
-                    useValue: mockWeeklySlotRepository,
-                },
-                {
-                    provide: getRepositoryToken(LessonScheduleOverrideEntity),
-                    useValue: mockScheduleOverrideRepository,
-                },
-                {
-                    provide: ManageDictionariesService,
-                    useValue: mockManageDictionariesService,
-                },
+                { provide: LessonRepository, useValue: mockLessonRepository },
+                { provide: PricingTierRepository, useValue: mockPricingTierRepository },
+                { provide: WeeklySlotRepository, useValue: mockWeeklySlotRepository },
+                { provide: ScheduleOverrideRepository, useValue: mockScheduleOverrideRepository },
+                { provide: ManageDictionariesService, useValue: mockManageDictionariesService },
             ],
         }).compile()
 
-        service = module.get<ManageLessonsService>(ManageLessonsService)
+        service = module.get(ManageLessonsService)
     })
 
     afterEach(() => {
@@ -93,54 +84,308 @@ describe("ManageLessonsService", () => {
     // -------------------------------------------------------------------------
 
     describe("create", () => {
-        it("should create lesson without categories", async () => {
-            const fakeLesson = { id: 1, name: "Lesson" } as unknown as LessonEntity
-            mockLessonRepository.save.mockResolvedValue(fakeLesson)
+        const baseData = {
+            name: "Math",
+            isActive: true,
+            minAge: 7,
+            enrollmentMode: EnrollmentMode.AUTO,
+        }
 
-            const result = await service.create(1, {
-                name: "Lesson",
-                isActive: false,
-                enrollmentMode: EnrollmentMode.AUTO,
-                categoryIds: [],
-                minAge: 0,
-            })
+        it("should create lesson without loading categories when categoryIds is empty", async () => {
+            const fakeLesson = { id: 1 } as LessonEntity
+            mockLessonRepository.create.mockResolvedValue(fakeLesson)
+
+            const result = await service.create(5, { ...baseData, categoryIds: [] } as CreateLessonBodyDto)
 
             expect(result).toEqual(fakeLesson)
             expect(mockManageDictionariesService.findCategoriesByIds).not.toHaveBeenCalled()
+            expect(mockLessonRepository.create).toHaveBeenCalledWith(5, baseData, [])
         })
 
-        it("should create lesson with categories when categoryIds provided", async () => {
-            const fakeLesson = { id: 1 } as unknown as LessonEntity
-            const fakeCategories = [{ id: 1 }, { id: 2 }] as unknown as CategoryEntity[]
-
+        it("should load categories by ids and pass them to repository", async () => {
+            const fakeCategories = [{ id: 1 }, { id: 2 }] as CategoryEntity[]
             mockManageDictionariesService.findCategoriesByIds.mockResolvedValue(fakeCategories)
-            mockLessonRepository.save.mockResolvedValue(fakeLesson)
+            mockLessonRepository.create.mockResolvedValue({ id: 1 })
 
-            await service.create(1, {
-                name: "Lesson",
-                isActive: false,
-                enrollmentMode: EnrollmentMode.AUTO,
-                categoryIds: [1, 2],
-                minAge: 0,
-            })
+            await service.create(5, { ...baseData, categoryIds: [1, 2] } as CreateLessonBodyDto)
 
             expect(mockManageDictionariesService.findCategoriesByIds).toHaveBeenCalledWith([1, 2])
-            expect(mockLessonRepository.save).toHaveBeenCalledWith(
-                expect.objectContaining({ categories: fakeCategories })
+            // categoryIds не должны попасть в данные занятия
+            expect(mockLessonRepository.create).toHaveBeenCalledWith(5, baseData, fakeCategories)
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("createPricingTier", () => {
+        const data = { label: "Month", price: 1000, sessionsCount: 8, isActive: true } as CreatePricingTierBodyDto
+
+        it("should create pricing tier for existing lesson", async () => {
+            const fakeTier = { id: 1 } as LessonPricingTierEntity
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockPricingTierRepository.create.mockResolvedValue(fakeTier)
+
+            const result = await service.createPricingTier(1, data)
+
+            expect(result).toEqual(fakeTier)
+            expect(mockPricingTierRepository.create).toHaveBeenCalledWith(1, data)
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
+
+            await expect(service.createPricingTier(99, data)).rejects.toThrow(NotFoundException)
+            expect(mockPricingTierRepository.create).not.toHaveBeenCalled()
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("createWeeklySlots", () => {
+        const data = {
+            startTime: "10:00",
+            durationMinutes: 45,
+            address: "Main street 1",
+            isActive: true,
+            daysOfWeek: [DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY],
+        } as CreateWeeklySlotBodyDto
+
+        it("should create slots for all given days", async () => {
+            const fakeSlots = [{ id: 1 }, { id: 2 }] as LessonWeeklySlotEntity[]
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockWeeklySlotRepository.findDuplicates.mockResolvedValue([])
+            mockWeeklySlotRepository.createMany.mockResolvedValue(fakeSlots)
+
+            const result = await service.createWeeklySlots(1, data)
+
+            expect(result).toEqual(fakeSlots)
+            expect(mockWeeklySlotRepository.findDuplicates).toHaveBeenCalledWith(
+                1,
+                [DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY],
+                "10:00"
+            )
+            // daysOfWeek передаются отдельно, а не внутри данных слота
+            expect(mockWeeklySlotRepository.createMany).toHaveBeenCalledWith(
+                1,
+                { startTime: "10:00", durationMinutes: 45, address: "Main street 1", isActive: true },
+                [DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY]
             )
         })
 
-        it("should create lesson with empty categories when categoryIds is empty array", async () => {
-            const fakeLesson = { id: 1 } as unknown as LessonEntity
-            mockLessonRepository.save.mockResolvedValue(fakeLesson)
+        it("should throw ConflictException when slots already exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockWeeklySlotRepository.findDuplicates.mockResolvedValue([{ id: 5, dayOfWeek: DayOfWeek.MONDAY }])
 
-            await service.create(1, {
-                name: "Lesson",
-                isActive: false,
-                enrollmentMode: EnrollmentMode.AUTO,
-                categoryIds: [],
-                minAge: 0,
+            await expect(service.createWeeklySlots(1, data)).rejects.toThrow(ConflictException)
+            expect(mockWeeklySlotRepository.createMany).not.toHaveBeenCalled()
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
+
+            await expect(service.createWeeklySlots(99, data)).rejects.toThrow(NotFoundException)
+            expect(mockWeeklySlotRepository.createMany).not.toHaveBeenCalled()
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("createScheduleOverride", () => {
+        const data = {
+            date: new Date("2026-01-10"),
+            status: ScheduleOverrideStatus.CANCELLED,
+        } as CreateScheduleOverrideBodyDto
+
+        it("should create schedule override for existing lesson", async () => {
+            const fakeOverride = { id: 1 } as LessonScheduleOverrideEntity
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockScheduleOverrideRepository.create.mockResolvedValue(fakeOverride)
+
+            const result = await service.createScheduleOverride(1, data)
+
+            expect(result).toEqual(fakeOverride)
+            expect(mockScheduleOverrideRepository.create).toHaveBeenCalledWith(1, data)
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
+
+            await expect(service.createScheduleOverride(99, data)).rejects.toThrow(NotFoundException)
+            expect(mockScheduleOverrideRepository.create).not.toHaveBeenCalled()
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("findAll", () => {
+        const query = {
+            page: 1,
+            limit: 5,
+            sortDirection: SortDirection.ASC,
+        } as GetManageLessonListQueryDto
+
+        it("should return lessons with pagination meta", async () => {
+            const fakeLessons = [{ id: 1 }, { id: 2 }] as LessonEntity[]
+            mockLessonRepository.findPage.mockResolvedValue([fakeLessons, 12])
+
+            const result = await service.findAll(query)
+
+            expect(mockLessonRepository.findPage).toHaveBeenCalledWith(query)
+            expect(result).toEqual({
+                data: fakeLessons,
+                meta: {
+                    totalCount: 12,
+                    totalPagesAmount: 3, // 12 занятий по 5 на странице = 3 страницы
+                    currentPage: 1,
+                },
             })
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("findById", () => {
+        it("should return lesson when it exists", async () => {
+            const fakeLesson = { id: 1 } as LessonEntity
+            mockLessonRepository.findByIdWithDetails.mockResolvedValue(fakeLesson)
+
+            const result = await service.findById(1)
+
+            expect(result).toEqual(fakeLesson)
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.findByIdWithDetails.mockResolvedValue(null)
+
+            await expect(service.findById(99)).rejects.toThrow(NotFoundException)
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("findAllPricingTiersByLessonId", () => {
+        it("should return pricing tiers filtered by isActive", async () => {
+            const fakeTiers = [{ id: 1 }] as LessonPricingTierEntity[]
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockPricingTierRepository.findAllByLessonId.mockResolvedValue(fakeTiers)
+
+            const result = await service.findAllPricingTiersByLessonId(
+                1,
+                { isActive: true } as GetManagePricingTierQueryDto
+            )
+
+            expect(result).toEqual(fakeTiers)
+            expect(mockPricingTierRepository.findAllByLessonId).toHaveBeenCalledWith(1, true)
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
+
+            await expect(
+                service.findAllPricingTiersByLessonId(99, {} as GetManagePricingTierQueryDto)
+            ).rejects.toThrow(NotFoundException)
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("findAllWeeklySlotsByLessonId", () => {
+        it("should return weekly slots filtered by query", async () => {
+            const query = { isActive: true, daysOfWeek: [DayOfWeek.MONDAY] } as GetWeeklySlotQueryDto
+            const fakeSlots = [{ id: 1 }] as LessonWeeklySlotEntity[]
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockWeeklySlotRepository.findAllByLessonId.mockResolvedValue(fakeSlots)
+
+            const result = await service.findAllWeeklySlotsByLessonId(1, query)
+
+            expect(result).toEqual(fakeSlots)
+            expect(mockWeeklySlotRepository.findAllByLessonId).toHaveBeenCalledWith(1, query)
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
+
+            await expect(
+                service.findAllWeeklySlotsByLessonId(99, {} as GetWeeklySlotQueryDto)
+            ).rejects.toThrow(NotFoundException)
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("findAllScheduleOverridesByLessonId", () => {
+        it("should return schedule overrides filtered by query", async () => {
+            const query = { status: ScheduleOverrideStatus.MOVED } as GetManageScheduleOverrideQueryDto
+            const fakeOverrides = [{ id: 1 }] as LessonScheduleOverrideEntity[]
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockScheduleOverrideRepository.findAllByLessonId.mockResolvedValue(fakeOverrides)
+
+            const result = await service.findAllScheduleOverridesByLessonId(1, query)
+
+            expect(result).toEqual(fakeOverrides)
+            expect(mockScheduleOverrideRepository.findAllByLessonId).toHaveBeenCalledWith(1, query)
+        })
+
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
+
+            await expect(
+                service.findAllScheduleOverridesByLessonId(99, {} as GetManageScheduleOverrideQueryDto)
+            ).rejects.toThrow(NotFoundException)
+        })
+    })
+
+    // -------------------------------------------------------------------------
+
+    describe("update", () => {
+        it("should throw NotFoundException when lesson does not exist", async () => {
+            mockLessonRepository.findByIdWithCategories.mockResolvedValue(null)
+
+            await expect(service.update(99, { name: "New" })).rejects.toThrow(NotFoundException)
+            expect(mockLessonRepository.save).not.toHaveBeenCalled()
+        })
+
+        it("should update lesson fields and save", async () => {
+            const fakeLesson = { id: 1, name: "Old", categories: [] } as unknown as LessonEntity
+            mockLessonRepository.findByIdWithCategories.mockResolvedValue(fakeLesson)
+
+            await service.update(1, { name: "New" })
+
+            expect(mockLessonRepository.save).toHaveBeenCalledWith(
+                expect.objectContaining({ id: 1, name: "New" })
+            )
+        })
+
+        it("should not touch categories when categoryIds is not provided", async () => {
+            const oldCategories = [{ id: 1 }] as CategoryEntity[]
+            const fakeLesson = { id: 1, categories: oldCategories } as LessonEntity
+            mockLessonRepository.findByIdWithCategories.mockResolvedValue(fakeLesson)
+
+            await service.update(1, { name: "New" })
+
+            expect(mockManageDictionariesService.findCategoriesByIds).not.toHaveBeenCalled()
+            expect(fakeLesson.categories).toEqual(oldCategories)
+        })
+
+        it("should replace categories when categoryIds is provided", async () => {
+            const newCategories = [{ id: 2 }, { id: 3 }] as CategoryEntity[]
+            const fakeLesson = { id: 1, categories: [{ id: 1 }] } as LessonEntity
+            mockLessonRepository.findByIdWithCategories.mockResolvedValue(fakeLesson)
+            mockManageDictionariesService.findCategoriesByIds.mockResolvedValue(newCategories)
+
+            await service.update(1, { categoryIds: [2, 3] })
+
+            expect(mockManageDictionariesService.findCategoriesByIds).toHaveBeenCalledWith([2, 3])
+            expect(mockLessonRepository.save).toHaveBeenCalledWith(
+                expect.objectContaining({ categories: newCategories })
+            )
+        })
+
+        it("should remove all categories when categoryIds is empty", async () => {
+            const fakeLesson = { id: 1, categories: [{ id: 1 }] } as LessonEntity
+            mockLessonRepository.findByIdWithCategories.mockResolvedValue(fakeLesson)
+
+            await service.update(1, { categoryIds: [] })
 
             expect(mockManageDictionariesService.findCategoriesByIds).not.toHaveBeenCalled()
             expect(mockLessonRepository.save).toHaveBeenCalledWith(
@@ -151,342 +396,26 @@ describe("ManageLessonsService", () => {
 
     // -------------------------------------------------------------------------
 
-    describe("createPricingTier", () => {
-        it("should create pricing tier for existing lesson", async () => {
-            const fakeTier = { id: 1 } as unknown as LessonPricingTierEntity
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockPricingTierRepository.save.mockResolvedValue(fakeTier)
-
-            const result = await service.createPricingTier(1, {
-                label: "Basic",
-                price: 1000,
-                sessionsCount: 8,
-                isActive: false,
-            })
-
-            expect(result).toEqual(fakeTier)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
-
-            await expect(service.createPricingTier(99, {
-                label: "Basic",
-                price: 1000,
-                sessionsCount: 8,
-                isActive: false,
-            }))
-            .rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("createWeeklySlots", () => {
-        it("should create weekly slots for multiple days", async () => {
-            const fakeSlots = [{ id: 1 }, { id: 2 }] as unknown as LessonWeeklySlotEntity[]
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockWeeklySlotRepository.find.mockResolvedValue([]) // дубликатов нет
-            mockWeeklySlotRepository.save.mockResolvedValue(fakeSlots)
-
-            const result = await service.createWeeklySlots(1, {
-                daysOfWeek: [1, 2],
-                startTime: "10:00",
-                durationMinutes: 0,
-                address: "",
-                isActive: false
-            })
-
-            expect(result).toEqual(fakeSlots)
-        })
-
-        it("should throw ConflictException when duplicate slots exist", async () => {
-            const existingSlot = { id: 1, dayOfWeek: 1 } as unknown as LessonWeeklySlotEntity
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockWeeklySlotRepository.find.mockResolvedValue([existingSlot])
-
-            await expect(service.createWeeklySlots(1, {
-                daysOfWeek: [1, 2],
-                startTime: "10:00",
-                durationMinutes: 0,
-                address: "",
-                isActive: false,
-            }))
-            .rejects.toThrow(ConflictException)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
-
-            await expect(service.createWeeklySlots(99, {
-                daysOfWeek: [1], startTime: "10:00",
-                durationMinutes: 0,
-                address: "",
-                isActive: false,
-            }))
-            .rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("createScheduleOverride", () => {
-        it("should create schedule override for existing lesson", async () => {
-            const fakeOverride = { id: 1 } as unknown as LessonScheduleOverrideEntity
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockScheduleOverrideRepository.save.mockResolvedValue(fakeOverride)
-
-            const result = await service.createScheduleOverride(1, {
-                date: new Date("2024-01-01"),
-                status: ScheduleOverrideStatus.CANCELLED,
-            })
-
-            expect(result).toEqual(fakeOverride)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
-
-            await expect(service.createScheduleOverride(99, {
-                date: new Date("2024-01-01"),
-                status: ScheduleOverrideStatus.CANCELLED,
-            }))
-            .rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("findAll", () => {
-        const baseQuery = {
-            page: 1,
-            limit: 10,
-            sortDirection: SortDirection.DESC,
-        }
-
-        it("should return paginated result", async () => {
-            const fakeLessons = [{ id: 1 }, { id: 2 }] as unknown as LessonEntity[]
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([fakeLessons, 2])
-            mockLessonRepository.createQueryBuilder.mockReturnValue(qb)
-
-            const result = await service.findAll(baseQuery)
-
-            expect(result.data).toEqual(fakeLessons)
-            expect(result.meta).toEqual({
-                totalCount: 2,
-                totalPagesAmount: 1,
-                currentPage: 1,
-            })
-        })
-
-        it("should calculate totalPagesAmount correctly", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 25])
-            mockLessonRepository.createQueryBuilder.mockReturnValue(qb)
-
-            const result = await service.findAll({ ...baseQuery, limit: 10 })
-
-            expect(result.meta.totalPagesAmount).toBe(3)
-        })
-
-        it("should apply isActive filter when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockLessonRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, isActive: true })
-
-            expect(qb.where).toHaveBeenCalledWith(
-                "lessons.isActive = :isActive",
-                { isActive: true }
-            )
-        })
-
-        it("should apply search filter when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockLessonRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, search: "yoga" })
-
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "(lessons.name LIKE :search OR lessons.description LIKE :search)",
-                { search: "%yoga%" }
-            )
-        })
-
-        it("should apply dateFrom and dateTo filters when provided", async () => {
-            const qb = createQueryBuilderMock()
-            qb.getManyAndCount.mockResolvedValue([[], 0])
-            mockLessonRepository.createQueryBuilder.mockReturnValue(qb)
-
-            await service.findAll({ ...baseQuery, dateFrom: new Date("2024-01-01"), dateTo: new Date("2024-12-31") })
-
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "lessons.startsAt >= :dateFrom",
-                { dateFrom: new Date("2024-01-01") }
-            )
-            expect(qb.andWhere).toHaveBeenCalledWith(
-                "lessons.endsAt <= :dateTo",
-                { dateTo: new Date("2024-12-31") }
-            )
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("findById", () => {
-        it("should return lesson when it exists", async () => {
-            const fakeLesson = { id: 1 } as unknown as LessonEntity
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-
-            const result = await service.findById(1)
-
-            expect(result).toEqual(fakeLesson)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.findById(99)).rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("findAllPricingTiersByLessonId", () => {
-        it("should return pricing tiers for existing lesson", async () => {
-            const fakeTiers = [{ id: 1 }, { id: 2 }] as unknown as LessonPricingTierEntity[]
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockPricingTierRepository.find.mockResolvedValue(fakeTiers)
-
-            const result = await service.findAllPricingTiersByLessonId(1, {})
-
-            expect(result).toEqual(fakeTiers)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
-
-            await expect(service.findAllPricingTiersByLessonId(99, {}))
-                .rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("findAllWeeklySlotsByLessonId", () => {
-        it("should return weekly slots for existing lesson", async () => {
-            const fakeSlots = [{ id: 1 }] as unknown as LessonWeeklySlotEntity[]
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockWeeklySlotRepository.find.mockResolvedValue(fakeSlots)
-
-            const result = await service.findAllWeeklySlotsByLessonId(1, {})
-
-            expect(result).toEqual(fakeSlots)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
-
-            await expect(service.findAllWeeklySlotsByLessonId(99, {}))
-                .rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("findAllScheduleOverridesByLessonId", () => {
-        it("should return schedule overrides for existing lesson", async () => {
-            const fakeOverrides = [{ id: 1 }] as unknown as LessonScheduleOverrideEntity[]
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockScheduleOverrideRepository.find.mockResolvedValue(fakeOverrides)
-
-            const result = await service.findAllScheduleOverridesByLessonId(1, {
-                dateFrom: new Date("2023-12-31")
-            })
-
-            expect(result).toEqual(fakeOverrides)
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
-
-            await expect(service.findAllScheduleOverridesByLessonId(99, {
-                dateFrom: new Date("2023-12-31")
-            }))
-            .rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
-    describe("update", () => {
-        it("should update lesson without changing categories", async () => {
-            const fakeLesson = {
-                id: 1,
-                name: "Old name",
-                categories: [],
-            } as unknown as LessonEntity
-
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-            mockLessonRepository.save.mockResolvedValue(fakeLesson)
-
-            await expect(service.update(1, { name: "New name" })).resolves.not.toThrow()
-
-            expect(mockManageDictionariesService.findCategoriesByIds).not.toHaveBeenCalled()
-        })
-
-        it("should update lesson categories when categoryIds provided", async () => {
-            const fakeLesson = {
-                id: 1,
-                categories: [{ id: 1 }],
-            } as unknown as LessonEntity
-            const newCategories = [{ id: 2 }, { id: 3 }] as unknown as CategoryEntity[]
-
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-            mockManageDictionariesService.findCategoriesByIds.mockResolvedValue(newCategories)
-            mockLessonRepository.save.mockResolvedValue(fakeLesson)
-
-            await service.update(1, { categoryIds: [2, 3] })
-
-            expect(mockManageDictionariesService.findCategoriesByIds).toHaveBeenCalledWith([2, 3])
-        })
-
-        it("should clear categories when categoryIds is empty array", async () => {
-            const fakeLesson = {
-                id: 1,
-                categories: [{ id: 1 }],
-            } as unknown as LessonEntity
-
-            mockLessonRepository.findOne.mockResolvedValue(fakeLesson)
-            mockLessonRepository.save.mockResolvedValue(fakeLesson)
-
-            await service.update(1, { categoryIds: [] })
-
-            expect(mockManageDictionariesService.findCategoriesByIds).not.toHaveBeenCalled()
-            expect(fakeLesson.categories).toEqual([])
-        })
-
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.update(99, { name: "X" })).rejects.toThrow(NotFoundException)
-        })
-    })
-
-    // -------------------------------------------------------------------------
-
     describe("delete", () => {
-        it("should delete lesson successfully", async () => {
-            mockLessonRepository.softDelete.mockResolvedValue({ affected: 1 })
+        it("should delete lesson without active enrollments", async () => {
+            mockLessonRepository.existsWithActiveEnrollments.mockResolvedValue(false)
+            mockLessonRepository.softDelete.mockResolvedValue(true)
 
-            await expect(service.delete(1)).resolves.not.toThrow()
+            await service.delete(1)
+
+            expect(mockLessonRepository.softDelete).toHaveBeenCalledWith(1)
+        })
+
+        it("should throw ConflictException when lesson has active enrollments", async () => {
+            mockLessonRepository.existsWithActiveEnrollments.mockResolvedValue(true)
+
+            await expect(service.delete(1)).rejects.toThrow(ConflictException)
+            expect(mockLessonRepository.softDelete).not.toHaveBeenCalled()
         })
 
         it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.softDelete.mockResolvedValue({ affected: 0 })
+            mockLessonRepository.existsWithActiveEnrollments.mockResolvedValue(false)
+            mockLessonRepository.softDelete.mockResolvedValue(false)
 
             await expect(service.delete(99)).rejects.toThrow(NotFoundException)
         })

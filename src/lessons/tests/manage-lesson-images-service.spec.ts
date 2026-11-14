@@ -1,33 +1,22 @@
 import { NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { MediaService } from "src/media/media.service"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { LessonImageEntity } from "../entities/lesson-image.entity"
-import { LessonEntity } from "../entities/lesson.entity"
+import { LessonImageRepository } from "../abstracts/lesson-image-repository.abstract"
+import { LessonRepository } from "../abstracts/lesson-repository.abstract"
 import { ManageLessonImagesService } from "../services/manage-lesson-images.service"
 
-const createTransactionManagerMock = () => ({
-    update: vi.fn(),
-    remove: vi.fn(),
-    find: vi.fn(),
-    save: vi.fn(),
-})
-
 const mockImageRepository = {
-    findOne: vi.fn(),
-    find: vi.fn(),
-    save: vi.fn(),
-    manager: {
-        transaction: vi.fn(),
-    },
+    create: vi.fn(),
+    findByIdAndLessonId: vi.fn(),
+    findLastByLessonId: vi.fn(),
+    findAllByLessonId: vi.fn(),
+    deleteAndReorder: vi.fn(),
 }
 
 const mockLessonRepository = {
-    findOne: vi.fn(),
-    exists: vi.fn(),
-    update: vi.fn(),
-    save: vi.fn(),
+    existsById: vi.fn(),
 }
 
 const mockMediaService = {
@@ -42,22 +31,13 @@ describe("ManageLessonImagesService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ManageLessonImagesService,
-                {
-                    provide: getRepositoryToken(LessonImageEntity),
-                    useValue: mockImageRepository,
-                },
-                {
-                    provide: getRepositoryToken(LessonEntity),
-                    useValue: mockLessonRepository,
-                },
-                {
-                    provide: MediaService,
-                    useValue: mockMediaService,
-                },
+                { provide: LessonImageRepository, useValue: mockImageRepository },
+                { provide: LessonRepository, useValue: mockLessonRepository },
+                { provide: MediaService, useValue: mockMediaService },
             ],
         }).compile()
 
-        service = module.get<ManageLessonImagesService>(ManageLessonImagesService)
+        service = module.get(ManageLessonImagesService)
     })
 
     afterEach(() => {
@@ -69,72 +49,64 @@ describe("ManageLessonImagesService", () => {
     describe("uploadImage", () => {
         const fakeFile = { originalname: "photo.jpg" } as Express.Multer.File
 
-        it("should upload image with position 0 when no images exist", async () => {
-            const fakeImage = { id: 1, position: 0 } as unknown as LessonImageEntity
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockImageRepository.findOne.mockResolvedValue(null) // последнего изображения нет
-            mockMediaService.saveFile.mockResolvedValue("lessons/1/photo.jpg")
-            mockImageRepository.save.mockResolvedValue(fakeImage)
+        it("should save file to the lesson folder and create image record", async () => {
+            const fakeImage = { id: 1 } as LessonImageEntity
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockImageRepository.findLastByLessonId.mockResolvedValue(null)
+            mockMediaService.saveFile.mockResolvedValue("lessons/5/photo.jpg")
+            mockImageRepository.create.mockResolvedValue(fakeImage)
 
-            const result = await service.uploadImage(1, fakeFile)
+            const result = await service.uploadImage(5, fakeFile)
 
             expect(result).toEqual(fakeImage)
-            expect(mockImageRepository.save).toHaveBeenCalledWith(
-                expect.objectContaining({ position: 0 })
-            )
+            expect(mockMediaService.saveFile).toHaveBeenCalledWith(fakeFile, "lessons/5")
+            expect(mockImageRepository.create).toHaveBeenCalledWith(5, "lessons/5/photo.jpg", 0)
         })
 
-        it("should upload image with position = lastPosition + 1", async () => {
-            const lastImage = { id: 1, position: 2 } as unknown as LessonImageEntity
-            const fakeImage = { id: 2, position: 3 } as unknown as LessonImageEntity
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockImageRepository.findOne.mockResolvedValue(lastImage)
-            mockMediaService.saveFile.mockResolvedValue("lessons/1/photo.jpg")
-            mockImageRepository.save.mockResolvedValue(fakeImage)
+        it("should use position 0 when lesson has no images", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockImageRepository.findLastByLessonId.mockResolvedValue(null)
+            mockMediaService.saveFile.mockResolvedValue("path")
 
             await service.uploadImage(1, fakeFile)
 
-            expect(mockImageRepository.save).toHaveBeenCalledWith(
-                expect.objectContaining({ position: 3 })
-            )
+            expect(mockImageRepository.create).toHaveBeenCalledWith(1, "path", 0)
         })
 
-        it("should save file to correct path", async () => {
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockImageRepository.findOne.mockResolvedValue(null)
-            mockMediaService.saveFile.mockResolvedValue("lessons/1/photo.jpg")
-            mockImageRepository.save.mockResolvedValue({ id: 1 } as unknown as LessonImageEntity)
+        it("should use last position + 1 when lesson already has images", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockImageRepository.findLastByLessonId.mockResolvedValue({ id: 1, position: 2 })
+            mockMediaService.saveFile.mockResolvedValue("path")
 
             await service.uploadImage(1, fakeFile)
 
-            expect(mockMediaService.saveFile).toHaveBeenCalledWith(
-                fakeFile,
-                expect.stringContaining("1") // путь содержит lessonId
-            )
+            expect(mockImageRepository.create).toHaveBeenCalledWith(1, "path", 3)
         })
 
-        it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
+        it("should throw NotFoundException and not save file when lesson does not exist", async () => {
+            mockLessonRepository.existsById.mockResolvedValue(false)
 
             await expect(service.uploadImage(99, fakeFile)).rejects.toThrow(NotFoundException)
+            expect(mockMediaService.saveFile).not.toHaveBeenCalled()
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findAll", () => {
-        it("should return images for existing lesson", async () => {
-            const fakeImages = [{ id: 1 }, { id: 2 }] as unknown as LessonImageEntity[]
-            mockLessonRepository.exists.mockResolvedValue(true)
-            mockImageRepository.find.mockResolvedValue(fakeImages)
+        it("should return images of existing lesson", async () => {
+            const fakeImages = [{ id: 1 }, { id: 2 }] as LessonImageEntity[]
+            mockLessonRepository.existsById.mockResolvedValue(true)
+            mockImageRepository.findAllByLessonId.mockResolvedValue(fakeImages)
 
             const result = await service.findAll(1)
 
             expect(result).toEqual(fakeImages)
+            expect(mockImageRepository.findAllByLessonId).toHaveBeenCalledWith(1)
         })
 
         it("should throw NotFoundException when lesson does not exist", async () => {
-            mockLessonRepository.exists.mockResolvedValue(false)
+            mockLessonRepository.existsById.mockResolvedValue(false)
 
             await expect(service.findAll(99)).rejects.toThrow(NotFoundException)
         })
@@ -143,69 +115,23 @@ describe("ManageLessonImagesService", () => {
     // -------------------------------------------------------------------------
 
     describe("remove", () => {
-        const setupTransaction = (managerMock: ReturnType<typeof createTransactionManagerMock>) => {
-            mockImageRepository.manager.transaction.mockImplementation(
-                async (cb: (manager: any) => Promise<void>) => cb(managerMock)
-            )
-        }
+        it("should delete image from database and file from storage", async () => {
+            const fakeImage = { id: 3, path: "lessons/1/photo.jpg" } as LessonImageEntity
+            mockImageRepository.findByIdAndLessonId.mockResolvedValue(fakeImage)
 
-        it("should remove image and reorder remaining images", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeImage = {
-                id: 1,
-                path: "lessons/1/photo.jpg",
-                lesson: { id: 1 },
-            } as unknown as LessonImageEntity
+            await service.remove(1, 3)
 
-            const remainingImages = [
-                { id: 2, position: 1 },
-                { id: 3, position: 2 },
-            ] as unknown as LessonImageEntity[]
-
-            mockImageRepository.findOne
-                .mockResolvedValueOnce(fakeImage)  // получаем image
-            mockLessonRepository.findOne.mockResolvedValue(null) // обложки нет
-            setupTransaction(manager)
-            manager.find.mockResolvedValue(remainingImages)
-            manager.save.mockResolvedValue(undefined)
-            mockMediaService.deleteFile.mockResolvedValue(undefined)
-
-            await expect(service.remove(1, 1)).resolves.not.toThrow()
-
-            // изображения переупорядочены — позиции пересчитаны с 0
-            expect(manager.save).toHaveBeenCalledWith(
-                LessonImageEntity,
-                expect.arrayContaining([
-                    expect.objectContaining({ position: 0 }),
-                    expect.objectContaining({ position: 1 }),
-                ])
-            )
-        })
-
-        it("should delete file from storage", async () => {
-            const manager = createTransactionManagerMock()
-            const fakeImage = {
-                id: 1,
-                path: "lessons/1/photo.jpg",
-                lesson: { id: 1 },
-            } as unknown as LessonImageEntity
-
-            mockImageRepository.findOne.mockResolvedValueOnce(fakeImage)
-            mockLessonRepository.findOne.mockResolvedValue(null)
-            setupTransaction(manager)
-            manager.find.mockResolvedValue([])
-            manager.save.mockResolvedValue(undefined)
-            mockMediaService.deleteFile.mockResolvedValue(undefined)
-
-            await service.remove(1, 1)
-
+            expect(mockImageRepository.findByIdAndLessonId).toHaveBeenCalledWith(3, 1)
+            expect(mockImageRepository.deleteAndReorder).toHaveBeenCalledWith(3, 1)
             expect(mockMediaService.deleteFile).toHaveBeenCalledWith("lessons/1/photo.jpg")
         })
 
         it("should throw NotFoundException when image does not exist or belongs to another lesson", async () => {
-            mockImageRepository.findOne.mockResolvedValue(null)
+            mockImageRepository.findByIdAndLessonId.mockResolvedValue(null)
 
             await expect(service.remove(1, 99)).rejects.toThrow(NotFoundException)
+            expect(mockImageRepository.deleteAndReorder).not.toHaveBeenCalled()
+            expect(mockMediaService.deleteFile).not.toHaveBeenCalled()
         })
     })
 })
