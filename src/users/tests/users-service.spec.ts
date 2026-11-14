@@ -1,17 +1,13 @@
 import { NotFoundException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { UserEntity } from "../entities/user.entity"
-import { UsersInternalService } from "../services/users-internal.service"
+import { UserRepository } from "../abstracts/user-repository.abstract"
 import { UsersService } from "../services/users.service"
 
 const mockUserRepository = {
     update: vi.fn(),
-}
-
-const mockUsersInternalService = {
-    findUser: vi.fn(),
+    findSimplifiedById: vi.fn(),
 }
 
 describe("UsersService", () => {
@@ -21,18 +17,11 @@ describe("UsersService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 UsersService,
-                {
-                    provide: getRepositoryToken(UserEntity),
-                    useValue: mockUserRepository,
-                },
-                {
-                    provide: UsersInternalService,
-                    useValue: mockUsersInternalService,
-                },
+                { provide: UserRepository, useValue: mockUserRepository },
             ],
         }).compile()
 
-        service = module.get<UsersService>(UsersService)
+        service = module.get(UsersService)
     })
 
     afterEach(() => {
@@ -42,16 +31,18 @@ describe("UsersService", () => {
     // -------------------------------------------------------------------------
 
     describe("updateName", () => {
-        it("should update user name successfully", async () => {
-            mockUserRepository.update.mockResolvedValue({ affected: 1 })
+        it("should update user name", async () => {
+            mockUserRepository.update.mockResolvedValue(true)
 
-            await expect(service.updateName(1, { firstName: "John" })).resolves.not.toThrow()
+            await service.updateName(1, { firstName: "Ivan", secondName: "Ivanov" })
+
+            expect(mockUserRepository.update).toHaveBeenCalledWith(1, { firstName: "Ivan", secondName: "Ivanov" })
         })
 
         it("should throw NotFoundException when user does not exist", async () => {
-            mockUserRepository.update.mockResolvedValue({ affected: 0 })
+            mockUserRepository.update.mockResolvedValue(false)
 
-            await expect(service.updateName(99, { firstName: "John" })).rejects.toThrow(NotFoundException)
+            await expect(service.updateName(99, { firstName: "Ivan" })).rejects.toThrow(NotFoundException)
         })
     })
 
@@ -59,16 +50,17 @@ describe("UsersService", () => {
 
     describe("findById", () => {
         it("should return user when it exists", async () => {
-            const fakeUser = { id: 1, name: "John" } as unknown as UserEntity
-            mockUsersInternalService.findUser.mockResolvedValue(fakeUser)
+            const fakeUser = { id: 1, email: "a@b.c" } as UserEntity
+            mockUserRepository.findSimplifiedById.mockResolvedValue(fakeUser)
 
             const result = await service.findById(1)
 
             expect(result).toEqual(fakeUser)
+            expect(mockUserRepository.findSimplifiedById).toHaveBeenCalledWith(1)
         })
 
         it("should throw NotFoundException when user does not exist", async () => {
-            mockUsersInternalService.findUser.mockResolvedValue(null)
+            mockUserRepository.findSimplifiedById.mockResolvedValue(null)
 
             await expect(service.findById(99)).rejects.toThrow(NotFoundException)
         })

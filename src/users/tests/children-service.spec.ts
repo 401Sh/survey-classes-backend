@@ -1,17 +1,19 @@
-import { NotFoundException } from "@nestjs/common"
+import { NotFoundException, ConflictException } from "@nestjs/common"
 import { TestingModule, Test } from "@nestjs/testing"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { vi, describe, beforeEach, afterEach, it, expect } from "vitest"
 import { UserChildEntity } from "../entities/user-child.entity"
+import { ChildRepository } from "../abstracts/child-repository.abstract"
+import { CreateChildBodyDto } from "../dto"
 import { ChildrenService } from "../services/children.service"
 
 const mockChildRepository = {
-    save: vi.fn(),
-    find: vi.fn(),
-    findOne: vi.fn(),
-    update: vi.fn(),
+    create: vi.fn(),
+    findByIdAndUserId: vi.fn(),
+    findAllByUserId: vi.fn(),
+    existsNotSuspendedEnrollments: vi.fn(),
+    existsByIdAndUserId: vi.fn(),
+    updateByIdAndUserId: vi.fn(),
     delete: vi.fn(),
-    exists: vi.fn(),
 }
 
 describe("ChildrenService", () => {
@@ -21,14 +23,11 @@ describe("ChildrenService", () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ChildrenService,
-                {
-                    provide: getRepositoryToken(UserChildEntity),
-                    useValue: mockChildRepository,
-                },
+                { provide: ChildRepository, useValue: mockChildRepository },
             ],
         }).compile()
 
-        service = module.get<ChildrenService>(ChildrenService)
+        service = module.get(ChildrenService)
     })
 
     afterEach(() => {
@@ -38,43 +37,35 @@ describe("ChildrenService", () => {
     // -------------------------------------------------------------------------
 
     describe("create", () => {
-        it("should create and return child", async () => {
-            const fakeChild = { id: 1, firstName: "Anna" } as unknown as UserChildEntity
-            mockChildRepository.save.mockResolvedValue(fakeChild)
+        it("should create child for user", async () => {
+            const data = { firstName: "Ivan", birthDate: new Date("2018-05-01") } as CreateChildBodyDto
+            const fakeChild = { id: 1 } as UserChildEntity
+            mockChildRepository.create.mockResolvedValue(fakeChild)
 
-            const result = await service.create(1, { firstName: "Anna", birthDate: new Date("2020-01-01") })
+            const result = await service.create(5, data)
 
             expect(result).toEqual(fakeChild)
-        })
-
-        it("should save child with correct userId", async () => {
-            const fakeChild = { id: 1 } as unknown as UserChildEntity
-            mockChildRepository.save.mockResolvedValue(fakeChild)
-
-            await service.create(42, { firstName: "Anna", birthDate: new Date("2020-01-01") })
-
-            expect(mockChildRepository.save).toHaveBeenCalledWith(
-                expect.objectContaining({ user: { id: 42 } })
-            )
+            expect(mockChildRepository.create).toHaveBeenCalledWith(5, data)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("findAll", () => {
-        it("should return children for user", async () => {
-            const fakeChildren = [{ id: 1 }, { id: 2 }] as unknown as UserChildEntity[]
-            mockChildRepository.find.mockResolvedValue(fakeChildren)
+        it("should return children of the user", async () => {
+            const fakeChildren = [{ id: 1 }, { id: 2 }] as UserChildEntity[]
+            mockChildRepository.findAllByUserId.mockResolvedValue(fakeChildren)
 
-            const result = await service.findAll(1)
+            const result = await service.findAll(5)
 
             expect(result).toEqual(fakeChildren)
+            expect(mockChildRepository.findAllByUserId).toHaveBeenCalledWith(5)
         })
 
         it("should return empty array when user has no children", async () => {
-            mockChildRepository.find.mockResolvedValue([])
+            mockChildRepository.findAllByUserId.mockResolvedValue([])
 
-            const result = await service.findAll(1)
+            const result = await service.findAll(5)
 
             expect(result).toEqual([])
         })
@@ -83,69 +74,76 @@ describe("ChildrenService", () => {
     // -------------------------------------------------------------------------
 
     describe("findById", () => {
-        it("should return child when it exists", async () => {
-            const fakeChild = { id: 1, firstName: "Anna" } as unknown as UserChildEntity
-            mockChildRepository.findOne.mockResolvedValue(fakeChild)
+        it("should return child when it belongs to user", async () => {
+            const fakeChild = { id: 1 } as UserChildEntity
+            mockChildRepository.findByIdAndUserId.mockResolvedValue(fakeChild)
 
-            const result = await service.findById(1, 1)
+            const result = await service.findById(5, 1)
 
             expect(result).toEqual(fakeChild)
+            // порядок аргументов в репозитории: сначала id ребёнка, потом id пользователя
+            expect(mockChildRepository.findByIdAndUserId).toHaveBeenCalledWith(1, 5)
         })
 
-        it("should throw NotFoundException when child does not exist", async () => {
-            mockChildRepository.findOne.mockResolvedValue(null)
+        it("should throw NotFoundException when child is not found", async () => {
+            mockChildRepository.findByIdAndUserId.mockResolvedValue(null)
 
-            await expect(service.findById(1, 99)).rejects.toThrow(NotFoundException)
-        })
-
-        it("should not return child belonging to another user", async () => {
-            mockChildRepository.findOne.mockResolvedValue(null)
-
-            await expect(service.findById(99, 1)).rejects.toThrow(NotFoundException)
+            await expect(service.findById(5, 99)).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("update", () => {
-        it("should update child successfully", async () => {
-            mockChildRepository.update.mockResolvedValue({ affected: 1 })
+        it("should update child", async () => {
+            mockChildRepository.updateByIdAndUserId.mockResolvedValue(true)
 
-            await expect(service.update(1, 1, { firstName: "Updated" })).resolves.not.toThrow()
+            await service.update(5, 1, { firstName: "Petr" })
+
+            expect(mockChildRepository.updateByIdAndUserId).toHaveBeenCalledWith(1, 5, { firstName: "Petr" })
         })
 
-        it("should throw NotFoundException when child does not exist", async () => {
-            mockChildRepository.update.mockResolvedValue({ affected: 0 })
+        it("should throw NotFoundException when child is not found", async () => {
+            mockChildRepository.updateByIdAndUserId.mockResolvedValue(false)
 
-            await expect(service.update(1, 99, { firstName: "X" })).rejects.toThrow(NotFoundException)
-        })
-
-        it("should throw NotFoundException when child belongs to another user", async () => {
-            mockChildRepository.update.mockResolvedValue({ affected: 0 })
-
-            await expect(service.update(99, 1, { firstName: "X" })).rejects.toThrow(NotFoundException)
+            await expect(service.update(5, 99, { firstName: "Petr" })).rejects.toThrow(NotFoundException)
         })
     })
 
     // -------------------------------------------------------------------------
 
     describe("delete", () => {
-        it("should delete child successfully", async () => {
-            mockChildRepository.delete.mockResolvedValue({ affected: 1 })
+        it("should delete child without active enrollments", async () => {
+            mockChildRepository.existsByIdAndUserId.mockResolvedValue(true)
+            mockChildRepository.existsNotSuspendedEnrollments.mockResolvedValue(false)
+            mockChildRepository.delete.mockResolvedValue(true)
 
-            await expect(service.delete(1, 1)).resolves.not.toThrow()
+            await service.delete(5, 1)
+
+            expect(mockChildRepository.delete).toHaveBeenCalledWith(1)
         })
 
-        it("should throw NotFoundException when child does not exist", async () => {
-            mockChildRepository.delete.mockResolvedValue({ affected: 0 })
+        it("should throw NotFoundException when child does not belong to user", async () => {
+            mockChildRepository.existsByIdAndUserId.mockResolvedValue(false)
 
-            await expect(service.delete(1, 99)).rejects.toThrow(NotFoundException)
+            await expect(service.delete(5, 99)).rejects.toThrow(NotFoundException)
+            expect(mockChildRepository.delete).not.toHaveBeenCalled()
         })
 
-        it("should throw NotFoundException when child belongs to another user", async () => {
-            mockChildRepository.delete.mockResolvedValue({ affected: 0 })
+        it("should throw ConflictException when child has active enrollments", async () => {
+            mockChildRepository.existsByIdAndUserId.mockResolvedValue(true)
+            mockChildRepository.existsNotSuspendedEnrollments.mockResolvedValue(true)
 
-            await expect(service.delete(99, 1)).rejects.toThrow(NotFoundException)
+            await expect(service.delete(5, 1)).rejects.toThrow(ConflictException)
+            expect(mockChildRepository.delete).not.toHaveBeenCalled()
+        })
+
+        it("should throw NotFoundException when repository did not delete anything", async () => {
+            mockChildRepository.existsByIdAndUserId.mockResolvedValue(true)
+            mockChildRepository.existsNotSuspendedEnrollments.mockResolvedValue(false)
+            mockChildRepository.delete.mockResolvedValue(false)
+
+            await expect(service.delete(5, 1)).rejects.toThrow(NotFoundException)
         })
     })
 })
