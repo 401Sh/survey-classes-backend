@@ -197,11 +197,11 @@ export class AuthService implements IAuthService {
 
         // do not disclose whether the user exists
         if (!user || !user.isEmailVerified) return
-    
+
         const code = this.generateOtp(MAIL_CONFIRMATION_CODE_LENGTH)
         const hashedCode = await this.cryptoService.hashData(code)
         const expiresAt = new Date(Date.now() + MAIL_CONFIRMATION_CODE_TTL)
-    
+
         const emailVerification = await this.emailVerificationRepository.findOne({
             where: {
                 user: {
@@ -210,7 +210,7 @@ export class AuthService implements IAuthService {
                 type: VerificationType.PASSWORD_RESET,
             },
         })
-    
+
         if (emailVerification) {
             await this.emailVerificationRepository.update(
                 {
@@ -224,15 +224,15 @@ export class AuthService implements IAuthService {
                     expiresAt,
                 },
             )
+        } else {
+            await this.emailVerificationRepository.save({
+                user,
+                code: hashedCode,
+                type: VerificationType.PASSWORD_RESET,
+                expiresAt,
+            })
         }
 
-        await this.emailVerificationRepository.save({
-            user,
-            code: hashedCode,
-            type: VerificationType.PASSWORD_RESET,
-            expiresAt,
-        })
-    
         await this.mailService.sendMail(MailTemplate.PasswordReset, user, { code })
     }
 
